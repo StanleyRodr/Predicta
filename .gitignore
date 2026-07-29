@@ -1,0 +1,82 @@
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# ============================================
+# Virtual environments
+# ============================================
+venv/
+env/
+ENV/
+.venv/
+
+# ============================================
+# Environment variables (CRITICAL)
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.production
+!.env.example
+
+# ============================================
+# Node / Frontend
+# ============================================
+node_modules/
+dist/
+build/
+.vite/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ============================================
+# IDEs & editors
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Project-specific
+# ============================================
+# Generated datasets (regenerate with: make seed)
+backend/ventas_*.csv
+data/*.csv
+!data/.gitkeep
+!data/README.md
+
+# Runtime artifacts
+backend/temp_data/
+backend/saved_models/*.pkl
+backend/saved_models/*.joblib
+backend/*.log
+backend/.python-version
+
+# Old / deprecated paths (kept ignored during transition)
+query_db/
+
+# ============================================
+# OS files
+# ============================================
+.DS_Store
+desktop.ini
