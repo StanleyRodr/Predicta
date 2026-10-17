@@ -103,17 +103,22 @@ def healthcheck() -> dict:
     return {"status": "ok"}
 
 
-@app.get("/health/db", tags=["Health"])
-def db_healthcheck() -> dict:
+@app.get("/health/db", tags=["Health"], response_model=None)
+def db_healthcheck() -> dict | JSONResponse:
     """Readiness probe: confirms the database is reachable."""
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
         return {"status": "ok", "database": "reachable"}
-    except Exception as exc:
+    except Exception:  # noqa: BLE001 - readiness endpoint must report any DB failure
+        logger.exception("La comprobacion de disponibilidad de la base de datos fallo.")
         return JSONResponse(
             status_code=503,
-            content={"status": "error", "database": "unreachable", "detail": str(exc)},
+            content={
+                "status": "error",
+                "database": "unreachable",
+                "detail": "La base de datos no esta disponible.",
+            },
         )
 
 

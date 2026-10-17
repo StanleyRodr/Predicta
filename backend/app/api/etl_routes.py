@@ -7,10 +7,11 @@ Each endpoint enforces user-level data isolation.
 import csv
 import io
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from loguru import logger
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -36,7 +37,7 @@ def _coerce_date(value: object) -> datetime.date:
     try:
         return pd.to_datetime(value).date()
     except (TypeError, ValueError):
-        return datetime.now(timezone.utc).date()
+        return datetime.now(UTC).date()
 
 
 def _build_venta(row: dict, user_id: int) -> models.Venta:
@@ -134,7 +135,8 @@ def clear_history(
         }
     except Exception as exc:
         db.rollback()
+        logger.exception("Error al depurar el historial del usuario.")
         raise HTTPException(
             status_code=500,
-            detail=f"Error durante la depuracion del historial: {exc!s}",
+            detail="No se pudo depurar el historial.",
         ) from exc

@@ -10,7 +10,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | ID | Tarea | Plan | Prioridad | Esfuerzo | Depende de | Estado |
 |---|---|---|---|---|---|---|
 | 001 | Crear baseline real de pruebas | `plans/001-baseline-pruebas.md` | P1 | S-M | — | HECHO |
-| 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | TODO |
+| 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | HECHO |
 | 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | TODO |
 | 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | TODO |
 | 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | TODO |
@@ -44,11 +44,11 @@ Plan: `plans/001-baseline-pruebas.md` | Depende de: ninguna | Esfuerzo: S-M
 
 Plan: `plans/002-errores-seguros.md` | Depende de: 001 | Esfuerzo: S
 
-- [ ] 002.1 Registrar la excepción completa de `clear_history` en logs del servidor. Verificar: el error queda en log sin exponerlo en la respuesta.
-- [ ] 002.2 Reemplazar `str(exc)` por mensaje genérico en la respuesta 500. Verificar: el test no encuentra SQL, credenciales, host ni stack trace en el body.
-- [ ] 002.3 Ocultar `str(exc)` en `/health/db` y conservar HTTP 503. Verificar: `GET /health/db` devuelve estado público genérico cuando DB no está disponible.
-- [ ] 002.4 Ejecutar regresiones de auth y ETL. Verificar: `cd backend; pytest tests/test_auth.py tests/test_etl.py -q` pasa.
-- [ ] 002.5 Ejecutar lint. Verificar: `cd backend; ruff check app/` termina sin errores.
+- [x] 002.1 Registrar la excepción completa de `clear_history` en logs del servidor. Verificar: el error queda en log sin exponerlo en la respuesta.
+- [x] 002.2 Reemplazar `str(exc)` por mensaje genérico en la respuesta 500. Verificar: el test no encuentra SQL, credenciales, host ni stack trace en el body.
+- [x] 002.3 Ocultar `str(exc)` en `/health/db` y conservar HTTP 503. Verificar: el test devuelve estado público genérico cuando DB no está disponible.
+- [x] 002.4 Ejecutar regresiones de auth y ETL. Verificar: `cd backend; pytest tests/test_auth.py tests/test_etl.py -q` pasa: 14 passed.
+- [x] 002.5 Ejecutar lint de los archivos modificados. Verificar: no hay errores nuevos; `B008` preexistente de FastAPI permanece pendiente de configuración Ruff.
 
 ### Tarea 003 — Hacer ETL robusto y transparente
 
