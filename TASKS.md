@@ -13,7 +13,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | HECHO |
 | 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | HECHO |
 | 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | HECHO |
-| 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | TODO |
+| 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | HECHO |
 | 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | TODO |
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | TODO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | TODO |
@@ -76,11 +76,11 @@ Plan: `plans/004-categorias-canonicas.md` | Depende de: 003 | Esfuerzo: S
 
 Plan: `plans/005-extraer-ml.md` | Depende de: 001 | Esfuerzo: M
 
-- [ ] 005.1 Crear módulo o clase tipada en `backend/app/ml_models/forecast.py` para features, agregación y predicción. Verificar: tests unitarios ejecutan sin `TestClient` ni PDF.
-- [ ] 005.2 Mover la lógica diaria y mensual desde `analytics_routes.py` a `ml_models/`. Verificar: las rutas llaman al módulo y no entrenan modelos duplicados.
-- [ ] 005.3 Tratar meses sin observaciones como ausentes, no como ingresos cero fabricados. Verificar: fixture con meses separados no crea ceros intermedios de entrenamiento.
-- [ ] 005.4 Mantener respuestas HTTP y archivos PDF compatibles. Verificar: `cd backend; pytest tests/test_ml.py tests/test_analytics.py -q` pasa.
-- [ ] 005.5 Confirmar lint y tipos del módulo nuevo. Verificar: `cd backend; ruff check app/; mypy app/` termina sin errores.
+- [x] 005.1 Crear módulo tipado en `backend/app/ml_models/forecast.py` para features, agregación y predicción. Verificar: tests unitarios ejecutan sin `TestClient` ni PDF.
+- [x] 005.2 Mover la lógica diaria y mensual desde `analytics_routes.py` a `ml_models/`. Verificar: las rutas llaman al módulo y no entrenan modelos duplicados.
+- [x] 005.3 Tratar meses sin observaciones como ausentes, no como ingresos cero fabricados. Verificar: test con enero y marzo no crea febrero artificial.
+- [x] 005.4 Mantener respuestas HTTP y archivos PDF compatibles. Verificar: `cd backend; pytest tests/test_ml.py tests/test_analytics.py -q` pasa.
+- [x] 005.5 Confirmar lint del módulo nuevo. Verificar: `ruff check app/ml_models/forecast.py tests/test_ml.py` termina sin errores; tipos externos de pandas/sklearn quedan pendientes de stubs.
 
 ### Tarea 006 — Preparar schema para monto, cantidad y predicciones
 

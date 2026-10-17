@@ -9,17 +9,15 @@ Routes are organized in three groups:
 import io
 import os
 import tempfile
-from datetime import date, timedelta
+from datetime import date
 
 import matplotlib
-import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from fpdf import FPDF
 from matplotlib import dates as mdates
 from matplotlib import pyplot as plt
-from sklearn.linear_model import LinearRegression
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -27,6 +25,11 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import models
 from app.services.category_service import normalize_category
+from app.ml_models.forecast import (
+    monthly_aggregates,
+    monthly_forecast,
+    predict_next_day as forecast_next_day,
+)
 
 # Backend 'Agg' must be set before pyplot is imported to avoid the
 # library trying to open a display when running headless.
@@ -172,23 +175,6 @@ MONTH_NAMES = [
 # Aliases accepted by the monthly report endpoint (URL-friendly).
 MONTH_ALIASES: dict[str, int] = {name.lower(): idx + 1 for idx, name in enumerate(MONTH_NAMES)}
 
-def _build_seasonal_features(months_index: np.ndarray, calendar_months: pd.Series) -> pd.DataFrame:
-    """Construct the design matrix: trend + 12 monthly dummy variables."""
-    features = pd.DataFrame({"mes_indice": months_index})
-    for m in range(1, 13):
-        features[f"mes_{m}"] = (calendar_months == m).astype(int)
-    return features
-
-
-def _monthly_aggregates(ventas: list[models.Venta]) -> pd.DataFrame:
-    """Resample raw sales into a monthly sum-indexed dataframe."""
-    df = pd.DataFrame(
-        [{"fecha": v.fecha_venta, "monto": float(v.monto)} for v in ventas]
-    )
-    df["fecha"] = pd.to_datetime(df["fecha"])
-    return df.set_index("fecha").resample("ME")["monto"].sum().reset_index()
-
-
 # =====================================================================
 # Predictions
 # =====================================================================
@@ -221,16 +207,9 @@ def predict_next_day(
         date.fromisoformat(r.fecha) if isinstance(r.fecha, str) else r.fecha
         for r in rows
     ]
-    first_date = dates[0]
-    X = np.array([[(current_date - first_date).days] for current_date in dates])
-    y = np.array([float(r.total_dia) for r in rows])
-
-    model = LinearRegression().fit(X, y)
-
-    last_date = dates[-1]
-    next_date = last_date + timedelta(days=1)
-    predicted = float(model.predict([[(next_date - first_date).days]])[0])
-    monto_final = max(0.0, predicted)
+    next_date, monto_final, predicted = forecast_next_day(
+        dates, [float(row.total_dia) for row in rows]
+    )
 
     return {
         "usuario": current_user.nombre_usuario,
@@ -421,26 +400,15 @@ def annual_forecast_pdf(
     if not ventas:
         raise HTTPException(status_code=400, detail="No hay datos historicos para procesar.")
 
-    monthly = _monthly_aggregates(ventas)
+    monthly = monthly_aggregates(ventas)
     if len(monthly) < 2:
         raise HTTPException(
             status_code=400, detail="Muestreo insuficiente para analisis lineal."
         )
-
-    X_train = _build_seasonal_features(
-        np.arange(len(monthly)), monthly["fecha"].dt.month
-    )
-    y_train = monthly["monto"]
-    model = LinearRegression().fit(X_train, y_train)
+    _, future_dates, predictions = monthly_forecast(ventas)
 
     last_date = monthly["fecha"].max()
     last_amount = float(monthly.iloc[-1]["monto"])
-    future_dates = [last_date + pd.DateOffset(months=i) for i in range(1, 13)]
-    X_future = _build_seasonal_features(
-        np.arange(len(monthly), len(monthly) + 12),
-        pd.Series([d.month for d in future_dates]),
-    )
-    predictions = np.clip(model.predict(X_future), 0.0, None)
 
     # Anchor the projection to the last real point so the line is continuous.
     chart_dates = [last_date] + future_dates
@@ -521,34 +489,23 @@ def monthly_report_pdf(
     if not ventas:
         raise HTTPException(status_code=400, detail="Ecosistema sin registros para entrenamiento.")
 
-    monthly = _monthly_aggregates(ventas)
+    monthly = monthly_aggregates(ventas)
     if len(monthly) < 2:
         raise HTTPException(status_code=400, detail="Varianza insuficiente para ejecutar regresion.")
 
-    X_train = _build_seasonal_features(
-        np.arange(len(monthly)), monthly["fecha"].dt.month
+    _, future_dates, predictions = monthly_forecast(ventas, horizon=12)
+    projection_index = next(
+        (index for index, current_date in enumerate(future_dates) if current_date.month == target_month),
+        None,
     )
-    model = LinearRegression().fit(X_train, monthly["monto"])
-
-    last_date = monthly["fecha"].max()
-    projection_date = None
-    for i in range(1, 13):
-        candidate = last_date + pd.DateOffset(months=i)
-        if candidate.month == target_month:
-            projection_date = candidate
-            steps = i
-            break
-    if projection_date is None:
+    if projection_index is None:
         raise HTTPException(
             status_code=400,
             detail="El mes solicitado cae fuera del rango de prevision de 12 meses.",
         )
 
-    X_pred = _build_seasonal_features(
-        np.array([len(monthly) + steps - 1]),
-        pd.Series([target_month]),
-    )
-    monto_predicho = max(0.0, float(model.predict(X_pred)[0]))
+    projection_date = future_dates[projection_index]
+    monto_predicho = float(predictions[projection_index])
 
     historical = monthly[monthly["fecha"].dt.month == target_month]
     labels = [f"Año {i + 1} Real" for i in range(len(historical))]
@@ -617,28 +574,17 @@ def category_forecast_pdf(
             detail=f"No hay registros historicos para la categoria '{canonical}'.",
         )
 
-    monthly = _monthly_aggregates(ventas)
+    monthly = monthly_aggregates(ventas)
     if len(monthly) < 2:
         raise HTTPException(
             status_code=400,
             detail="Historial insuficiente para proyeccion lineal en esta categoria.",
         )
-
-    X_train = _build_seasonal_features(
-        np.arange(len(monthly)), monthly["fecha"].dt.month
-    )
-    model = LinearRegression().fit(X_train, monthly["monto"])
+    _, future_dates, predictions = monthly_forecast(ventas)
 
     last_date = monthly["fecha"].max()
     last_amount = float(monthly.iloc[-1]["monto"])
-    future_dates = [last_date + pd.DateOffset(months=i) for i in range(1, 13)]
     future_labels = [f"{MONTH_NAMES[d.month - 1]} {d.year}" for d in future_dates]
-    X_future = _build_seasonal_features(
-        np.arange(len(monthly), len(monthly) + 12),
-        pd.Series([d.month for d in future_dates]),
-    )
-    predictions = np.clip(model.predict(X_future), 0.0, None)
-
     chart_dates = [last_date] + future_dates
     chart_values = [last_amount] + list(predictions)
 
