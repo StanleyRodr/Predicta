@@ -46,6 +46,56 @@ def test_upload_excel_returns_success(client, auth_headers):
     assert "1 registros" in response.json()["message"]
 
 
+def test_upload_csv_detects_semicolon_and_cp1252(client, auth_headers):
+    contents = (
+        "producto;monto;categoria;fecha\n"
+        "Café;25,50;Bebidas;2026-03-01\n"
+    ).encode("cp1252")
+
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={"file": ("ventas.csv", contents, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["registros_cargados"] == 1
+    assert response.json()["filas_rechazadas"] == 0
+
+
+def test_upload_rejects_invalid_rows_without_silent_defaults(client, auth_headers):
+    contents = (
+        b"producto,monto,categoria,fecha\n"
+        b"Arroz,no-numero,Abarrotes,2026-03-01\n"
+        b"Leche,18,Lacteos,no-es-fecha\n"
+        b"Cafe,12,Bebidas,2026-03-02\n"
+    )
+
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={"file": ("ventas.csv", contents, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["registros_leidos"] == 3
+    assert body["registros_cargados"] == 1
+    assert body["filas_rechazadas"] == 2
+    assert len(body["errores"]) == 2
+
+
+def test_upload_rejects_csv_without_required_columns(client, auth_headers):
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={"file": ("ventas.csv", b"producto,monto\nArroz,10\n", "text/csv")},
+    )
+
+    assert response.status_code == 400
+    assert "columnas requeridas" in response.json()["detail"]
+
+
 def test_upload_invalid_format_returns_bad_request(client, auth_headers):
     response = client.post(
         "/etl/upload-ventas",

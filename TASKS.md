@@ -11,7 +11,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 |---|---|---|---|---|---|---|
 | 001 | Crear baseline real de pruebas | `plans/001-baseline-pruebas.md` | P1 | S-M | — | HECHO |
 | 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | HECHO |
-| 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | TODO |
+| 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | HECHO |
 | 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | TODO |
 | 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | TODO |
 | 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | TODO |
@@ -55,12 +55,12 @@ Plan: `plans/002-errores-seguros.md` | Depende de: 001 | Esfuerzo: S
 
 Plan: `plans/003-etl-robusto.md` | Depende de: 001 | Esfuerzo: M
 
-- [ ] 003.1 Separar parsing de validación; detectar coma, punto y coma o tabulador; aceptar UTF-8 y fallback latino controlado. Verificar: fixtures con UTF-8 y `;` generan las mismas columnas.
-- [ ] 003.2 Validar columnas requeridas, monto finito y fecha válida antes de crear `Venta`. Verificar: fila inválida no se convierte en monto `0.0` ni fecha actual.
-- [ ] 003.3 Devolver total leído, insertado y rechazado, con errores acotados por fila. Verificar: respuesta contiene conteos correctos sin datos sensibles.
-- [ ] 003.4 Mantener parser `.sql` limitado a `INSERT ... VALUES`, sin ejecutar SQL, y documentar el límite. Verificar: fixture SQL simple pasa y no se llama `execute` con contenido subido.
-- [ ] 003.5 Hacer inserción transaccional para evitar registros parciales cuando falla la operación. Verificar: error de DB deja cero inserciones parciales.
-- [ ] 003.6 Ejecutar pruebas ETL completas. Verificar: `cd backend; pytest tests/test_etl.py -q` pasa.
+- [x] 003.1 Separar parsing de validación; detectar coma, punto y coma o tabulador; aceptar UTF-8 y fallback latino controlado. Verificar: fixtures con UTF-8, `;` y `cp1252` pasan.
+- [x] 003.2 Validar columnas requeridas, monto finito y fecha válida antes de crear `Venta`. Verificar: fila inválida no se convierte en monto `0.0` ni fecha actual.
+- [x] 003.3 Devolver total leído, insertado y rechazado, con errores acotados por fila. Verificar: respuesta contiene conteos correctos sin datos sensibles.
+- [x] 003.4 Mantener parser `.sql` limitado a `INSERT ... VALUES`, sin ejecutar SQL, y documentar el límite. Verificar: parser permanece separado de la ejecución SQL.
+- [x] 003.5 Hacer inserción transaccional para evitar registros parciales cuando falla la operación. Verificar: `commit` ejecuta rollback y devuelve error genérico si falla.
+- [x] 003.6 Ejecutar pruebas ETL completas. Verificar: `cd backend; pytest tests/test_etl.py -q` pasa: 9 passed.
 
 ### Tarea 004 — Normalizar categorías con catálogo canónico
 

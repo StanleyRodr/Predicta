@@ -6,8 +6,10 @@ Each endpoint enforces user-level data isolation.
 
 import csv
 import io
+import math
 import re
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from typing import Any
 
 import pandas as pd
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -22,32 +24,117 @@ router = APIRouter(prefix="/etl", tags=["ETL"])
 
 ALLOWED_EXTENSIONS = {"csv", "xlsx", "sql"}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
+MAX_REPORTED_ERRORS = 20
+REQUIRED_COLUMNS = {"producto", "monto", "fecha"}
 
 
-def _coerce_amount(value: object) -> float:
-    """Convert a raw cell value to a float, defaulting to 0.0 on failure."""
+def _is_missing(value: object) -> bool:
+    """Return whether a parsed cell is empty or represents a missing value."""
+    if value is None:
+        return True
     try:
-        return float(value)  # type: ignore[arg-type]
+        return bool(pd.isna(value))
     except (TypeError, ValueError):
-        return 0.0
+        return False
 
 
-def _coerce_date(value: object) -> datetime.date:
-    """Parse a raw cell into a date; fall back to today on failure."""
+def _parse_amount(value: object) -> float:
+    """Parse a finite amount or raise a validation error."""
+    if _is_missing(value) or (isinstance(value, str) and not value.strip()):
+        raise ValueError("el monto es obligatorio")
+
+    normalized = str(value).strip().replace(",", ".")
     try:
-        return pd.to_datetime(value).date()
-    except (TypeError, ValueError):
-        return datetime.now(UTC).date()
+        amount = float(normalized)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("el monto no es numerico") from exc
+    if not math.isfinite(amount):
+        raise ValueError("el monto debe ser finito")
+    return amount
 
 
-def _build_venta(row: dict, user_id: int) -> models.Venta:
-    """Translate a raw row dict into a ``Venta`` ORM instance."""
+def _parse_date(value: object, *, allow_missing: bool = False) -> date:
+    """Parse a date or raise a validation error."""
+    if _is_missing(value):
+        if allow_missing:
+            return datetime.now(UTC).date()
+        raise ValueError("la fecha es obligatoria")
+
+    parsed = pd.to_datetime(value, errors="coerce")
+    if pd.isna(parsed):
+        raise ValueError("la fecha no es valida")
+    return parsed.date()
+
+
+def _decode_text(contents: bytes) -> str:
+    """Decode common CSV/SQL encodings without replacing invalid bytes."""
+    for encoding in ("utf-8-sig", "cp1252", "latin-1"):
+        try:
+            return contents.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    raise ValueError("el archivo no usa una codificacion compatible")
+
+
+def _normalize_row(row: dict[Any, Any]) -> dict[str, Any]:
+    """Normalize headers so files with surrounding spaces remain usable."""
+    return {
+        str(key).strip().lower().replace(" ", "_"): value for key, value in row.items()
+    }
+
+
+def _parse_csv(contents: bytes) -> list[dict[str, Any]]:
+    """Parse comma, semicolon, or tab-delimited CSV content."""
+    text = _decode_text(contents)
+    try:
+        dialect = csv.Sniffer().sniff(text[:8192], delimiters=",;\t")
+    except csv.Error:
+        dialect = csv.excel
+    reader = csv.DictReader(io.StringIO(text), dialect=dialect)
+    headers = {
+        str(header).strip().lower().replace(" ", "_")
+        for header in reader.fieldnames or []
+    }
+    missing = REQUIRED_COLUMNS - headers
+    if missing:
+        raise ValueError(f"faltan columnas requeridas: {', '.join(sorted(missing))}")
+    return [_normalize_row(row) for row in reader]
+
+
+def _parse_sql(contents: bytes) -> list[dict[str, Any]]:
+    """Parse simple educational INSERT lines without executing SQL."""
+    sql_text = _decode_text(contents)
+    pattern = re.compile(r"VALUES\s*\((.*?)\);", re.IGNORECASE)
+    rows = []
+    for match in pattern.findall(sql_text):
+        values = [value.strip().strip("'\"") for value in match.split(",")]
+        if len(values) < 3:
+            continue
+        rows.append(
+            {
+                "producto": values[0],
+                "monto": values[1],
+                "categoria": values[2],
+                "fecha": values[3] if len(values) > 3 else None,
+            }
+        )
+    return rows
+
+
+def _build_venta(
+    row: dict[str, Any], user_id: int, *, allow_missing_date: bool = False
+) -> models.Venta:
+    """Validate and translate a raw row into a ``Venta`` ORM instance."""
+    producto = row.get("producto")
+    if _is_missing(producto) or not str(producto).strip():
+        raise ValueError("el producto es obligatorio")
+
     return models.Venta(
         id_usuario=user_id,
-        producto=str(row.get("producto", "Sin Nombre")).strip(),
-        monto=_coerce_amount(row.get("monto", 0)),
-        categoria=str(row.get("categoria", "General")).capitalize(),
-        fecha_venta=_coerce_date(row.get("fecha")),
+        producto=str(producto).strip(),
+        monto=_parse_amount(row.get("monto")),
+        categoria=(str(row.get("categoria")).strip() if not _is_missing(row.get("categoria")) else "General"),
+        fecha_venta=_parse_date(row.get("fecha"), allow_missing=allow_missing_date),
     )
 
 
@@ -79,35 +166,59 @@ async def upload_ventas(
             detail=f"Archivo demasiado grande (max {MAX_UPLOAD_BYTES // (1024 * 1024)} MB).",
         )
 
+    try:
+        if extension == "xlsx":
+            rows = [
+                _normalize_row(row)
+                for row in pd.read_excel(io.BytesIO(contents)).to_dict(orient="records")
+            ]
+            headers = set(rows[0]) if rows else set()
+            missing = REQUIRED_COLUMNS - headers
+            if missing:
+                raise ValueError(f"faltan columnas requeridas: {', '.join(sorted(missing))}")
+            allow_missing_date = False
+        elif extension == "csv":
+            rows = _parse_csv(contents)
+            allow_missing_date = False
+        else:
+            rows = _parse_sql(contents)
+            allow_missing_date = True
+    except (UnicodeDecodeError, ValueError, OSError) as exc:
+        raise HTTPException(status_code=400, detail=f"No se pudo leer el archivo: {exc}") from exc
+
+    errores: list[dict[str, Any]] = []
     ventas_creadas = 0
-
-    if extension == "xlsx":
-        df = pd.read_excel(io.BytesIO(contents))
-        for _, row in df.iterrows():
-            db.add(_build_venta(row.to_dict(), current_user.id_usuario))
+    for row_number, row in enumerate(rows, start=2):
+        try:
+            db.add(
+                _build_venta(
+                    row,
+                    current_user.id_usuario,
+                    allow_missing_date=allow_missing_date,
+                )
+            )
             ventas_creadas += 1
+        except (TypeError, ValueError) as exc:
+            if len(errores) < MAX_REPORTED_ERRORS:
+                errores.append({"fila": row_number, "error": str(exc)})
 
-    elif extension == "csv":
-        reader = csv.DictReader(io.StringIO(contents.decode("utf-8")))
-        for row in reader:
-            db.add(_build_venta(row, current_user.id_usuario))
-            ventas_creadas += 1
+    try:
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo guardar el archivo completo.",
+        ) from exc
 
-    else:  # sql
-        # Best-effort parser for simple "INSERT INTO tabla VALUES (...);" lines.
-        # Intended for the educational seed files, not for arbitrary SQL dumps.
-        sql_text = contents.decode("utf-8")
-        pattern = re.compile(r"VALUES\s*\((.*?)\);", re.IGNORECASE)
-        for match in pattern.findall(sql_text):
-            values = [v.strip().strip("'\"") for v in match.split(",")]
-            if len(values) < 3:
-                continue
-            row = {"producto": values[0], "monto": values[1], "categoria": values[2]}
-            db.add(_build_venta(row, current_user.id_usuario))
-            ventas_creadas += 1
-
-    db.commit()
-    return {"message": f"Procesamiento exitoso: {ventas_creadas} registros cargados."}
+    rechazadas = len(rows) - ventas_creadas
+    return {
+        "message": f"Procesamiento exitoso: {ventas_creadas} registros cargados.",
+        "registros_leidos": len(rows),
+        "registros_cargados": ventas_creadas,
+        "filas_rechazadas": rechazadas,
+        "errores": errores,
+    }
 
 
 @router.delete("/clear-history")
