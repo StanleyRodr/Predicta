@@ -17,6 +17,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | TODO |
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | TODO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | TODO |
+| 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | TODO |
 
 ## Reglas de ejecución
 
@@ -117,6 +118,17 @@ Plan: `plans/008-filtros-fecha.md` | Depende de: 001 | Esfuerzo: S
 - [ ] 008.4 Crear tests para rango válido, un solo día, rango vacío y rango invertido. Verificar: `cd backend; pytest tests/test_analytics.py -q` pasa.
 - [ ] 008.5 Documentar parámetros en OpenAPI y `docs/api.md`. Verificar: `/docs` muestra nombres, formato y límites.
 
+### Tarea 009 — Migrar JWT de `python-jose` a `PyJWT`
+
+Plan: `plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
+
+- [ ] 009.1 Revisar uso actual de `python-jose` en generación y validación de tokens. Verificar: búsqueda identifica `security.py` y `deps.py` como únicos puntos runtime.
+- [ ] 009.2 Sustituir dependencia por `PyJWT` con soporte criptográfico compatible. Verificar: `pip check` no reporta dependencias rotas.
+- [ ] 009.3 Adaptar creación, decodificación, expiración y manejo de errores JWT. Verificar: tokens válidos se aceptan y tokens inválidos o expirados se rechazan con HTTP 401.
+- [ ] 009.4 Actualizar tests de login, `/users/me` y credenciales inválidas. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
+- [ ] 009.5 Confirmar que no queda importación runtime de `jose`. Verificar: búsqueda en `backend/app/` no encuentra `from jose` ni `import jose`.
+- [ ] 009.6 Documentar migración y ejecutar suite completa. Verificar: `cd backend; pytest --cov=app --cov-report=term-missing` pasa.
+
 ## Verificación global
 
 Desde la raíz, cuando el entorno esté preparado:
@@ -149,4 +161,4 @@ Después del plan 008, construir frontend con React, Tailwind CSS y Chart.js:
 
 ## Hallazgos pospuestos
 
-No forman parte de esta tanda: actualización de dependencias, CI, CORS estricto, contrato uniforme de errores en `/predict` y anotaciones de fecha. Revisarlos después de completar 001-008.
+No forman parte de esta tanda: migración `python-jose` a `PyJWT` (plan 009), actualización adicional de dependencias, CI, CORS estricto, contrato uniforme de errores en `/predict` y anotaciones de fecha. Revisarlos después de completar 001-008.
