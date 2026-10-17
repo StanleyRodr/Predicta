@@ -9,7 +9,7 @@ Routes are organized in three groups:
 import io
 import os
 import tempfile
-from datetime import timedelta
+from datetime import date, timedelta
 
 import matplotlib
 import numpy as np
@@ -17,8 +17,8 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from fpdf import FPDF
-from matplotlib import pyplot as plt
 from matplotlib import dates as mdates
+from matplotlib import pyplot as plt
 from sklearn.linear_model import LinearRegression
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -228,13 +228,17 @@ def predict_next_day(
     # (fecha - primera_fecha).days keeps the regression input small
     # and stable compared to using toordinal() (which is ~738000 for
     # recent dates and degrades float precision).
-    first_date = rows[0].fecha
-    X = np.array([[(r.fecha - first_date).days] for r in rows])
+    dates = [
+        date.fromisoformat(r.fecha) if isinstance(r.fecha, str) else r.fecha
+        for r in rows
+    ]
+    first_date = dates[0]
+    X = np.array([[(current_date - first_date).days] for current_date in dates])
     y = np.array([float(r.total_dia) for r in rows])
 
     model = LinearRegression().fit(X, y)
 
-    last_date = rows[-1].fecha
+    last_date = dates[-1]
     next_date = last_date + timedelta(days=1)
     predicted = float(model.predict([[(next_date - first_date).days]])[0])
     monto_final = max(0.0, predicted)

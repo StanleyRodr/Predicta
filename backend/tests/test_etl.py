@@ -1,9 +1,92 @@
 """Tests for ETL (data ingestion) endpoints."""
 
-# Test cases planned:
-# - test_upload_csv: Upload valid CSV returns success
-# - test_upload_excel: Upload valid XLSX returns success
-# - test_upload_invalid_format: Unsupported extension returns 400
-# - test_upload_unauthenticated: Missing token returns 401
-# - test_clear_history: Deletes only current user's sales
-# - test_clear_history_empty: No data returns success message
+import io
+
+import pandas as pd
+
+
+def test_upload_csv_returns_success(client, auth_headers):
+    contents = (
+        b"producto,monto,categoria,fecha\n"
+        b"Arroz,25.50,Abarrotes,2026-01-10\n"
+        b"Leche,18.00,Lacteos,2026-01-11\n"
+    )
+
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={"file": ("ventas.csv", contents, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    assert "2 registros" in response.json()["message"]
+
+
+def test_upload_excel_returns_success(client, auth_headers):
+    output = io.BytesIO()
+    pd.DataFrame(
+        [
+            {"producto": "Jabon", "monto": 12.5, "categoria": "Limpieza", "fecha": "2026-02-01"}
+        ]
+    ).to_excel(output, index=False)
+
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={
+            "file": (
+                "ventas.xlsx",
+                output.getvalue(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert "1 registros" in response.json()["message"]
+
+
+def test_upload_invalid_format_returns_bad_request(client, auth_headers):
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={"file": ("ventas.txt", b"contenido", "text/plain")},
+    )
+
+    assert response.status_code == 400
+
+
+def test_upload_without_token_returns_unauthorized(client):
+    response = client.post(
+        "/etl/upload-ventas",
+        files={"file": ("ventas.csv", b"producto,monto\nArroz,10", "text/csv")},
+    )
+
+    assert response.status_code == 401
+
+
+def test_clear_history_deletes_only_current_user_sales(client, auth_headers):
+    upload = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={
+            "file": (
+                "ventas.csv",
+                b"producto,monto,categoria,fecha\nArroz,10,Abarrotes,2026-01-01",
+                "text/csv",
+            )
+        },
+    )
+    assert upload.status_code == 200
+
+    response = client.delete("/etl/clear-history", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert "1 registros" in response.json()["message"]
+
+
+def test_clear_history_empty_returns_success_message(client, auth_headers):
+    response = client.delete("/etl/clear-history", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert "vacio" in response.json()["message"]

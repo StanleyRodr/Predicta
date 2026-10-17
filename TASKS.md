@@ -9,7 +9,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 
 | ID | Tarea | Plan | Prioridad | Esfuerzo | Depende de | Estado |
 |---|---|---|---|---|---|---|
-| 001 | Crear baseline real de pruebas | `plans/001-baseline-pruebas.md` | P1 | S-M | — | TODO |
+| 001 | Crear baseline real de pruebas | `plans/001-baseline-pruebas.md` | P1 | S-M | — | HECHO |
 | 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | TODO |
 | 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | TODO |
 | 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | TODO |
@@ -33,12 +33,12 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 
 Plan: `plans/001-baseline-pruebas.md` | Depende de: ninguna | Esfuerzo: S-M
 
-- [ ] 001.1 Preparar `backend/.env` con `DATABASE_URL` y `SECRET_KEY`; confirmar PostgreSQL accesible. Verificar: `cd backend; pytest --collect-only` recolecta tests sin error.
-- [ ] 001.2 Crear pruebas de registro, duplicados, contraseña débil, login, `/users/me` y actualización de perfil. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
-- [ ] 001.3 Crear pruebas ETL para CSV válido, formato rechazado, usuario no autenticado, historial vacío y aislamiento por usuario. Verificar: `cd backend; pytest tests/test_etl.py -q` pasa.
-- [ ] 001.4 Crear pruebas de estadísticas, categorías, evolución temporal, predicción insuficiente, predicción válida y exportaciones. Verificar: `cd backend; pytest tests/test_analytics.py -q` pasa.
-- [ ] 001.5 Crear pruebas unitarias para features estacionales y predictor básico. Verificar: `cd backend; pytest tests/test_ml.py -q` pasa.
-- [ ] 001.6 Confirmar baseline completo. Verificar: `cd backend; pytest --cov=app --cov-report=term-missing` termina con código 0.
+- [x] 001.1 Configurar entorno de pruebas aislado en SQLite, con `DATABASE_URL` y `SECRET_KEY` definidos antes de importar la app. Verificar: `cd backend; pytest --collect-only` recolecta 26 tests sin error.
+- [x] 001.2 Crear pruebas de registro, duplicados, contraseña débil, login, `/users/me` y actualización de perfil. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
+- [x] 001.3 Crear pruebas ETL para CSV válido, XLSX, formato rechazado, usuario no autenticado, historial vacío y aislamiento por usuario. Verificar: `cd backend; pytest tests/test_etl.py -q` pasa.
+- [x] 001.4 Crear pruebas de estadísticas, categorías, evolución temporal, predicción insuficiente, predicción válida y exportaciones. Verificar: `cd backend; pytest tests/test_analytics.py -q` pasa.
+- [x] 001.5 Crear pruebas unitarias para features estacionales y agregación mensual. Verificar: `cd backend; pytest tests/test_ml.py -q` pasa.
+- [x] 001.6 Confirmar baseline completo. Verificar: `cd backend; pytest --cov=app --cov-report=term-missing` termina con código 0: 26 passed, 67% coverage.
 
 ### Tarea 002 — Ocultar detalles internos en errores
 
