@@ -1,5 +1,8 @@
 """Tests for analytics and prediction endpoints."""
 
+from app.models import models
+
+
 def _upload_sales(client, headers, rows):
     csv_rows = ["producto,monto,categoria,fecha"]
     csv_rows.extend(",".join(map(str, row)) for row in rows)
@@ -105,6 +108,30 @@ def test_predict_with_two_days_returns_forecast(client, auth_headers):
     assert response.status_code == 200
     assert response.json()["proxima_fecha"] == "2026-01-03"
     assert response.json()["monto_predicho"] >= 0
+    assert response.json()["cantidad_predicha"] >= 0
+
+
+def test_predict_persists_amount_and_quantity(client, auth_headers, test_db):
+    assert _upload_sales(
+        client,
+        auth_headers,
+        [
+            ("Arroz", 20, "Abarrotes", "2026-01-01"),
+            ("Arroz", 30, "Abarrotes", "2026-01-02"),
+        ],
+    ).status_code == 200
+
+    response = client.get("/analytics/predict", headers=auth_headers)
+
+    assert response.status_code == 200
+    session = test_db()
+    try:
+        prediction = session.query(models.Prediccion).one()
+        assert prediction.producto_referencia == "GLOBAL"
+        assert prediction.monto_proyectado is not None
+        assert prediction.cantidad_proyectada is not None
+    finally:
+        session.close()
 
 
 def test_export_excel_returns_xlsx(client, auth_headers):

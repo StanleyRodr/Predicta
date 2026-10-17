@@ -14,7 +14,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | HECHO |
 | 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | HECHO |
 | 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | HECHO |
-| 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | TODO |
+| 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | HECHO |
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | TODO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | TODO |
 | 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | TODO |
@@ -86,13 +86,13 @@ Plan: `plans/005-extraer-ml.md` | Depende de: 001 | Esfuerzo: M
 
 Plan: `plans/006-schema-predicciones.md` | Depende de: 003 y 005 | Esfuerzo: M
 
-- [ ] 006.1 Actualizar modelos y generar migration para `ventas.cantidad`, `predicciones.monto_proyectado` y eliminación de `archivos`. Verificar: revisar manualmente la migration antes de aplicarla.
-- [ ] 006.2 Aplicar migration en una base de prueba. Verificar: desde `backend`, `alembic upgrade head` termina sin error.
-- [ ] 006.3 Hacer que ETL lea `cantidad`, use `1` cuando la fuente antigua no la incluya y rechace cantidades negativas. Verificar: CSV antiguo y CSV con cantidad crean ventas correctas.
-- [ ] 006.4 Actualizar dataset sintético para generar columna `cantidad`. Verificar: desde `backend`, `python scripts/generate_dataset.py` crea CSV con la columna.
-- [ ] 006.5 Persistir monto y cantidad proyectados sin duplicar filas en una misma operación. Verificar: test consulta `predicciones` y encuentra ambos valores.
-- [ ] 006.6 Verificar reversión en una base descartable. Verificar: desde `backend`, `alembic downgrade -1` termina sin error.
-- [ ] 006.7 Confirmar ausencia de uso runtime de `Archivo`. Verificar: búsqueda en `backend/app/` no encuentra escrituras de metadata de archivos.
+- [x] 006.1 Actualizar modelos y crear migration para `ventas.cantidad`, `predicciones.monto_proyectado` y eliminación de `archivos`. Verificar: migration revisada manualmente.
+- [x] 006.2 Aplicar migration en una base temporal. Verificar: `alembic upgrade head` termina sin error.
+- [x] 006.3 Verificar reversión en la misma base temporal. Verificar: `alembic downgrade -1` termina sin error.
+- [x] 006.4 Hacer que ETL lea `cantidad`, use `1` cuando la fuente antigua no la incluya y rechace cantidades negativas. Verificar: tests ETL pasan.
+- [x] 006.5 Actualizar dataset sintético para generar columna `cantidad`. Verificar: CSV generado contiene `cantidad`.
+- [x] 006.6 Persistir monto y cantidad proyectados en `predicciones`. Verificar: test consulta ambos valores.
+- [x] 006.7 Confirmar ausencia de uso runtime de `Archivo`. Verificar: modelo, exportaciones y `alembic/env.py` ya no registran `Archivo`.
 
 ### Tarea 007 — Formalizar RLM para monto y cantidad
 

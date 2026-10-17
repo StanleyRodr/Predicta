@@ -190,6 +190,7 @@ def predict_next_day(
         db.query(
             func.date(models.Venta.fecha_venta).label("fecha"),
             func.sum(models.Venta.monto).label("total_dia"),
+            func.sum(models.Venta.cantidad).label("total_cantidad"),
         )
         .filter(models.Venta.id_usuario == current_user.id_usuario)
         .group_by(func.date(models.Venta.fecha_venta))
@@ -210,11 +211,26 @@ def predict_next_day(
     next_date, monto_final, predicted = forecast_next_day(
         dates, [float(row.total_dia) for row in rows]
     )
+    _, cantidad_final, _ = forecast_next_day(
+        dates, [float(row.total_cantidad) for row in rows]
+    )
+
+    db.add(
+        models.Prediccion(
+            id_usuario=current_user.id_usuario,
+            producto_referencia="GLOBAL",
+            cantidad_proyectada=round(cantidad_final, 2),
+            monto_proyectado=round(monto_final, 2),
+            fecha_proyeccion=next_date,
+        )
+    )
+    db.commit()
 
     return {
         "usuario": current_user.nombre_usuario,
         "proxima_fecha": str(next_date),
         "monto_predicho": round(monto_final, 2),
+        "cantidad_predicha": round(cantidad_final, 2),
         "monto_original_crudo": round(predicted, 2),
         "mensaje": "Prediccion ajustada: los valores negativos se nivelan a cero.",
     }

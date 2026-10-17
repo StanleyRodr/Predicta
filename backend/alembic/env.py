@@ -10,7 +10,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from app.core.database import Base, engine as app_engine
-from app.models.models import Rol, Usuario, Venta, Archivo, Prediccion  # noqa: F401  (registers models with Base)
+from app.models.models import Prediccion, Rol, Usuario, Venta  # noqa: F401  (registers models with Base)
 
 config = context.config
 

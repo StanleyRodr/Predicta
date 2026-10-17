@@ -4,6 +4,8 @@ import io
 
 import pandas as pd
 
+from app.models import models
+
 
 def test_upload_csv_returns_success(client, auth_headers):
     contents = (
@@ -94,6 +96,50 @@ def test_upload_rejects_csv_without_required_columns(client, auth_headers):
 
     assert response.status_code == 400
     assert "columnas requeridas" in response.json()["detail"]
+
+
+def test_upload_quantity_defaults_to_one_for_legacy_csv(client, auth_headers, test_db):
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={
+            "file": (
+                "ventas.csv",
+                b"producto,monto,categoria,fecha\nArroz,10,Abarrotes,2026-03-01",
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    session = test_db()
+    try:
+        sale = session.query(models.Venta).one()
+        assert float(sale.cantidad) == 1.0
+    finally:
+        session.close()
+
+
+def test_upload_quantity_accepts_non_negative_value(client, auth_headers, test_db):
+    response = client.post(
+        "/etl/upload-ventas",
+        headers=auth_headers,
+        files={
+            "file": (
+                "ventas.csv",
+                b"producto,monto,cantidad,categoria,fecha\nArroz,10,3,Abarrotes,2026-03-01",
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    session = test_db()
+    try:
+        sale = session.query(models.Venta).one()
+        assert float(sale.cantidad) == 3.0
+    finally:
+        session.close()
 
 
 def test_upload_invalid_format_returns_bad_request(client, auth_headers):

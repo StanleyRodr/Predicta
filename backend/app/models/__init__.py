@@ -1,15 +1,9 @@
 """SQLAlchemy ORM models. Re-exported here for convenient imports.
 
 Usage:
-    from app.models import Usuario, Venta, Rol, Archivo, Prediccion
+    from app.models import Usuario, Venta, Rol, Prediccion
 """
 
-from app.models.models import (
-    Archivo,
-    Prediccion,
-    Rol,
-    Usuario,
-    Venta,
-)
+from app.models.models import Prediccion, Rol, Usuario, Venta
 
-__all__ = ["Rol", "Usuario", "Archivo", "Venta", "Prediccion"]
+__all__ = ["Prediccion", "Rol", "Usuario", "Venta"]

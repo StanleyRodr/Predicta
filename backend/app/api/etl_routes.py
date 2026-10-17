@@ -54,6 +54,16 @@ def _parse_amount(value: object) -> float:
     return amount
 
 
+def _parse_quantity(value: object) -> float:
+    """Parse a non-negative quantity, defaulting legacy rows to one unit."""
+    if _is_missing(value) or (isinstance(value, str) and not value.strip()):
+        return 1.0
+    quantity = _parse_amount(value)
+    if quantity < 0:
+        raise ValueError("la cantidad no puede ser negativa")
+    return quantity
+
+
 def _parse_date(value: object, *, allow_missing: bool = False) -> date:
     """Parse a date or raise a validation error."""
     if _is_missing(value):
@@ -134,6 +144,7 @@ def _build_venta(
         id_usuario=user_id,
         producto=str(producto).strip(),
         monto=_parse_amount(row.get("monto")),
+        cantidad=_parse_quantity(row.get("cantidad")),
         categoria=normalize_category(row.get("categoria")),
         fecha_venta=_parse_date(row.get("fecha"), allow_missing=allow_missing_date),
     )

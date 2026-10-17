@@ -91,6 +91,7 @@ def generate_dataset(days: int = DAYS_TOTAL) -> pd.DataFrame:
                 {
                     "producto": product,
                     "monto": amount,
+                    "cantidad": random.randint(1, 10),
                     "categoria": category,
                     "fecha": current_date.strftime("%Y-%m-%d %H:%M:%S"),
                 }
