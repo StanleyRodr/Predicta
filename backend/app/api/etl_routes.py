@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import models
+from app.services.category_service import normalize_category
 
 router = APIRouter(prefix="/etl", tags=["ETL"])
 
@@ -133,7 +134,7 @@ def _build_venta(
         id_usuario=user_id,
         producto=str(producto).strip(),
         monto=_parse_amount(row.get("monto")),
-        categoria=(str(row.get("categoria")).strip() if not _is_missing(row.get("categoria")) else "General"),
+        categoria=normalize_category(row.get("categoria")),
         fecha_venta=_parse_date(row.get("fecha"), allow_missing=allow_missing_date),
     )
 

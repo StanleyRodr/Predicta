@@ -12,7 +12,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 001 | Crear baseline real de pruebas | `plans/001-baseline-pruebas.md` | P1 | S-M | — | HECHO |
 | 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | HECHO |
 | 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | HECHO |
-| 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | TODO |
+| 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | HECHO |
 | 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | TODO |
 | 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | TODO |
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | TODO |
@@ -66,11 +66,11 @@ Plan: `plans/003-etl-robusto.md` | Depende de: 001 | Esfuerzo: M
 
 Plan: `plans/004-categorias-canonicas.md` | Depende de: 003 | Esfuerzo: S
 
-- [ ] 004.1 Crear una función única que normalice espacios, mayúsculas y acentos sin perder información. Verificar: entradas equivalentes devuelven el mismo valor canónico.
-- [ ] 004.2 Aplicar la normalización al cargar ventas y resolver parámetros de reportes. Verificar: `cuidado personal`, `CUIDADO PERSONAL` y `Cuidado Personal` usan el mismo filtro.
-- [ ] 004.3 Conservar categorías desconocidas sin convertirlas en `General`. Verificar: una categoría nueva no se pierde durante la carga.
-- [ ] 004.4 Devolver error solo cuando no existen registros para la categoría solicitada. Verificar: reporte de categoría existente funciona y categoría sin registros devuelve el código documentado.
-- [ ] 004.5 Probar mayúsculas, espacios, acentos y categorías desconocidas. Verificar: `cd backend; pytest tests/test_etl.py tests/test_analytics.py -q` pasa.
+- [x] 004.1 Crear una función única que normalice espacios, mayúsculas y acentos sin perder información. Verificar: entradas equivalentes devuelven el mismo valor canónico.
+- [x] 004.2 Aplicar la normalización al cargar ventas y resolver parámetros de reportes. Verificar: `cuidado personal`, `CUIDADO PERSONAL` y `Cuidado Personal` usan el mismo filtro.
+- [x] 004.3 Conservar categorías desconocidas sin convertirlas en `General`. Verificar: una categoría nueva no se pierde durante la carga.
+- [x] 004.4 Devolver error solo cuando no existen registros para la categoría solicitada. Verificar: el filtro usa la categoría normalizada y conserva el código documentado para ausencia de registros.
+- [x] 004.5 Probar mayúsculas, espacios, acentos y categorías desconocidas. Verificar: `cd backend; pytest tests/test_categories.py tests/test_etl.py tests/test_analytics.py -q` pasa: 21 passed.
 
 ### Tarea 005 — Extraer el procesamiento ML
 

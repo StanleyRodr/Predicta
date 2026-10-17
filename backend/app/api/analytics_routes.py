@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import models
+from app.services.category_service import normalize_category
 
 # Backend 'Agg' must be set before pyplot is imported to avoid the
 # library trying to open a display when running headless.
@@ -170,18 +171,6 @@ MONTH_NAMES = [
 
 # Aliases accepted by the monthly report endpoint (URL-friendly).
 MONTH_ALIASES: dict[str, int] = {name.lower(): idx + 1 for idx, name in enumerate(MONTH_NAMES)}
-
-# Canonical category names accepted by the category report endpoint.
-CATEGORY_ALIASES: dict[str, str] = {
-    "abarrotes": "Abarrotes",
-    "limpieza": "Limpieza",
-    "lacteos": "Lácteos",
-    "lácteos": "Lácteos",
-    "bebidas": "Bebidas",
-    "cuidado-personal": "Cuidado Personal",
-    "cuidado personal": "Cuidado Personal",
-}
-
 
 def _build_seasonal_features(months_index: np.ndarray, calendar_months: pd.Series) -> pd.DataFrame:
     """Construct the design matrix: trend + 12 monthly dummy variables."""
@@ -611,13 +600,8 @@ def category_forecast_pdf(
     current_user: models.Usuario = Depends(get_current_user),
 ) -> Response:
     """Return a PDF with the 12-month forecast filtered to a single category."""
-    cat_key = categoria.lower().strip()
-    if cat_key not in CATEGORY_ALIASES:
-        raise HTTPException(
-            status_code=404,
-            detail=f"La categoria '{categoria}' no existe en el catalogo operativo.",
-        )
-    canonical = CATEGORY_ALIASES[cat_key]
+    canonical = normalize_category(categoria)
+    cat_key = canonical.lower().replace(" ", "-")
 
     ventas = (
         db.query(models.Venta)
