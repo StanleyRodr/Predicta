@@ -4,7 +4,7 @@
 
 - `backend/` is the implemented application: a FastAPI service with routes in `app/api/`, cross-cutting setup in `app/core/`, SQLAlchemy models in `app/models/`, Pydantic schemas in `app/schemas/`, business logic in `app/services/`, and migrations in `alembic/`.
 - `frontend/` is planning-only; it has no package manifest or implemented source yet.
-- `database/seed.sql` is a development schema/seed reference. Treat `backend/alembic/` as the authoritative schema history.
+- Treat `backend/alembic/` as the authoritative schema history; do not maintain a second SQL schema copy.
 
 ## Setup And Runtime
 

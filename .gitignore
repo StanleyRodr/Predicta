@@ -61,9 +61,6 @@ Thumbs.db
 # ============================================
 # Generated datasets (regenerate with: make seed)
 backend/ventas_*.csv
-data/*.csv
-!data/.gitkeep
-!data/README.md
 
 # Runtime artifacts
 backend/temp_data/
@@ -71,9 +68,6 @@ backend/saved_models/*.pkl
 backend/saved_models/*.joblib
 backend/*.log
 backend/.python-version
-
-# Old / deprecated paths (kept ignored during transition)
-query_db/
 
 # ============================================
 # OS files

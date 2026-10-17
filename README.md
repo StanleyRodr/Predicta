@@ -94,10 +94,8 @@ Predicta/
 │   ├── requirements-dev.txt
 │   └── .env.example
 ├── frontend/                 # React frontend (planned)
-├── database/                 # Schema reference
-├── data/                     # Generated datasets
-├── docs/                     # Extended documentation
-├── .github/                  # GitHub templates & CI
+├── docs/                     # ML documentation
+├── .github/                  # GitHub templates
 ├── .editorconfig
 ├── .gitignore
 ├── CHANGELOG.md
@@ -152,11 +150,6 @@ createdb predicta_db
 Apply the schema. **Recommended (Alembic):**
 ```bash
 alembic upgrade head
-```
-
-**Or apply the seed file directly (development only):**
-```bash
-psql -U postgres -d predicta_db -f ../database/seed.sql
 ```
 
 ### 4. Run the backend
@@ -219,31 +212,9 @@ This project uses [GitHub Flow](https://docs.github.com/en/get-started/using-git
 make test
 ```
 
-## API Endpoints
-
-| Method | Path | Description |
-|---|---|---|
-| `POST` | `/users/register` | Create new account |
-| `POST` | `/users/login` | Get JWT token |
-| `GET` | `/users/me` | Get current user |
-| `PUT` | `/users/me` | Update current user |
-| `POST` | `/etl/upload-ventas` | Upload CSV/Excel/SQL |
-| `DELETE` | `/etl/clear-history` | Purge all sales for current user |
-| `GET` | `/analytics/stats` | Global metrics |
-| `GET` | `/analytics/stats/categories` | By-category breakdown |
-| `GET` | `/analytics/stats/temporal` | Daily evolution |
-| `GET` | `/analytics/ventas` | Paginated sales history |
-| `GET` | `/analytics/predict` | Next-day forecast |
-| `GET` | `/analytics/export/excel` | Download Excel report |
-| `GET` | `/analytics/export/pdf` | Download PDF report |
-| `GET` | `/analytics/reporte-predictivo-anual-pdf` | Annual forecast PDF |
-| `GET` | `/analytics/reporte-mensual/{mes}` | Monthly report PDF |
-| `GET` | `/analytics/prediccion-categorias/{categoria}` | Category forecast PDF |
-| `GET` | `/health` | Health check |
-
 ## Roadmap
 
-See [CHANGELOG.md](./CHANGELOG.md) for current progress and [docs/](./docs/) for detailed documentation.
+See [TASKS.md](./TASKS.md) for active work, [CHANGELOG.md](./CHANGELOG.md) for project history, and [docs/](./docs/) for ML documentation. API reference is generated at `/docs`.
 
 - [x] Sprint 1+2: Security hardening, schema unification, Alembic, project structure
 - [ ] Sprint 3: ML refactor (extract predictors to `ml_models/`)

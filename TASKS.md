@@ -116,7 +116,7 @@ Plan: `plans/008-filtros-fecha.md` | Depende de: 001 | Esfuerzo: S
 - [ ] 008.2 Aplicar el helper a `/analytics/stats`, `/analytics/stats/categories` y `/analytics/stats/temporal`. Verificar: cada endpoint devuelve solo registros del rango.
 - [ ] 008.3 Validar rango invertido y conservar comportamiento sin fechas. Verificar: rango inválido devuelve HTTP 422; sin parámetros no cambia respuesta.
 - [ ] 008.4 Crear tests para rango válido, un solo día, rango vacío y rango invertido. Verificar: `cd backend; pytest tests/test_analytics.py -q` pasa.
-- [ ] 008.5 Documentar parámetros en OpenAPI y `docs/api.md`. Verificar: `/docs` muestra nombres, formato y límites.
+- [ ] 008.5 Documentar parámetros en OpenAPI. Verificar: `/docs` muestra nombres, formato y límites.
 
 ### Tarea 009 — Migrar JWT de `python-jose` a `PyJWT`
 

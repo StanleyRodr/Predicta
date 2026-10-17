@@ -24,7 +24,7 @@ Permitir comparar periodos para toma de decisiones: mes actual contra anterior, 
 - `backend/app/api/analytics_routes.py`
 - Schemas compartidos solo si son necesarios
 - `backend/tests/test_analytics.py`
-- `docs/api.md` si cambia contrato documentado
+- OpenAPI generado en `/docs` si cambia contrato documentado
 
 ## Contrato propuesto
 
@@ -41,7 +41,7 @@ Permitir comparar periodos para toma de decisiones: mes actual contra anterior, 
    - **Verificar:** cada endpoint devuelve solo registros dentro del rango.
 3. Añadir tests sin rango, rango válido, rango de un día y rango invertido.
    - **Verificar:** `pytest tests/test_analytics.py -q` pasa.
-4. Documentar parámetros en OpenAPI mediante `Query` y actualizar `docs/api.md` si es necesario.
+4. Documentar parámetros en OpenAPI mediante `Query`; no mantener una lista manual de endpoints.
    - **Verificar:** `/docs` muestra parámetros y límites.
 
 ## Criterios de terminado
