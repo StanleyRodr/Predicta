@@ -82,6 +82,79 @@ def test_temporal_evolution_is_sorted(client, auth_headers):
     assert [item["fecha"] for item in evolution] == ["2026-01-01", "2026-01-03"]
 
 
+def test_analytics_date_range_is_inclusive(client, auth_headers):
+    assert _upload_sales(
+        client,
+        auth_headers,
+        [
+            ("Arroz", 10, "Abarrotes", "2026-01-01"),
+            ("Leche", 20, "Lacteos", "2026-01-02"),
+            ("Cafe", 30, "Abarrotes", "2026-01-03"),
+        ],
+    ).status_code == 200
+
+    response = client.get(
+        "/analytics/stats?fecha_desde=2026-01-02&fecha_hasta=2026-01-02",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["metricas_globales"]["total_ingresos"] == 20.0
+
+
+def test_category_and_temporal_stats_apply_date_range(client, auth_headers):
+    assert _upload_sales(
+        client,
+        auth_headers,
+        [
+            ("Arroz", 10, "Abarrotes", "2026-01-01"),
+            ("Leche", 20, "Lacteos", "2026-01-02"),
+        ],
+    ).status_code == 200
+
+    categories = client.get(
+        "/analytics/stats/categories?fecha_desde=2026-01-02&fecha_hasta=2026-01-02",
+        headers=auth_headers,
+    )
+    temporal = client.get(
+        "/analytics/stats/temporal?fecha_desde=2026-01-02&fecha_hasta=2026-01-02",
+        headers=auth_headers,
+    )
+
+    category_rows = categories.json()["analisis_por_categoria"]
+    assert len(category_rows) == 1
+    assert category_rows[0]["ingresos_totales"] == 20.0
+    assert [row["fecha"] for row in temporal.json()["evolucion_diaria"]] == [
+        "2026-01-02"
+    ]
+
+
+def test_analytics_date_range_rejects_inverted_range(client, auth_headers):
+    response = client.get(
+        "/analytics/stats?fecha_desde=2026-01-03&fecha_hasta=2026-01-01",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "fecha_desde no puede ser posterior a fecha_hasta."
+
+
+def test_analytics_date_range_with_no_matching_rows_returns_empty_metrics(
+    client, auth_headers
+):
+    assert _upload_sales(
+        client, auth_headers, [("Arroz", 10, "Abarrotes", "2026-01-01")]
+    ).status_code == 200
+
+    response = client.get(
+        "/analytics/stats/temporal?fecha_desde=2026-02-01&fecha_hasta=2026-02-28",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["evolucion_diaria"] == []
+
+
 def test_predict_with_insufficient_data_returns_error(client, auth_headers):
     assert _upload_sales(
         client, auth_headers, [("Arroz", 20, "Abarrotes", "2026-01-01")]

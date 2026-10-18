@@ -19,23 +19,42 @@ from fpdf import FPDF
 from matplotlib import dates as mdates
 from matplotlib import pyplot as plt
 from sqlalchemy import func
+from sqlalchemy.orm import Query as SQLQuery
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
-from app.models import models
-from app.services.category_service import normalize_category
 from app.ml_models.forecast import (
+    daily_predictions,
     monthly_aggregates,
     monthly_forecast,
-    daily_predictions,
 )
+from app.models import models
+from app.services.category_service import normalize_category
 
 # Backend 'Agg' must be set before pyplot is imported to avoid the
 # library trying to open a display when running headless.
 matplotlib.use("Agg")
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
+
+
+def _apply_date_range(
+    query: SQLQuery,
+    fecha_desde: date | None,
+    fecha_hasta: date | None,
+) -> SQLQuery:
+    """Apply inclusive date bounds after the mandatory user filter."""
+    if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
+        raise HTTPException(
+            status_code=422,
+            detail="fecha_desde no puede ser posterior a fecha_hasta.",
+        )
+    if fecha_desde:
+        query = query.filter(models.Venta.fecha_venta >= fecha_desde)
+    if fecha_hasta:
+        query = query.filter(models.Venta.fecha_venta <= fecha_hasta)
+    return query
 
 # =====================================================================
 # Statistics
@@ -44,12 +63,22 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 @router.get("/stats")
 def global_stats(
+    fecha_desde: date | None = Query(
+        None, description="Fecha inicial inclusiva en formato YYYY-MM-DD."
+    ),
+    fecha_hasta: date | None = Query(
+        None, description="Fecha final inclusiva en formato YYYY-MM-DD."
+    ),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
     """Return aggregate revenue, count, average ticket, and max sale."""
-    base = db.query(models.Venta).filter(
-        models.Venta.id_usuario == current_user.id_usuario
+    base = _apply_date_range(
+        db.query(models.Venta).filter(
+            models.Venta.id_usuario == current_user.id_usuario
+        ),
+        fecha_desde,
+        fecha_hasta,
     )
     total_ingresos = base.with_entities(func.sum(models.Venta.monto)).scalar() or 0
     total_ventas = base.count()
@@ -69,17 +98,23 @@ def global_stats(
 
 @router.get("/stats/categories")
 def category_stats(
+    fecha_desde: date | None = Query(
+        None, description="Fecha inicial inclusiva en formato YYYY-MM-DD."
+    ),
+    fecha_hasta: date | None = Query(
+        None, description="Fecha final inclusiva en formato YYYY-MM-DD."
+    ),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
     """Return revenue and ticket metrics grouped by product category."""
-    rows = (
-        db.query(
+    query = db.query(
             models.Venta.categoria,
             func.sum(models.Venta.monto).label("total_ingresos"),
             func.count(models.Venta.id_venta).label("numero_ventas"),
-        )
-        .filter(models.Venta.id_usuario == current_user.id_usuario)
+        ).filter(models.Venta.id_usuario == current_user.id_usuario)
+    rows = (
+        _apply_date_range(query, fecha_desde, fecha_hasta)
         .group_by(models.Venta.categoria)
         .all()
     )
@@ -98,17 +133,23 @@ def category_stats(
 
 @router.get("/stats/temporal")
 def temporal_stats(
+    fecha_desde: date | None = Query(
+        None, description="Fecha inicial inclusiva en formato YYYY-MM-DD."
+    ),
+    fecha_hasta: date | None = Query(
+        None, description="Fecha final inclusiva en formato YYYY-MM-DD."
+    ),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
     """Return daily revenue evolution ordered chronologically."""
-    rows = (
-        db.query(
+    query = db.query(
             func.date(models.Venta.fecha_venta).label("fecha"),
             func.sum(models.Venta.monto).label("total_dia"),
             func.count(models.Venta.id_venta).label("num_operaciones"),
-        )
-        .filter(models.Venta.id_usuario == current_user.id_usuario)
+        ).filter(models.Venta.id_usuario == current_user.id_usuario)
+    rows = (
+        _apply_date_range(query, fecha_desde, fecha_hasta)
         .group_by(func.date(models.Venta.fecha_venta))
         .order_by(func.date(models.Venta.fecha_venta))
         .all()
