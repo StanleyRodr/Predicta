@@ -21,7 +21,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | HECHO |
 | 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | HECHO |
 | 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
-| 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | TODO |
+| 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
 | 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | TODO |
 
 ## Reglas de ejecución
@@ -165,11 +165,11 @@ Plan: `plans/012-frontend-carga-historial.md` | Depende de: 011 | Esfuerzo: M
 
 Plan: `plans/013-frontend-dashboard.md` | Depende de: 011 y 012 | Esfuerzo: M
 
-- [ ] 013.1 Implementar filtros inclusivos `fecha_desde`/`fecha_hasta`. Verificar: sin rango, un dia, rango vacio e invertido.
-- [ ] 013.2 Mostrar KPIs globales. Verificar: loading, cero, datos y error tienen tests.
-- [ ] 013.3 Crear grafico Chart.js de categorias. Verificar: labels y dataset coinciden con API.
-- [ ] 013.4 Crear grafico Chart.js temporal. Verificar: fechas, datos vacios y accesibilidad funcionan.
-- [ ] 013.5 Integrar dashboard responsive y cache por rango. Verificar: tres endpoints reciben mismos limites.
+- [x] 013.1 Implementar filtros inclusivos `fecha_desde`/`fecha_hasta`. Verificar: sin rango, un dia, rango vacio e invertido.
+- [x] 013.2 Mostrar KPIs globales. Verificar: loading, cero, datos y error tienen tests.
+- [x] 013.3 Crear grafico Chart.js de categorias. Verificar: labels y dataset coinciden con API.
+- [x] 013.4 Crear grafico Chart.js temporal. Verificar: fechas, datos vacios y accesibilidad funcionan.
+- [x] 013.5 Integrar dashboard responsive y cache por rango. Verificar: tres endpoints reciben mismos limites.
 
 ### Tarea 014 — Implementar predicciones y reportes
 

@@ -5,6 +5,7 @@ import { AppShell, ProtectedRoute } from "./components/layout";
 import { Spinner } from "./components/ui";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SectionPlaceholder } from "./pages/SectionPlaceholder";
@@ -58,7 +59,7 @@ function AppRoutes() {
         <Route element={<RegisterPage />} path="/register" />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
-            <Route element={<SectionPlaceholder description="Resumen de tu operacion." eyebrow="dashboard // resumen" title="Dashboard" />} path="/dashboard" />
+            <Route element={<DashboardPage />} path="/dashboard" />
             <Route element={<UploadPage />} path="/upload" />
             <Route element={<SectionPlaceholder description="Consulta monto, cantidad e intervalos." eyebrow="ml // proyeccion" title="Predicciones" />} path="/predictions" />
             <Route element={<SectionPlaceholder description="Descarga reportes de tu operacion." eyebrow="salidas // reportes" title="Reportes" />} path="/reports" />
