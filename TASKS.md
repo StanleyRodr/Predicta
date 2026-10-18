@@ -20,7 +20,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
 | 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | HECHO |
 | 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | HECHO |
-| 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | TODO |
+| 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
 | 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | TODO |
 | 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | TODO |
 
@@ -156,10 +156,10 @@ Plan: `plans/011-frontend-auth-layout.md` | Depende de: 010 | Esfuerzo: M
 
 Plan: `plans/012-frontend-carga-historial.md` | Depende de: 011 | Esfuerzo: M
 
-- [ ] 012.1 Implementar dropzone para CSV/XLSX/SQL con limite 25 MB. Verificar: tests rechazan archivo vacio, extension invalida y archivo grande.
-- [ ] 012.2 Mostrar resumen de carga y errores acotados por fila. Verificar: conteos y errores backend aparecen sin datos inventados.
-- [ ] 012.3 Implementar historial paginado. Verificar: `skip`/`limit` cambian pagina y estado vacio funciona.
-- [ ] 012.4 Implementar purga con confirmacion. Verificar: cancelar no llama API; confirmar invalida cache.
+- [x] 012.1 Implementar dropzone para CSV/XLSX/SQL con limite 25 MB. Verificar: tests rechazan archivo vacio, extension invalida y archivo grande.
+- [x] 012.2 Mostrar resumen de carga y errores acotados por fila. Verificar: conteos y errores backend aparecen sin datos inventados.
+- [x] 012.3 Implementar historial paginado. Verificar: `skip`/`limit` cambian pagina y estado vacio funciona.
+- [x] 012.4 Implementar purga con confirmacion. Verificar: cancelar no llama API; confirmar invalida cache.
 
 ### Tarea 013 — Implementar dashboard y analytics
 

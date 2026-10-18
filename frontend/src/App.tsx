@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { SectionPlaceholder } from "./pages/SectionPlaceholder";
+import { UploadPage } from "./pages/UploadPage";
 import { useAuthStore } from "./stores/authStore";
 
 function UnauthorizedRedirect() {
@@ -58,7 +59,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route element={<SectionPlaceholder description="Resumen de tu operacion." eyebrow="dashboard // resumen" title="Dashboard" />} path="/dashboard" />
-            <Route element={<SectionPlaceholder description="Carga un archivo de ventas para comenzar." eyebrow="datos // importar" title="Cargar ventas" />} path="/upload" />
+            <Route element={<UploadPage />} path="/upload" />
             <Route element={<SectionPlaceholder description="Consulta monto, cantidad e intervalos." eyebrow="ml // proyeccion" title="Predicciones" />} path="/predictions" />
             <Route element={<SectionPlaceholder description="Descarga reportes de tu operacion." eyebrow="salidas // reportes" title="Reportes" />} path="/reports" />
             <Route element={<ProfilePage />} path="/profile" />
