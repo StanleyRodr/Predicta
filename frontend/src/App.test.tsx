@@ -18,5 +18,8 @@ describe("Predicta foundation", () => {
 
     expect(screen.getByText("Tus ventas, con siguiente movimiento.")).toBeInTheDocument();
     expect(screen.getByText("Sube un archivo para activar tus métricas.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Entrar al panel" })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("link", { name: "Crear cuenta" })).toHaveAttribute("href", "/register");
+    expect(screen.getByRole("link", { name: "Cargar ventas" })).toHaveAttribute("href", "/upload");
   });
 });

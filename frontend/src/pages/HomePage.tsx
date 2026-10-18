@@ -1,4 +1,8 @@
-import { Badge, Button, Card } from "../components/ui";
+import { Link } from "react-router-dom";
+import { Badge, Card } from "../components/ui";
+import { cn } from "../lib/cn";
+
+const actionLink = "inline-flex min-h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-colors";
 
 export function HomePage() {
   return (
@@ -15,8 +19,12 @@ export function HomePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <Button>Entrar al panel</Button>
-          <Button variant="secondary">Crear cuenta</Button>
+          <Link className={cn(actionLink, "bg-terminal-amber text-terminal-bg hover:bg-amber-300")} to="/login">
+            Entrar al panel
+          </Link>
+          <Link className={cn(actionLink, "border border-terminal-border bg-terminal-surface text-terminal-text hover:border-terminal-amber")} to="/register">
+            Crear cuenta
+          </Link>
         </div>
       </section>
       <Card className="grid content-center gap-5">
@@ -30,6 +38,9 @@ export function HomePage() {
         </div>
         <div className="grid gap-2 border-t border-terminal-border pt-4 text-sm text-terminal-muted">
           <span>Sube un archivo para activar tus métricas.</span>
+          <Link className="text-terminal-amber hover:underline" to="/upload">
+            Cargar ventas
+          </Link>
           <span className="font-mono text-terminal-positive">estado: esperando datos</span>
         </div>
       </Card>
