@@ -19,7 +19,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | HECHO |
 | 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
 | 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | HECHO |
-| 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | TODO |
+| 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | HECHO |
 | 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | TODO |
 | 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | TODO |
 | 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | TODO |
@@ -147,10 +147,10 @@ Plan: `plans/010-frontend-fundacion.md` | Depende de: backend 001-009 | Esfuerzo
 
 Plan: `plans/011-frontend-auth-layout.md` | Depende de: 010 | Esfuerzo: M
 
-- [ ] 011.1 Implementar registro y login con Zod y React Hook Form. Verificar: tests cubren exito y errores 400/401/422.
-- [ ] 011.2 Implementar store JWT en localStorage e interceptor Axios 401. Verificar: tests confirman Bearer, logout y redireccion sin loop.
-- [ ] 011.3 Implementar perfil y `ProtectedRoute`. Verificar: anonimo va a `/login`; autenticado accede al shell.
-- [ ] 011.4 Implementar layout responsive y navegacion en español. Verificar: RTL confirma rutas privadas y mobile basico.
+- [x] 011.1 Implementar registro y login con Zod y React Hook Form. Verificar: tests cubren exito y errores 400/401/422.
+- [x] 011.2 Implementar store JWT en localStorage e interceptor Axios 401. Verificar: tests confirman Bearer, logout y redireccion sin loop.
+- [x] 011.3 Implementar perfil y `ProtectedRoute`. Verificar: anonimo va a `/login`; autenticado accede al shell.
+- [x] 011.4 Implementar layout responsive y navegacion en español. Verificar: RTL confirma rutas privadas y mobile basico.
 
 ### Tarea 012 — Implementar carga ETL e historial
 

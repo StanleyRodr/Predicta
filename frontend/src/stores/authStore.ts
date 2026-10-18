@@ -7,6 +7,7 @@ interface AuthState {
   token: string | null;
   user: User | null;
   isHydrated: boolean;
+  isCheckingSession: boolean;
   setSession: (token: string, user: User | null) => void;
   setUser: (user: User) => void;
   clearSession: () => void;
@@ -17,17 +18,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: null,
   user: null,
   isHydrated: false,
+  isCheckingSession: false,
   setSession: (token, user) => {
     localStorage.setItem(TOKEN_KEY, token);
-    set({ token, user, isHydrated: true });
+    set({ token, user, isHydrated: true, isCheckingSession: user === null });
   },
-  setUser: (user) => set({ user }),
+  setUser: (user) => set({ user, isCheckingSession: false }),
   clearSession: () => {
     localStorage.removeItem(TOKEN_KEY);
-    set({ token: null, user: null, isHydrated: true });
+    set({ token: null, user: null, isHydrated: true, isCheckingSession: false });
   },
   hydrate: () => {
-    set({ token: localStorage.getItem(TOKEN_KEY), isHydrated: true });
+    const token = localStorage.getItem(TOKEN_KEY);
+    set({ token, isHydrated: true, isCheckingSession: token !== null });
   },
 }));
 

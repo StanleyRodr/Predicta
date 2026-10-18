@@ -2,6 +2,7 @@
 
 ## Estado
 
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MED
