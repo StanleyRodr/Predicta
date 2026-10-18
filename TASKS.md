@@ -18,6 +18,11 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | HECHO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | HECHO |
 | 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
+| 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | TODO |
+| 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | TODO |
+| 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | TODO |
+| 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | TODO |
+| 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | TODO |
 
 ## Reglas de ejecución
 
@@ -128,6 +133,53 @@ Plan: `plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
 - [x] 009.4 Actualizar tests de login, `/users/me` y credenciales inválidas. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
 - [x] 009.5 Confirmar que no queda importación runtime de `jose`. Verificar: búsqueda en `backend/app/` no encuentra `from jose` ni `import jose`.
 - [x] 009.6 Documentar migración y ejecutar suite completa. Verificar: `cd backend; pytest --cov=app --cov-report=term-missing` pasa.
+
+### Tarea 010 — Crear fundacion frontend
+
+Plan: `plans/010-frontend-fundacion.md` | Depende de: backend 001-009 | Esfuerzo: M
+
+- [ ] 010.1 Crear React 19 + TypeScript + Vite y scripts npm. Verificar: `npm install` y `npm run build` pasan desde `frontend/`.
+- [ ] 010.2 Configurar Tailwind CSS v4 con tokens oscuros y componentes base manuales. Verificar: smoke test confirma estilos y foco visible.
+- [ ] 010.3 Configurar Axios, TanStack Query, React Router y Zustand. Verificar: `npx tsc --noEmit` pasa.
+- [ ] 010.4 Configurar Vitest + React Testing Library. Verificar: `npm test -- --run` pasa.
+
+### Tarea 011 — Implementar auth y layout frontend
+
+Plan: `plans/011-frontend-auth-layout.md` | Depende de: 010 | Esfuerzo: M
+
+- [ ] 011.1 Implementar registro y login con Zod y React Hook Form. Verificar: tests cubren exito y errores 400/401/422.
+- [ ] 011.2 Implementar store JWT en localStorage e interceptor Axios 401. Verificar: tests confirman Bearer, logout y redireccion sin loop.
+- [ ] 011.3 Implementar perfil y `ProtectedRoute`. Verificar: anonimo va a `/login`; autenticado accede al shell.
+- [ ] 011.4 Implementar layout responsive y navegacion en español. Verificar: RTL confirma rutas privadas y mobile basico.
+
+### Tarea 012 — Implementar carga ETL e historial
+
+Plan: `plans/012-frontend-carga-historial.md` | Depende de: 011 | Esfuerzo: M
+
+- [ ] 012.1 Implementar dropzone para CSV/XLSX/SQL con limite 25 MB. Verificar: tests rechazan archivo vacio, extension invalida y archivo grande.
+- [ ] 012.2 Mostrar resumen de carga y errores acotados por fila. Verificar: conteos y errores backend aparecen sin datos inventados.
+- [ ] 012.3 Implementar historial paginado. Verificar: `skip`/`limit` cambian pagina y estado vacio funciona.
+- [ ] 012.4 Implementar purga con confirmacion. Verificar: cancelar no llama API; confirmar invalida cache.
+
+### Tarea 013 — Implementar dashboard y analytics
+
+Plan: `plans/013-frontend-dashboard.md` | Depende de: 011 y 012 | Esfuerzo: M
+
+- [ ] 013.1 Implementar filtros inclusivos `fecha_desde`/`fecha_hasta`. Verificar: sin rango, un dia, rango vacio e invertido.
+- [ ] 013.2 Mostrar KPIs globales. Verificar: loading, cero, datos y error tienen tests.
+- [ ] 013.3 Crear grafico Chart.js de categorias. Verificar: labels y dataset coinciden con API.
+- [ ] 013.4 Crear grafico Chart.js temporal. Verificar: fechas, datos vacios y accesibilidad funcionan.
+- [ ] 013.5 Integrar dashboard responsive y cache por rango. Verificar: tres endpoints reciben mismos limites.
+
+### Tarea 014 — Implementar predicciones y reportes
+
+Plan: `plans/014-frontend-predicciones-reportes.md` | Depende de: 013 | Esfuerzo: M
+
+- [ ] 014.1 Mostrar monto, cantidad, fecha e intervalos separados. Verificar: valores normales, cero, null y error.
+- [ ] 014.2 Mostrar R², MAPE y RMSE sin convertir null en cero. Verificar: test cubre dataset insuficiente.
+- [ ] 014.3 Evitar prediccion automatica y refetch al enfocar ventana. Verificar: request ocurre solo tras click.
+- [ ] 014.4 Implementar descargas Excel/PDF/anual/mensual/categoria como blob. Verificar: nombre, extension y object URL funcionan.
+- [ ] 014.5 Integrar paginas protegidas de predicciones y reportes. Verificar: build y suite frontend pasan.
 
 ## Verificación global
 
