@@ -17,7 +17,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | HECHO |
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | EN PROGRESO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | HECHO |
-| 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | TODO |
+| 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
 
 ## Reglas de ejecución
 
@@ -122,12 +122,12 @@ Plan: `plans/008-filtros-fecha.md` | Depende de: 001 | Esfuerzo: S
 
 Plan: `plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
 
-- [ ] 009.1 Revisar uso actual de `python-jose` en generación y validación de tokens. Verificar: búsqueda identifica `security.py` y `deps.py` como únicos puntos runtime.
-- [ ] 009.2 Sustituir dependencia por `PyJWT` con soporte criptográfico compatible. Verificar: `pip check` no reporta dependencias rotas.
-- [ ] 009.3 Adaptar creación, decodificación, expiración y manejo de errores JWT. Verificar: tokens válidos se aceptan y tokens inválidos o expirados se rechazan con HTTP 401.
-- [ ] 009.4 Actualizar tests de login, `/users/me` y credenciales inválidas. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
-- [ ] 009.5 Confirmar que no queda importación runtime de `jose`. Verificar: búsqueda en `backend/app/` no encuentra `from jose` ni `import jose`.
-- [ ] 009.6 Documentar migración y ejecutar suite completa. Verificar: `cd backend; pytest --cov=app --cov-report=term-missing` pasa.
+- [x] 009.1 Revisar uso actual de `python-jose` en generación y validación de tokens. Verificar: búsqueda identifica `security.py` y `deps.py` como únicos puntos runtime.
+- [x] 009.2 Sustituir dependencia por `PyJWT` con soporte criptográfico compatible. Verificar: `pip check` no reporta dependencias rotas.
+- [x] 009.3 Adaptar creación, decodificación, expiración y manejo de errores JWT. Verificar: tokens válidos se aceptan y tokens inválidos o expirados se rechazan con HTTP 401.
+- [x] 009.4 Actualizar tests de login, `/users/me` y credenciales inválidas. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
+- [x] 009.5 Confirmar que no queda importación runtime de `jose`. Verificar: búsqueda en `backend/app/` no encuentra `from jose` ni `import jose`.
+- [x] 009.6 Documentar migración y ejecutar suite completa. Verificar: `cd backend; pytest --cov=app --cov-report=term-missing` pasa.
 
 ## Verificación global
 
@@ -161,4 +161,4 @@ Después del plan 008, construir frontend con React, Tailwind CSS y Chart.js:
 
 ## Hallazgos pospuestos
 
-No forman parte de esta tanda: migración `python-jose` a `PyJWT` (plan 009), actualización adicional de dependencias, CI, CORS estricto, contrato uniforme de errores en `/predict` y anotaciones de fecha. Revisarlos después de completar 001-008.
+No forman parte de esta tanda: actualización adicional de dependencias, CI, CORS estricto, contrato uniforme de errores en `/predict` y anotaciones de fecha. Revisarlos después de completar 001-009.

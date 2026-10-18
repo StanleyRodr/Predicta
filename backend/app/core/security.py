@@ -4,11 +4,11 @@ Implements JWT token generation/validation and bcrypt password hashing
 for the Predicta authentication system.
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import jwt
 from dotenv import load_dotenv
-from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 load_dotenv()
@@ -34,7 +34,7 @@ def create_access_token(data: dict[str, Any]) -> str:
         The encoded JWT string.
     """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(UTC) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode["exp"] = expire
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -50,11 +50,10 @@ def get_password_hash(password: str) -> str:
 
 
 __all__ = [
-    "SECRET_KEY",
-    "ALGORITHM",
     "ACCESS_TOKEN_EXPIRE_MINUTES",
+    "ALGORITHM",
+    "SECRET_KEY",
     "create_access_token",
-    "verify_password",
     "get_password_hash",
-    "JWTError",
+    "verify_password",
 ]

@@ -2,9 +2,10 @@
 
 from collections.abc import Callable
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
+from jwt import InvalidTokenError
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -32,7 +33,7 @@ def get_current_user(
         if sub is None:
             raise CREDENTIALS_EXCEPTION
         user_id = int(sub)
-    except (JWTError, ValueError):
+    except (InvalidTokenError, TypeError, ValueError):
         raise CREDENTIALS_EXCEPTION from None
 
     user = user_service.get_user_by_id(db, user_id=user_id)

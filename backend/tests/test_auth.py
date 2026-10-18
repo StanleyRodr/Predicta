@@ -1,5 +1,12 @@
 """Tests for authentication endpoints."""
 
+from datetime import UTC, datetime, timedelta
+
+import jwt
+
+from app.core.security import ALGORITHM, SECRET_KEY
+
+
 def test_register_success(client):
     response = client.post(
         "/users/register",
@@ -82,6 +89,38 @@ def test_me_with_valid_token_returns_current_user(client, auth_headers):
 
     assert response.status_code == 200
     assert response.json()["correo_electronico"] == "test@example.com"
+
+
+def test_me_with_malformed_token_returns_unauthorized(client):
+    response = client.get(
+        "/users/me", headers={"Authorization": "Bearer not-a-jwt"}
+    )
+
+    assert response.status_code == 401
+
+
+def test_me_with_token_without_subject_returns_unauthorized(client):
+    token = jwt.encode({}, SECRET_KEY, algorithm=ALGORITHM)
+
+    response = client.get(
+        "/users/me", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 401
+
+
+def test_me_with_expired_token_returns_unauthorized(client):
+    token = jwt.encode(
+        {"sub": "1", "exp": datetime.now(UTC) - timedelta(minutes=1)},
+        SECRET_KEY,
+        algorithm=ALGORITHM,
+    )
+
+    response = client.get(
+        "/users/me", headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 401
 
 
 def test_update_profile_returns_updated_user(client, auth_headers):
