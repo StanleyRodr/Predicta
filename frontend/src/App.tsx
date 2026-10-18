@@ -14,6 +14,12 @@ import { useAuthStore } from "./stores/authStore";
 const DashboardPage = lazy(() =>
   import("./pages/DashboardPage").then(({ DashboardPage: page }) => ({ default: page })),
 );
+const PredictionsPage = lazy(() =>
+  import("./pages/PredictionsPage").then(({ PredictionsPage: page }) => ({ default: page })),
+);
+const ReportsPage = lazy(() =>
+  import("./pages/ReportsPage").then(({ ReportsPage: page }) => ({ default: page })),
+);
 
 function UnauthorizedRedirect() {
   const navigate = useNavigate();
@@ -71,8 +77,22 @@ function AppRoutes() {
               path="/dashboard"
             />
             <Route element={<UploadPage />} path="/upload" />
-            <Route element={<SectionPlaceholder description="Consulta monto, cantidad e intervalos." eyebrow="ml // proyeccion" title="Predicciones" />} path="/predictions" />
-            <Route element={<SectionPlaceholder description="Descarga reportes de tu operacion." eyebrow="salidas // reportes" title="Reportes" />} path="/reports" />
+            <Route
+              element={
+                <Suspense fallback={<Spinner label="Cargando predicciones" />}>
+                  <PredictionsPage />
+                </Suspense>
+              }
+              path="/predictions"
+            />
+            <Route
+              element={
+                <Suspense fallback={<Spinner label="Cargando reportes" />}>
+                  <ReportsPage />
+                </Suspense>
+              }
+              path="/reports"
+            />
             <Route element={<ProfilePage />} path="/profile" />
           </Route>
         </Route>

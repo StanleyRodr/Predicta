@@ -22,7 +22,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | HECHO |
 | 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
 | 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
-| 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | TODO |
+| 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
 
 ## Reglas de ejecución
 
@@ -175,11 +175,11 @@ Plan: `plans/013-frontend-dashboard.md` | Depende de: 011 y 012 | Esfuerzo: M
 
 Plan: `plans/014-frontend-predicciones-reportes.md` | Depende de: 013 | Esfuerzo: M
 
-- [ ] 014.1 Mostrar monto, cantidad, fecha e intervalos separados. Verificar: valores normales, cero, null y error.
-- [ ] 014.2 Mostrar R², MAPE y RMSE sin convertir null en cero. Verificar: test cubre dataset insuficiente.
-- [ ] 014.3 Evitar prediccion automatica y refetch al enfocar ventana. Verificar: request ocurre solo tras click.
-- [ ] 014.4 Implementar descargas Excel/PDF/anual/mensual/categoria como blob. Verificar: nombre, extension y object URL funcionan.
-- [ ] 014.5 Integrar paginas protegidas de predicciones y reportes. Verificar: build y suite frontend pasan.
+- [x] 014.1 Mostrar monto, cantidad, fecha e intervalos separados. Verificar: valores normales, cero, null y error.
+- [x] 014.2 Mostrar R², MAPE y RMSE sin convertir null en cero. Verificar: test cubre dataset insuficiente.
+- [x] 014.3 Evitar prediccion automatica y refetch al enfocar ventana. Verificar: request ocurre solo tras click.
+- [x] 014.4 Implementar descargas Excel/PDF/anual/mensual/categoria como blob. Verificar: nombre, extension y object URL funcionan.
+- [x] 014.5 Integrar paginas protegidas de predicciones y reportes. Verificar: build y suite frontend pasan.
 
 ## Verificación global
 
