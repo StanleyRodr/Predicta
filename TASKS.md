@@ -18,7 +18,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | HECHO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | HECHO |
 | 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
-| 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | TODO |
+| 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | HECHO |
 | 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | TODO |
 | 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | TODO |
 | 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | TODO |
@@ -138,10 +138,10 @@ Plan: `plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
 
 Plan: `plans/010-frontend-fundacion.md` | Depende de: backend 001-009 | Esfuerzo: M
 
-- [ ] 010.1 Crear React 19 + TypeScript + Vite y scripts npm. Verificar: `npm install` y `npm run build` pasan desde `frontend/`.
-- [ ] 010.2 Configurar Tailwind CSS v4 con tokens oscuros y componentes base manuales. Verificar: smoke test confirma estilos y foco visible.
-- [ ] 010.3 Configurar Axios, TanStack Query, React Router y Zustand. Verificar: `npx tsc --noEmit` pasa.
-- [ ] 010.4 Configurar Vitest + React Testing Library. Verificar: `npm test -- --run` pasa.
+- [x] 010.1 Crear React 19 + TypeScript + Vite y scripts npm. Verificar: `npm install` y `npm run build` pasan desde `frontend/`.
+- [x] 010.2 Configurar Tailwind CSS v4 con tokens oscuros y componentes base manuales. Verificar: smoke test confirma estilos y foco visible.
+- [x] 010.3 Configurar Axios, TanStack Query, React Router y Zustand. Verificar: `npx tsc --noEmit` pasa.
+- [x] 010.4 Configurar Vitest + React Testing Library. Verificar: `npm test -- --run` pasa.
 
 ### Tarea 011 — Implementar auth y layout frontend
 

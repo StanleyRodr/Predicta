@@ -1,12 +1,12 @@
 # Predicta - Frontend
 
-> **Status:** Planning phase - implementation pending.
+> **Status:** Foundation implemented - business pages pending.
 
 ## Planned Stack
 
 | Technology | Purpose |
 |---|---|
-| **React 18** | UI library |
+| **React 19** | UI library |
 | **TypeScript** | Static type checking |
 | **Vite** | Build tool and dev server |
 | **TailwindCSS** | Utility-first CSS framework |
@@ -46,7 +46,7 @@ src/
 └── main.tsx
 ```
 
-## Development Setup (future)
+## Development Setup
 
 ```bash
 cd frontend
@@ -55,3 +55,7 @@ npm run dev
 ```
 
 The dev server will run on `http://localhost:5173` (Vite default).
+
+Set `VITE_API_URL` in `.env` when the backend does not run at
+`http://localhost:8000`. Run `npm run typecheck`, `npm test -- --run`, and
+`npm run build` before submitting frontend changes.

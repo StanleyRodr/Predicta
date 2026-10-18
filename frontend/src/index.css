@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-terminal-bg: #0d1117;
+  --color-terminal-surface: #161b22;
+  --color-terminal-border: #30363d;
+  --color-terminal-text: #e6edf3;
+  --color-terminal-muted: #8b949e;
+  --color-terminal-amber: #f0b429;
+  --color-terminal-positive: #3fb950;
+  --color-terminal-error: #f85149;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    font-family: var(--font-sans);
+    background: var(--color-terminal-bg);
+    color: var(--color-terminal-text);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  * {
+    border-color: var(--color-terminal-border);
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    background:
+      radial-gradient(circle at 85% 0%, rgb(240 180 41 / 0.08), transparent 28rem),
+      var(--color-terminal-bg);
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-terminal-amber);
+    outline-offset: 3px;
+  }
+}
