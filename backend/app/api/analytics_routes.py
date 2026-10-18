@@ -28,7 +28,7 @@ from app.services.category_service import normalize_category
 from app.ml_models.forecast import (
     monthly_aggregates,
     monthly_forecast,
-    predict_next_day as forecast_next_day,
+    daily_predictions,
 )
 
 # Backend 'Agg' must be set before pyplot is imported to avoid the
@@ -201,27 +201,30 @@ def predict_next_day(
     if len(rows) < 2:
         return {"error": "Se necesitan al menos 2 dias de datos para predecir."}
 
-    # (fecha - primera_fecha).days keeps the regression input small
-    # and stable compared to using toordinal() (which is ~738000 for
-    # recent dates and degrades float precision).
     dates = [
         date.fromisoformat(r.fecha) if isinstance(r.fecha, str) else r.fecha
         for r in rows
     ]
-    next_date, monto_final, predicted = forecast_next_day(
-        dates, [float(row.total_dia) for row in rows]
+    next_date, forecasts = daily_predictions(
+        dates,
+        [float(row.total_dia) for row in rows],
+        [float(row.total_cantidad) for row in rows],
     )
-    _, cantidad_final, _ = forecast_next_day(
-        dates, [float(row.total_cantidad) for row in rows]
-    )
+    amount = forecasts["monto"]
+    quantity = forecasts["cantidad"]
 
     db.add(
         models.Prediccion(
             id_usuario=current_user.id_usuario,
             producto_referencia="GLOBAL",
-            cantidad_proyectada=round(cantidad_final, 2),
-            monto_proyectado=round(monto_final, 2),
+            cantidad_proyectada=round(quantity.prediction, 2),
+            monto_proyectado=round(amount.prediction, 2),
             fecha_proyeccion=next_date,
+            precision_estimada=(
+                round(amount.metrics["r2"], 2)
+                if amount.metrics["r2"] is not None
+                else None
+            ),
         )
     )
     db.commit()
@@ -229,9 +232,17 @@ def predict_next_day(
     return {
         "usuario": current_user.nombre_usuario,
         "proxima_fecha": str(next_date),
-        "monto_predicho": round(monto_final, 2),
-        "cantidad_predicha": round(cantidad_final, 2),
-        "monto_original_crudo": round(predicted, 2),
+        "monto_predicho": round(amount.prediction, 2),
+        "cantidad_predicha": round(quantity.prediction, 2),
+        "monto_original_crudo": round(amount.raw_prediction, 2),
+        "intervalos_prediccion": {
+            "monto": {"inferior": round(amount.lower, 2), "superior": round(amount.upper, 2)},
+            "cantidad": {
+                "inferior": round(quantity.lower, 2),
+                "superior": round(quantity.upper, 2),
+            },
+        },
+        "metricas": {"monto": amount.metrics, "cantidad": quantity.metrics},
         "mensaje": "Prediccion ajustada: los valores negativos se nivelan a cero.",
     }
 

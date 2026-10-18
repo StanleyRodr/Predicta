@@ -15,7 +15,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | HECHO |
 | 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | HECHO |
 | 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | HECHO |
-| 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | TODO |
+| 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | EN PROGRESO |
 | 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | TODO |
 | 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | TODO |
 
@@ -98,14 +98,14 @@ Plan: `plans/006-schema-predicciones.md` | Depende de: 003 y 005 | Esfuerzo: M
 
 Plan: `plans/007-rlm-metricas.md` | Depende de: 005 y 006 | Esfuerzo: M
 
-- [ ] 007.1 Definir y documentar matriz de features con orden estable. Verificar: tests comprueban número y valores de predictores.
-- [ ] 007.2 Entrenar targets separados para monto y cantidad con los mismos predictores. Verificar: API devuelve campos separados para ambos valores.
-- [ ] 007.3 Agregar tendencia y dummies mensuales al modelo mensual. Verificar: test confirma features estacionales.
-- [ ] 007.4 Agregar tendencia y 7 dummies de día de semana al modelo diario. Verificar: test confirma los 7 días y predicción diaria válida.
-- [ ] 007.5 Calcular R², MAPE y RMSE con validación temporal. Verificar: métricas no usan observaciones futuras ni datos de validación durante entrenamiento.
-- [ ] 007.6 Calcular límites inferior y superior del intervalo de predicción. Verificar: límite inferior no supera al superior y ningún valor final es negativo.
-- [ ] 007.7 Persistir predicción, monto, cantidad, fecha y métrica asociada. Verificar: una petición crea el registro esperado en `predicciones`.
-- [ ] 007.8 Documentar features, métricas, datos mínimos y limitaciones de la RLM. Verificar: `docs/ml-models.md` refleja el comportamiento real.
+- [x] 007.1 Definir y documentar matriz de features con orden estable. Verificar: tests comprueban número y valores de predictores.
+- [x] 007.2 Entrenar targets separados para monto y cantidad con los mismos predictores. Verificar: API devuelve campos separados para ambos valores.
+- [x] 007.3 Agregar tendencia y dummies mensuales al modelo mensual. Verificar: test confirma features estacionales.
+- [x] 007.4 Agregar tendencia y 7 dummies de día de semana al modelo diario. Verificar: test confirma los 7 días y predicción diaria válida.
+- [x] 007.5 Calcular R², MAPE y RMSE con validación temporal. Verificar: métricas no usan observaciones futuras ni datos de validación durante entrenamiento.
+- [x] 007.6 Calcular límites inferior y superior del intervalo de predicción. Verificar: límite inferior no supera al superior y ningún valor final es negativo.
+- [x] 007.7 Persistir predicción, monto, cantidad, fecha y métrica asociada. Verificar: una petición crea el registro esperado en `predicciones`.
+- [x] 007.8 Documentar features, métricas, datos mínimos y limitaciones de la RLM. Verificar: `docs/ml-models.md` refleja el comportamiento real.
 - [ ] 007.9 Ejecutar suite ML y analytics. Verificar: `cd backend; pytest tests/test_ml.py tests/test_analytics.py -q` pasa.
 
 ### Tarea 008 — Agregar filtros de fecha a analytics
