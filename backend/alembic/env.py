@@ -18,7 +18,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Use the same URL the app uses, so dev/prod parity is automatic.
-config.set_main_option("sqlalchemy.url", str(app_engine.url))
+config.set_main_option(
+    "sqlalchemy.url", app_engine.url.render_as_string(hide_password=False)
+)
 
 target_metadata = Base.metadata
 

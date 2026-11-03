@@ -15,8 +15,8 @@ email-validator==2.3.0
 # Authentication
 PyJWT==2.10.1
 passlib[bcrypt]==1.7.4
-# passlib 1.7.4 is incompatible with bcrypt 5.x.
-bcrypt==4.3.0
+# passlib 1.7.4 expects bcrypt's legacy version metadata.
+bcrypt==4.0.1
 python-multipart==0.0.32
 
 # Data science & ML

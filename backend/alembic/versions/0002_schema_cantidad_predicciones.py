@@ -1,6 +1,6 @@
 """Add sale quantities, prediction amounts, and remove unused file metadata.
 
-Revision ID: 0002_schema_cantidad_predicciones
+Revision ID: 0002_schema_predicciones
 Revises: 0001_initial
 """
 
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 from alembic import op
 
-revision: str = "0002_schema_cantidad_predicciones"
+revision: str = "0002_schema_predicciones"
 down_revision: str | None = "0001_initial"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -38,8 +38,9 @@ def upgrade() -> None:
             sa.Column("monto_proyectado", sa.Numeric(precision=10, scale=2), nullable=True)
         )
 
-    op.drop_index("ix_archivos_id_archivo", table_name="archivos")
-    op.drop_table("archivos")
+    # Legacy databases may keep an unused FK from ventas_procesadas to archivos.
+    # Drop the obsolete metadata table without deleting the legacy table itself.
+    op.execute("DROP TABLE IF EXISTS archivos CASCADE")
 
 
 def downgrade() -> None:

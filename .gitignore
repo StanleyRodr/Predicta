@@ -69,6 +69,44 @@ backend/saved_models/*.joblib
 backend/*.log
 backend/.python-version
 
+# Synthetic test data for manual uploads (regenerate with generar_ventas.py)
+DatosDePrueba/
+
+# ============================================
+# Secrets, keys and credentials
+# ============================================
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+*.keystore
+credentials*.json
+secrets*.json
+service-account*.json
+
+# ============================================
+# Databases, dumps and data exports
+# ============================================
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+backups/
+# Real sales data must never be committed; tests build fixtures in memory
+*.xlsx
+*.xls
+
+# ============================================
+# Local tool settings
+# ============================================
+.claude/settings.local.json
+*.local.json
+
 # ============================================
 # OS files
 # ============================================
