@@ -6,7 +6,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MED
-- **Depende de:** `plans/011-frontend-auth-layout.md`
+- **Depende de:** `docs/planning/plans/011-frontend-auth-layout.md`
 - **Categoria:** frontend / ETL
 - **Planificado en:** commit `96e38cc`, 2026-10-18
 

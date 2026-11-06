@@ -5,7 +5,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MED
-- **Depende de:** `plans/005-extraer-ml.md`, `plans/006-schema-predicciones.md`
+- **Depende de:** `docs/planning/plans/005-extraer-ml.md`, `docs/planning/plans/006-schema-predicciones.md`
 - **Categoría:** dirección / ML
 - **Planificado en:** commit `adcb0a4`, 2026-10-17
 

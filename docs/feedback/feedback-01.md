@@ -6,8 +6,8 @@
 **Estado:** pendiente de autorización.
 
 > Este documento solo describe los hallazgos y la corrección propuesta.
-> Cuando autorices los puntos, cada uno pasará a una tarea en `TASKS.md`
-> con su plan en `plans/NNN-*.md`. Ahí irá la justificación: por qué hacerlo,
+> Cuando autorices los puntos, cada uno pasará a una tarea en `docs/planning/TASKS.md`
+> con su plan en `docs/planning/plans/NNN-*.md`. Ahí irá la justificación: por qué hacerlo,
 > riesgos de hacerlo y de no hacerlo, y qué te conviene.
 
 **Leyenda de verificación**
@@ -27,7 +27,7 @@ El proyecto está en buen estado para una tesis:
 - ETL con validación por fila y transacción única.
 - El modelo se evalúa con un holdout temporal honesto.
 - Frontend con TypeScript `strict`.
-- Flujo de trabajo documentado (`TASKS.md` + `plans/`), con las 14 tareas hechas.
+- Flujo de trabajo documentado (`docs/planning/TASKS.md` + `docs/planning/plans/`), con las 14 tareas hechas.
 
 Los problemas se concentran en cuatro frentes:
 
@@ -85,7 +85,7 @@ Los problemas se concentran en cuatro frentes:
 
 ### F-05 — No hay integración continua (CI) ✅
 
-- **Dónde:** `.github/` solo contiene `PULL_REQUEST_TEMPLATE.md`. Ya figura como pospuesto en `TASKS.md:216`.
+- **Dónde:** `.github/` solo contiene `PULL_REQUEST_TEMPLATE.md`. Ya figura como pospuesto en `docs/planning/TASKS.md:216`.
 - **Problema:** lint, tipos, tests y build dependen de que alguien los ejecute a mano.
 - **Corrección propuesta:** un workflow de GitHub Actions con dos jobs:
   - **Backend:** `ruff check`, `mypy`, `pytest --cov`, más un servicio PostgreSQL que ejecute `alembic upgrade head` y `alembic check` (ver F-06).
@@ -223,7 +223,7 @@ Los problemas se concentran en cuatro frentes:
 ### F-20 — Linting configurado a medias 🔎
 
 - Los paquetes de ESLint están instalados, pero no hay `eslint.config.js` ni script `lint`.
-- ruff y mypy corren sin configuración, así que el aviso `B008` de FastAPI sigue abierto desde `TASKS.md:57`.
+- ruff y mypy corren sin configuración, así que el aviso `B008` de FastAPI sigue abierto desde `docs/planning/TASKS.md:57`.
 - `pre-commit` está en `requirements-dev.txt`, pero no existe `.pre-commit-config.yaml`.
 - **Corrección propuesta:** un `pyproject.toml` con la configuración de ruff y mypy (`B008` ignorado para `Depends`), `eslint.config.js` con un script `lint`, y un `.pre-commit-config.yaml`.
 
@@ -290,7 +290,7 @@ Contexto: `backend/app/ml_models/forecast.py`. Es una `LinearRegression` con int
 | F-33 | `/ventas` no tiene filtro de fechas, a diferencia de los demás endpoints | `analytics_routes.py` | 🔎 |
 | F-34 | Documentación desactualizada:<br>• `AGENTS.md:7` dice que el frontend está "solo en planificación"<br>• `AGENTS.md:18` dice que los tests necesitan PostgreSQL<br>• `README.md` marca sprints de frontend como pendientes<br>• `Makefile:58-66` tiene targets de Docker sin docker-compose<br>• `CHANGELOG.md` no cubre las tareas 001–014<br>• la versión de Python no coincide (el caché es de 3.14 y el README dice 3.11+) | varios | 🔎 |
 
-> F-34 toca el `README.md` raíz, que las reglas de `TASKS.md` excluyen de las tareas.
+> F-34 toca el `README.md` raíz, que las reglas de `docs/planning/TASKS.md` excluyen de las tareas.
 > Si lo autorizas, iría como una tarea aparte con permiso explícito.
 
 ---
@@ -336,7 +336,7 @@ Marca lo que autorizas. Lo no marcado queda fuera del plan.
 - [ ] Prioridad media completa (F-08 a F-20)
 - [ ] Modelo ML completo (F-21 a F-27)
 - [ ] Prioridad baja completa (F-28 a F-33)
-- [ ] F-34, documentación incluido `README.md` (excepción a la regla de `TASKS.md`)
+- [ ] F-34, documentación incluido `README.md` (excepción a la regla de `docs/planning/TASKS.md`)
 
 **Decisiones de diseño necesarias:**
 

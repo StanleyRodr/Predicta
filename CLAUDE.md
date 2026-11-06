@@ -67,6 +67,6 @@ Before submitting: backend `make lint`, `make typecheck`, `make test`; frontend 
 ## Conventions and workflow
 
 - Code, docstrings, and comments are in English; user-facing API messages and UI text are in Spanish.
-- Work is planned in `TASKS.md` (status table) with one detailed plan per task in `plans/NNN-*.md`. When executing a task, read its plan fully, run each listed verification, stop and report on any STOP condition, and update the task status in `TASKS.md`. Do not edit the root `README.md` as part of these tasks, and do not add an index inside `plans/`.
+- Work is planned in `docs/planning/TASKS.md` (status table) with one detailed plan per task in `docs/planning/plans/NNN-*.md`. When executing a task, read its plan fully, run each listed verification, stop and report on any STOP condition, and update the task status in `docs/planning/TASKS.md`. Do not edit the root `README.md` as part of these tasks, and do not add an index inside `docs/planning/plans/`.
 - Commits follow Conventional Commits on feature branches (GitHub Flow).
 - Project skills: `.agents/skills/` is the source of truth (opencode, tracked by `skills-lock.json`); `.claude/skills/` is a copy for Claude Code (without the opencode-only `agents/` subfolders). `code-review` is copied as `code-review-spec` to avoid shadowing Claude Code's built-in `/code-review`. After adding or updating a skill in `.agents/skills/`, re-copy it to `.claude/skills/`.
