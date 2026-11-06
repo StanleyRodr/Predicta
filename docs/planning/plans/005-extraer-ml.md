@@ -5,7 +5,7 @@
 - **Prioridad:** P2
 - **Esfuerzo:** M
 - **Riesgo:** MED
-- **Depende de:** `plans/001-baseline-pruebas.md`
+- **Depende de:** `docs/planning/plans/001-baseline-pruebas.md`
 - **Categoría:** deuda técnica
 - **Planificado en:** commit `adcb0a4`, 2026-10-17
 

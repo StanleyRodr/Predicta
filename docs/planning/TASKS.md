@@ -9,20 +9,20 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 
 | ID | Tarea | Plan | Prioridad | Esfuerzo | Depende de | Estado |
 |---|---|---|---|---|---|---|
-| 001 | Crear baseline real de pruebas | `plans/001-baseline-pruebas.md` | P1 | S-M | — | HECHO |
-| 002 | Ocultar detalles internos en errores | `plans/002-errores-seguros.md` | P2 | S | 001 | HECHO |
-| 003 | Hacer ETL robusto | `plans/003-etl-robusto.md` | P1 | M | 001 | HECHO |
-| 004 | Normalizar categorías | `plans/004-categorias-canonicas.md` | P2 | S | 003 | HECHO |
-| 005 | Extraer lógica ML | `plans/005-extraer-ml.md` | P2 | M | 001 | HECHO |
-| 006 | Actualizar schema para monto y cantidad | `plans/006-schema-predicciones.md` | P1 | M | 003, 005 | HECHO |
-| 007 | Formalizar RLM y métricas | `plans/007-rlm-metricas.md` | P1 | M | 005, 006 | HECHO |
-| 008 | Agregar filtros de fecha | `plans/008-filtros-fecha.md` | P2 | S | 001 | HECHO |
-| 009 | Migrar JWT de `python-jose` a `PyJWT` | `plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
-| 010 | Crear fundacion frontend | `plans/010-frontend-fundacion.md` | P1 | M | 001-009 | HECHO |
-| 011 | Implementar auth y layout frontend | `plans/011-frontend-auth-layout.md` | P1 | M | 010 | HECHO |
-| 012 | Implementar carga ETL e historial | `plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
-| 013 | Implementar dashboard y analytics | `plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
-| 014 | Implementar predicciones y reportes | `plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
+| 001 | Crear baseline real de pruebas | `docs/planning/plans/001-baseline-pruebas.md` | P1 | S-M | — | HECHO |
+| 002 | Ocultar detalles internos en errores | `docs/planning/plans/002-errores-seguros.md` | P2 | S | 001 | HECHO |
+| 003 | Hacer ETL robusto | `docs/planning/plans/003-etl-robusto.md` | P1 | M | 001 | HECHO |
+| 004 | Normalizar categorías | `docs/planning/plans/004-categorias-canonicas.md` | P2 | S | 003 | HECHO |
+| 005 | Extraer lógica ML | `docs/planning/plans/005-extraer-ml.md` | P2 | M | 001 | HECHO |
+| 006 | Actualizar schema para monto y cantidad | `docs/planning/plans/006-schema-predicciones.md` | P1 | M | 003, 005 | HECHO |
+| 007 | Formalizar RLM y métricas | `docs/planning/plans/007-rlm-metricas.md` | P1 | M | 005, 006 | HECHO |
+| 008 | Agregar filtros de fecha | `docs/planning/plans/008-filtros-fecha.md` | P2 | S | 001 | HECHO |
+| 009 | Migrar JWT de `python-jose` a `PyJWT` | `docs/planning/plans/009-migrar-pyjwt.md` | P2 | S-M | 001, 002 | HECHO |
+| 010 | Crear fundacion frontend | `docs/planning/plans/010-frontend-fundacion.md` | P1 | M | 001-009 | HECHO |
+| 011 | Implementar auth y layout frontend | `docs/planning/plans/011-frontend-auth-layout.md` | P1 | M | 010 | HECHO |
+| 012 | Implementar carga ETL e historial | `docs/planning/plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
+| 013 | Implementar dashboard y analytics | `docs/planning/plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
+| 014 | Implementar predicciones y reportes | `docs/planning/plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
 
 ## Reglas de ejecución
 
@@ -31,13 +31,13 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 - Si aparece una condición STOP, detenerse y reportar; no improvisar.
 - Actualizar estado de tarea en esta tabla al iniciar, terminar o bloquearse.
 - No modificar `README.md` raíz como parte de estas tareas.
-- No crear un índice dentro de `plans/`; esa función pertenece a este archivo.
+- No crear un índice dentro de `docs/planning/plans/`; esa función pertenece a este archivo.
 
 ## Subtareas detalladas
 
 ### Tarea 001 — Crear baseline real de pruebas
 
-Plan: `plans/001-baseline-pruebas.md` | Depende de: ninguna | Esfuerzo: S-M
+Plan: `docs/planning/plans/001-baseline-pruebas.md` | Depende de: ninguna | Esfuerzo: S-M
 
 - [x] 001.1 Configurar entorno de pruebas aislado en SQLite, con `DATABASE_URL` y `SECRET_KEY` definidos antes de importar la app. Verificar: `cd backend; pytest --collect-only` recolecta 26 tests sin error.
 - [x] 001.2 Crear pruebas de registro, duplicados, contraseña débil, login, `/users/me` y actualización de perfil. Verificar: `cd backend; pytest tests/test_auth.py -q` pasa.
@@ -48,7 +48,7 @@ Plan: `plans/001-baseline-pruebas.md` | Depende de: ninguna | Esfuerzo: S-M
 
 ### Tarea 002 — Ocultar detalles internos en errores
 
-Plan: `plans/002-errores-seguros.md` | Depende de: 001 | Esfuerzo: S
+Plan: `docs/planning/plans/002-errores-seguros.md` | Depende de: 001 | Esfuerzo: S
 
 - [x] 002.1 Registrar la excepción completa de `clear_history` en logs del servidor. Verificar: el error queda en log sin exponerlo en la respuesta.
 - [x] 002.2 Reemplazar `str(exc)` por mensaje genérico en la respuesta 500. Verificar: el test no encuentra SQL, credenciales, host ni stack trace en el body.
@@ -58,7 +58,7 @@ Plan: `plans/002-errores-seguros.md` | Depende de: 001 | Esfuerzo: S
 
 ### Tarea 003 — Hacer ETL robusto y transparente
 
-Plan: `plans/003-etl-robusto.md` | Depende de: 001 | Esfuerzo: M
+Plan: `docs/planning/plans/003-etl-robusto.md` | Depende de: 001 | Esfuerzo: M
 
 - [x] 003.1 Separar parsing de validación; detectar coma, punto y coma o tabulador; aceptar UTF-8 y fallback latino controlado. Verificar: fixtures con UTF-8, `;` y `cp1252` pasan.
 - [x] 003.2 Validar columnas requeridas, monto finito y fecha válida antes de crear `Venta`. Verificar: fila inválida no se convierte en monto `0.0` ni fecha actual.
@@ -69,7 +69,7 @@ Plan: `plans/003-etl-robusto.md` | Depende de: 001 | Esfuerzo: M
 
 ### Tarea 004 — Normalizar categorías con catálogo canónico
 
-Plan: `plans/004-categorias-canonicas.md` | Depende de: 003 | Esfuerzo: S
+Plan: `docs/planning/plans/004-categorias-canonicas.md` | Depende de: 003 | Esfuerzo: S
 
 - [x] 004.1 Crear una función única que normalice espacios, mayúsculas y acentos sin perder información. Verificar: entradas equivalentes devuelven el mismo valor canónico.
 - [x] 004.2 Aplicar la normalización al cargar ventas y resolver parámetros de reportes. Verificar: `cuidado personal`, `CUIDADO PERSONAL` y `Cuidado Personal` usan el mismo filtro.
@@ -79,7 +79,7 @@ Plan: `plans/004-categorias-canonicas.md` | Depende de: 003 | Esfuerzo: S
 
 ### Tarea 005 — Extraer el procesamiento ML
 
-Plan: `plans/005-extraer-ml.md` | Depende de: 001 | Esfuerzo: M
+Plan: `docs/planning/plans/005-extraer-ml.md` | Depende de: 001 | Esfuerzo: M
 
 - [x] 005.1 Crear módulo tipado en `backend/app/ml_models/forecast.py` para features, agregación y predicción. Verificar: tests unitarios ejecutan sin `TestClient` ni PDF.
 - [x] 005.2 Mover la lógica diaria y mensual desde `analytics_routes.py` a `ml_models/`. Verificar: las rutas llaman al módulo y no entrenan modelos duplicados.
@@ -89,7 +89,7 @@ Plan: `plans/005-extraer-ml.md` | Depende de: 001 | Esfuerzo: M
 
 ### Tarea 006 — Preparar schema para monto, cantidad y predicciones
 
-Plan: `plans/006-schema-predicciones.md` | Depende de: 003 y 005 | Esfuerzo: M
+Plan: `docs/planning/plans/006-schema-predicciones.md` | Depende de: 003 y 005 | Esfuerzo: M
 
 - [x] 006.1 Actualizar modelos y crear migration para `ventas.cantidad`, `predicciones.monto_proyectado` y eliminación de `archivos`. Verificar: migration revisada manualmente.
 - [x] 006.2 Aplicar migration en una base temporal. Verificar: `alembic upgrade head` termina sin error.
@@ -101,7 +101,7 @@ Plan: `plans/006-schema-predicciones.md` | Depende de: 003 y 005 | Esfuerzo: M
 
 ### Tarea 007 — Formalizar RLM para monto y cantidad
 
-Plan: `plans/007-rlm-metricas.md` | Depende de: 005 y 006 | Esfuerzo: M
+Plan: `docs/planning/plans/007-rlm-metricas.md` | Depende de: 005 y 006 | Esfuerzo: M
 
 - [x] 007.1 Definir y documentar matriz de features con orden estable. Verificar: tests comprueban número y valores de predictores.
 - [x] 007.2 Entrenar targets separados para monto y cantidad con los mismos predictores. Verificar: API devuelve campos separados para ambos valores.
@@ -115,7 +115,7 @@ Plan: `plans/007-rlm-metricas.md` | Depende de: 005 y 006 | Esfuerzo: M
 
 ### Tarea 008 — Agregar filtros de fecha a analytics
 
-Plan: `plans/008-filtros-fecha.md` | Depende de: 001 | Esfuerzo: S
+Plan: `docs/planning/plans/008-filtros-fecha.md` | Depende de: 001 | Esfuerzo: S
 
 - [x] 008.1 Crear helper para validar y aplicar `fecha_desde` y `fecha_hasta` junto con el filtro de usuario. Verificar: consulta filtra en PostgreSQL antes de agregar.
 - [x] 008.2 Aplicar el helper a `/analytics/stats`, `/analytics/stats/categories` y `/analytics/stats/temporal`. Verificar: cada endpoint devuelve solo registros del rango.
@@ -125,7 +125,7 @@ Plan: `plans/008-filtros-fecha.md` | Depende de: 001 | Esfuerzo: S
 
 ### Tarea 009 — Migrar JWT de `python-jose` a `PyJWT`
 
-Plan: `plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
+Plan: `docs/planning/plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
 
 - [x] 009.1 Revisar uso actual de `python-jose` en generación y validación de tokens. Verificar: búsqueda identifica `security.py` y `deps.py` como únicos puntos runtime.
 - [x] 009.2 Sustituir dependencia por `PyJWT` con soporte criptográfico compatible. Verificar: `pip check` no reporta dependencias rotas.
@@ -136,7 +136,7 @@ Plan: `plans/009-migrar-pyjwt.md` | Depende de: 001 y 002 | Esfuerzo: S-M
 
 ### Tarea 010 — Crear fundacion frontend
 
-Plan: `plans/010-frontend-fundacion.md` | Depende de: backend 001-009 | Esfuerzo: M
+Plan: `docs/planning/plans/010-frontend-fundacion.md` | Depende de: backend 001-009 | Esfuerzo: M
 
 - [x] 010.1 Crear React 19 + TypeScript + Vite y scripts npm. Verificar: `npm install` y `npm run build` pasan desde `frontend/`.
 - [x] 010.2 Configurar Tailwind CSS v4 con tokens oscuros y componentes base manuales. Verificar: smoke test confirma estilos y foco visible.
@@ -145,7 +145,7 @@ Plan: `plans/010-frontend-fundacion.md` | Depende de: backend 001-009 | Esfuerzo
 
 ### Tarea 011 — Implementar auth y layout frontend
 
-Plan: `plans/011-frontend-auth-layout.md` | Depende de: 010 | Esfuerzo: M
+Plan: `docs/planning/plans/011-frontend-auth-layout.md` | Depende de: 010 | Esfuerzo: M
 
 - [x] 011.1 Implementar registro y login con Zod y React Hook Form. Verificar: tests cubren exito y errores 400/401/422.
 - [x] 011.2 Implementar store JWT en localStorage e interceptor Axios 401. Verificar: tests confirman Bearer, logout y redireccion sin loop.
@@ -154,7 +154,7 @@ Plan: `plans/011-frontend-auth-layout.md` | Depende de: 010 | Esfuerzo: M
 
 ### Tarea 012 — Implementar carga ETL e historial
 
-Plan: `plans/012-frontend-carga-historial.md` | Depende de: 011 | Esfuerzo: M
+Plan: `docs/planning/plans/012-frontend-carga-historial.md` | Depende de: 011 | Esfuerzo: M
 
 - [x] 012.1 Implementar dropzone para CSV/XLSX/SQL con limite 25 MB. Verificar: tests rechazan archivo vacio, extension invalida y archivo grande.
 - [x] 012.2 Mostrar resumen de carga y errores acotados por fila. Verificar: conteos y errores backend aparecen sin datos inventados.
@@ -163,7 +163,7 @@ Plan: `plans/012-frontend-carga-historial.md` | Depende de: 011 | Esfuerzo: M
 
 ### Tarea 013 — Implementar dashboard y analytics
 
-Plan: `plans/013-frontend-dashboard.md` | Depende de: 011 y 012 | Esfuerzo: M
+Plan: `docs/planning/plans/013-frontend-dashboard.md` | Depende de: 011 y 012 | Esfuerzo: M
 
 - [x] 013.1 Implementar filtros inclusivos `fecha_desde`/`fecha_hasta`. Verificar: sin rango, un dia, rango vacio e invertido.
 - [x] 013.2 Mostrar KPIs globales. Verificar: loading, cero, datos y error tienen tests.
@@ -173,7 +173,7 @@ Plan: `plans/013-frontend-dashboard.md` | Depende de: 011 y 012 | Esfuerzo: M
 
 ### Tarea 014 — Implementar predicciones y reportes
 
-Plan: `plans/014-frontend-predicciones-reportes.md` | Depende de: 013 | Esfuerzo: M
+Plan: `docs/planning/plans/014-frontend-predicciones-reportes.md` | Depende de: 013 | Esfuerzo: M
 
 - [x] 014.1 Mostrar monto, cantidad, fecha e intervalos separados. Verificar: valores normales, cero, null y error.
 - [x] 014.2 Mostrar R², MAPE y RMSE sin convertir null en cero. Verificar: test cubre dataset insuficiente.

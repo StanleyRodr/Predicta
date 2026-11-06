@@ -6,7 +6,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MED
-- **Depende de:** `plans/013-frontend-dashboard.md`
+- **Depende de:** `docs/planning/plans/013-frontend-dashboard.md`
 - **Categoria:** frontend / ML / reportes
 - **Planificado en:** commit `96e38cc`, 2026-10-18
 
