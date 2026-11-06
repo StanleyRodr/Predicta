@@ -25,7 +25,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 014 | Implementar predicciones y reportes | `docs/planning/plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
 | 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | HECHO |
 | 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | HECHO |
-| 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | TODO |
+| 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | HECHO |
 | 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | HECHO |
 | 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | HECHO |
 | 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | TODO |
@@ -253,13 +253,13 @@ Plan: `docs/planning/plans/016-alinear-migraciones.md` | Depende de: 015 | Esfue
 
 Plan: `docs/planning/plans/017-etl-endurecida.md` | Depende de: 016 | Esfuerzo: L
 
-- [ ] 017.1 Mover la carga al threadpool. Verificar: `/health` responde durante una carga.
-- [ ] 017.2 Limitar bytes, filas y tamaño descomprimido de XLSX. Verificar: tests de 413 y carga de las 28,667 filas de prueba.
-- [ ] 017.3 Aplicar la regla de coma por dígitos. Verificar: test parametrizado con la tabla del plan.
-- [ ] 017.4 Validar rangos por fila. Verificar: una fila inválida no impide cargar el resto.
-- [ ] 017.5 Usar mensajes controlados y numeración correcta. Verificar: ningún texto de excepción llega a la respuesta.
-- [ ] 017.6 Reescribir el parser SQL. Verificar: respeta comillas y rechaza filas sin fecha.
-- [ ] 017.7 Rechazar duplicados por SHA-256 y usuario. Verificar: 409 en el segundo intento y carga posible tras purgar.
+- [x] 017.1 Mover la carga al threadpool. Verificar: `/health` responde durante una carga.
+- [x] 017.2 Limitar bytes, filas y tamaño descomprimido de XLSX. Verificar: tests de 413 y carga de las 28,667 filas de prueba.
+- [x] 017.3 Aplicar la regla de coma por dígitos. Verificar: test parametrizado con la tabla del plan.
+- [x] 017.4 Validar rangos por fila. Verificar: una fila inválida no impide cargar el resto.
+- [x] 017.5 Usar mensajes controlados y numeración correcta. Verificar: ningún texto de excepción llega a la respuesta.
+- [x] 017.6 Reescribir el parser SQL. Verificar: respeta comillas y rechaza filas sin fecha.
+- [x] 017.7 Rechazar duplicados por SHA-256 y usuario. Verificar: 409 en el segundo intento y carga posible tras purgar.
 
 ### Tarea 018 — Convención numérica 0,000.00
 
