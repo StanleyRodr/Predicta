@@ -5,24 +5,28 @@ import { getSalesHistory } from "../api/sales";
 import { SalesHistoryTable, UploadDropzone, UploadSummary } from "../components/etl";
 import { Alert, Button, Card, Modal, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
+import { refreshSalesData } from "../lib/salesCache";
+import { useAuthStore } from "../stores/authStore";
 
 const PAGE_SIZE = 10;
 
 export function UploadPage() {
   const queryClient = useQueryClient();
+  const userId = useAuthStore((state) => state.user?.id_usuario ?? null);
   const [file, setFile] = useState<File | null>(null);
   const [page, setPage] = useState(1);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
 
   const history = useQuery({
-    queryKey: ["sales-history", page],
+    queryKey: ["sales-history", userId, page],
     queryFn: () => getSalesHistory((page - 1) * PAGE_SIZE, PAGE_SIZE),
+    enabled: userId !== null,
   });
   const upload = useMutation({
     mutationFn: (selectedFile: File) => uploadSales(selectedFile),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["sales-history"] });
+      await refreshSalesData(queryClient);
       setFile(null);
       setClientError(null);
     },
@@ -30,7 +34,7 @@ export function UploadPage() {
   const clear = useMutation({
     mutationFn: clearSalesHistory,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["sales-history"] });
+      await refreshSalesData(queryClient);
       setPage(1);
       setIsClearModalOpen(false);
     },

@@ -12,9 +12,10 @@ describe("sales API", () => {
 
     await uploadSales(file);
 
-    const [, body] = vi.mocked(http.post).mock.calls[0];
+    const [, body, config] = vi.mocked(http.post).mock.calls[0];
     expect(body).toBeInstanceOf(FormData);
     expect((body as FormData).get("file")).toBe(file);
+    expect(config).toEqual({ timeout: 120_000 });
   });
 
   it("uses pagination params and exposes clear history route", async () => {

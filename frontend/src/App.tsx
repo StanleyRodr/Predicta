@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { getCurrentUser } from "./api/auth";
-import { AppShell, ProtectedRoute } from "./components/layout";
+import { AppShell, ProtectedRoute, SessionCacheGuard } from "./components/layout";
 import { Spinner } from "./components/ui";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
@@ -59,6 +59,7 @@ function SessionBootstrap() {
 function AppRoutes() {
   return (
     <>
+      <SessionCacheGuard />
       <SessionBootstrap />
       <UnauthorizedRedirect />
       <Routes>

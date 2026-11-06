@@ -24,10 +24,10 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 013 | Implementar dashboard y analytics | `docs/planning/plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
 | 014 | Implementar predicciones y reportes | `docs/planning/plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
 | 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | HECHO |
-| 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | TODO |
+| 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | EN PROGRESO |
 | 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | TODO |
 | 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | HECHO |
-| 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | EN PROGRESO |
+| 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | HECHO |
 | 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | TODO |
 | 021 | Corregir modelo y proyectar 12 meses | `docs/planning/plans/021-modelo-horizonte.md` | P1 | L | 020 | TODO |
 | 022 | Evaluación y modelos de referencia | `docs/planning/plans/022-evaluacion-baselines.md` | P1 | L | 021 | TODO |
@@ -274,11 +274,11 @@ Plan: `docs/planning/plans/018-convencion-numerica.md` | Depende de: ninguna | E
 
 Plan: `docs/planning/plans/019-frontend-sesion-descargas.md` | Depende de: ninguna | Esfuerzo: M
 
-- [ ] 019.1 Vaciar la caché al cerrar sesión y ante 401. Verificar: test RTL entre usuarios A y B.
-- [ ] 019.2 Incluir `userId` en todas las claves privadas. Verificar: búsqueda de `queryKey`.
-- [ ] 019.3 Leer errores desde Blob. Verificar: se muestra el mensaje del backend.
-- [ ] 019.4 Corregir revocación de URL y timeouts. Verificar: tests de ambos.
-- [ ] 019.5 Invalidar consultas tras carga o purga. Verificar: test de invalidación.
+- [x] 019.1 Vaciar la caché al cerrar sesión y ante 401. Verificar: test RTL entre usuarios A y B.
+- [x] 019.2 Incluir `userId` en todas las claves privadas. Verificar: búsqueda de `queryKey`.
+- [x] 019.3 Leer errores desde Blob. Verificar: se muestra el mensaje del backend.
+- [x] 019.4 Corregir revocación de URL y timeouts. Verificar: tests de ambos.
+- [x] 019.5 Invalidar consultas tras carga o purga. Verificar: test de invalidación.
 
 ### Tarea 020 — Reportes seguros y capa de servicios
 
