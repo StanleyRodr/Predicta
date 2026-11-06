@@ -5,12 +5,14 @@ import { ForecastMetricCard, ForecastQuality } from "../components/forecast";
 import { Alert, Button, Card, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { formatDate } from "../lib/formatters";
+import { useAuthStore } from "../stores/authStore";
 import { isForecastAvailable } from "../types/forecast";
 
 export function PredictionsPage() {
+  const userId = useAuthStore((state) => state.user?.id_usuario ?? null);
   const [requested, setRequested] = useState(false);
   const forecast = useQuery({
-    queryKey: ["forecast"],
+    queryKey: ["forecast", userId],
     queryFn: getForecast,
     enabled: false,
     refetchOnWindowFocus: false,

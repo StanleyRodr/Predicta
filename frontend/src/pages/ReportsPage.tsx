@@ -16,7 +16,7 @@ export function ReportsPage() {
     try {
       await downloadReport(path, fallback);
     } catch (reason) {
-      setError(reportErrorMessage(reason));
+      setError(await reportErrorMessage(reason));
     } finally {
       setDownloading(null);
     }
