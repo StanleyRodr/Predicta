@@ -5,7 +5,7 @@
 - **Prioridad:** P2
 - **Esfuerzo:** S
 - **Riesgo:** LOW
-- **Depende de:** `plans/003-etl-robusto.md`
+- **Depende de:** `docs/planning/plans/003-etl-robusto.md`
 - **Categoría:** bug
 - **Planificado en:** commit `adcb0a4`, 2026-10-17
 

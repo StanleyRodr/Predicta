@@ -3,11 +3,11 @@
 **Fecha:** 2026-11-02
 **Base:** `main` en `367f878` (más cambios locales sin commitear en `backend/alembic/env.py`, `backend/alembic/versions/0002_schema_cantidad_predicciones.py` y `backend/requirements.txt`)
 **Alcance:** backend, modelo ML, frontend, pruebas, herramientas e higiene del repositorio.
-**Estado:** pendiente de autorización.
+**Estado:** autorizado el 2026-11-05. Ver la sección 7 y las tareas 015 a 031 en `docs/planning/TASKS.md`.
 
 > Este documento solo describe los hallazgos y la corrección propuesta.
-> Cuando autorices los puntos, cada uno pasará a una tarea en `TASKS.md`
-> con su plan en `plans/NNN-*.md`. Ahí irá la justificación: por qué hacerlo,
+> Cuando autorices los puntos, cada uno pasará a una tarea en `docs/planning/TASKS.md`
+> con su plan en `docs/planning/plans/NNN-*.md`. Ahí irá la justificación: por qué hacerlo,
 > riesgos de hacerlo y de no hacerlo, y qué te conviene.
 
 **Leyenda de verificación**
@@ -27,7 +27,7 @@ El proyecto está en buen estado para una tesis:
 - ETL con validación por fila y transacción única.
 - El modelo se evalúa con un holdout temporal honesto.
 - Frontend con TypeScript `strict`.
-- Flujo de trabajo documentado (`TASKS.md` + `plans/`), con las 14 tareas hechas.
+- Flujo de trabajo documentado (`docs/planning/TASKS.md` + `docs/planning/plans/`), con las 14 tareas hechas.
 
 Los problemas se concentran en cuatro frentes:
 
@@ -85,7 +85,7 @@ Los problemas se concentran en cuatro frentes:
 
 ### F-05 — No hay integración continua (CI) ✅
 
-- **Dónde:** `.github/` solo contiene `PULL_REQUEST_TEMPLATE.md`. Ya figura como pospuesto en `TASKS.md:216`.
+- **Dónde:** `.github/` solo contiene `PULL_REQUEST_TEMPLATE.md`. Ya figura como pospuesto en `docs/planning/TASKS.md:216`.
 - **Problema:** lint, tipos, tests y build dependen de que alguien los ejecute a mano.
 - **Corrección propuesta:** un workflow de GitHub Actions con dos jobs:
   - **Backend:** `ruff check`, `mypy`, `pytest --cov`, más un servicio PostgreSQL que ejecute `alembic upgrade head` y `alembic check` (ver F-06).
@@ -101,7 +101,7 @@ Los problemas se concentran en cuatro frentes:
   - **Índices redundantes:** `index=True` en `id_usuario` y en `fecha_venta` duplican lo que ya cubre el índice compuesto.
   - Los tests usan SQLite con `create_all`, así que nunca validan las migraciones reales.
 - **Efecto:** el próximo `alembic revision --autogenerate` generará cambios inesperados, y la base de producción no coincide con lo que el código asume.
-- **Nota:** hay cambios locales sin commitear en `0002_schema_cantidad_predicciones.py` y `alembic/env.py`. Hay que revisarlos antes de tocar las migraciones.
+- **Nota:** los cambios en `0002_schema_cantidad_predicciones.py` y `alembic/env.py` que estaban sin commitear entraron en el commit `18e36df`.
 - **Corrección propuesta:** una migración `0003` que alinee los nombres, la nulabilidad (tras limpiar las filas con `NULL`), el índice de `predicciones.id_usuario` y los índices redundantes, junto con un `alembic check` en CI.
 - **Verificación sugerida:** `alembic upgrade head`, `alembic check` sin diferencias y `alembic downgrade -1`, en PostgreSQL.
 
@@ -223,7 +223,7 @@ Los problemas se concentran en cuatro frentes:
 ### F-20 — Linting configurado a medias 🔎
 
 - Los paquetes de ESLint están instalados, pero no hay `eslint.config.js` ni script `lint`.
-- ruff y mypy corren sin configuración, así que el aviso `B008` de FastAPI sigue abierto desde `TASKS.md:57`.
+- ruff y mypy corren sin configuración, así que el aviso `B008` de FastAPI sigue abierto desde `docs/planning/TASKS.md:57`.
 - `pre-commit` está en `requirements-dev.txt`, pero no existe `.pre-commit-config.yaml`.
 - **Corrección propuesta:** un `pyproject.toml` con la configuración de ruff y mypy (`B008` ignorado para `Depends`), `eslint.config.js` con un script `lint`, y un `.pre-commit-config.yaml`.
 
@@ -290,7 +290,7 @@ Contexto: `backend/app/ml_models/forecast.py`. Es una `LinearRegression` con int
 | F-33 | `/ventas` no tiene filtro de fechas, a diferencia de los demás endpoints | `analytics_routes.py` | 🔎 |
 | F-34 | Documentación desactualizada:<br>• `AGENTS.md:7` dice que el frontend está "solo en planificación"<br>• `AGENTS.md:18` dice que los tests necesitan PostgreSQL<br>• `README.md` marca sprints de frontend como pendientes<br>• `Makefile:58-66` tiene targets de Docker sin docker-compose<br>• `CHANGELOG.md` no cubre las tareas 001–014<br>• la versión de Python no coincide (el caché es de 3.14 y el README dice 3.11+) | varios | 🔎 |
 
-> F-34 toca el `README.md` raíz, que las reglas de `TASKS.md` excluyen de las tareas.
+> F-34 toca el `README.md` raíz, que las reglas de `docs/planning/TASKS.md` excluyen de las tareas.
 > Si lo autorizas, iría como una tarea aparte con permiso explícito.
 
 ---
@@ -310,7 +310,7 @@ Revisión de archivos sensibles (2026-11-02):
   - Bases de datos y dumps: `*.sqlite`, `*.sqlite3`, `*.db`, `*.dump`, `*.bak`, `backups/`
   - Hojas de cálculo: `*.xlsx`, `*.xls`
   - Configuración local: `.claude/settings.local.json`, `*.local.json`
-- **Pendiente de tu decisión:** `.claude/` y `CLAUDE.md` siguen sin seguimiento y sin ignorar. No tienen secretos (son skills y documentación). Opciones: commitearlos (recomendado para `CLAUDE.md`) o ignorarlos. `.claude/skills/` es una copia de `.agents/skills/`.
+- **Resuelto:** `.claude/` y `CLAUDE.md` se commitearon en `18e36df`. `.claude/skills/` es una copia de `.agents/skills/`.
 
 ---
 
@@ -332,20 +332,21 @@ Revisión de archivos sensibles (2026-11-02):
 
 Marca lo que autorizas. Lo no marcado queda fuera del plan.
 
-- [ ] Prioridad alta completa (F-01 a F-07)
-- [ ] Prioridad media completa (F-08 a F-20)
-- [ ] Modelo ML completo (F-21 a F-27)
-- [ ] Prioridad baja completa (F-28 a F-33)
-- [ ] F-34, documentación incluido `README.md` (excepción a la regla de `TASKS.md`)
+- [x] Prioridad alta completa (F-01 a F-07)
+- [x] Prioridad media completa (F-08 a F-20)
+- [x] Modelo ML completo (F-21 a F-27)
+- [x] Prioridad baja completa (F-28 a F-33)
+- [x] F-34, documentación incluido `README.md` (excepción a la regla de `docs/planning/TASKS.md`)
 
-**Decisiones de diseño necesarias:**
+**Decisiones de diseño:**
 
-- [ ] F-03: ¿se permiten montos negativos (devoluciones)? Recomendación: no.
-- [ ] F-08: ¿`Prediccion` se persiste con un historial consultable, o se deja de persistir?
-- [ ] F-13: ante un archivo duplicado, ¿se rechaza o solo se advierte?
-- [ ] F-27: ¿se agrega `statsmodels` como dependencia (para SARIMA/ETS e intervalos)?
-- [ ] `.claude/` y `CLAUDE.md`: ¿commitear o ignorar?
+- [x] F-03: no se permiten montos negativos ni en cero.
+- [x] F-08: `Prediccion` se guarda solo a pedido, con historial consultable. Consultar no escribe, así que la consulta sigue siendo GET; esto reemplaza la propuesta de pasar a POST.
+- [x] F-13: un archivo idéntico se rechaza.
+- [x] F-27: se agrega `statsmodels`.
+- [x] `.claude/` y `CLAUDE.md`: commiteados en `18e36df`.
 
 **Exclusiones o comentarios:**
 
-_(escribe aquí)_
+- F-22: no se devuelve 422 con menos de 24 meses. Se usa un modelo escalonado: menos de 6 meses, sin proyección mensual; de 6 a 23, solo tendencia; 24 o más, tendencia y estacionalidad. El horizonte es la mitad del historial, con máximo de 12 meses.
+- El detalle de las decisiones está en `docs/planning/TASKS.md`, sección "Fase 2".

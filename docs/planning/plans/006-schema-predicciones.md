@@ -5,7 +5,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** HIGH
-- **Depende de:** `plans/003-etl-robusto.md`, `plans/005-extraer-ml.md`
+- **Depende de:** `docs/planning/plans/003-etl-robusto.md`, `docs/planning/plans/005-extraer-ml.md`
 - **Categoría:** migración
 - **Planificado en:** commit `adcb0a4`, 2026-10-17
 

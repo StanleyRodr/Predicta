@@ -214,7 +214,7 @@ make test
 
 ## Roadmap
 
-See [TASKS.md](./TASKS.md) for active work, [CHANGELOG.md](./CHANGELOG.md) for project history, and [docs/](./docs/) for ML documentation. API reference is generated at `/docs`.
+See [TASKS.md](./docs/planning/TASKS.md) for active work, [CHANGELOG.md](./CHANGELOG.md) for project history, and [docs/](./docs/) for ML documentation. API reference is generated at `/docs`.
 
 - [x] Sprint 1+2: Security hardening, schema unification, Alembic, project structure
 - [ ] Sprint 3: ML refactor (extract predictors to `ml_models/`)

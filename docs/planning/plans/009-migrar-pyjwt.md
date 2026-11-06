@@ -5,7 +5,7 @@
 - **Prioridad:** P2
 - **Esfuerzo:** S-M
 - **Riesgo:** MED
-- **Depende de:** `plans/001-baseline-pruebas.md`, `plans/002-errores-seguros.md`
+- **Depende de:** `docs/planning/plans/001-baseline-pruebas.md`, `docs/planning/plans/002-errores-seguros.md`
 - **Categoría:** seguridad / dependencias
 - **Planificado en:** commit `adcb0a4`, 2026-10-17
 
