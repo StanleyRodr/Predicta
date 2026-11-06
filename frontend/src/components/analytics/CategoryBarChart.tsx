@@ -1,7 +1,7 @@
 import { Bar } from "react-chartjs-2";
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip } from "chart.js";
 import type { CategoryMetric } from "../../types/analytics";
-import { formatCurrency } from "../../lib/formatters";
+import { formatAxisCurrency, formatCurrency } from "../../lib/formatters";
 import { EmptyState } from "../ui";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
@@ -44,7 +44,7 @@ export function CategoryBarChart({ data }: CategoryBarChartProps) {
           },
           scales: {
             x: { ticks: { color: "#8b949e" }, grid: { color: "#30363d" } },
-            y: { ticks: { color: "#8b949e", callback: (value) => formatCurrency(Number(value)) }, grid: { color: "#30363d" } },
+            y: { ticks: { color: "#8b949e", callback: (value) => formatAxisCurrency(Number(value)) }, grid: { color: "#30363d" } },
           },
         }}
       />

@@ -21,6 +21,7 @@ from matplotlib import dates as mdates
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.ticker import FuncFormatter
 from sqlalchemy import func
 from sqlalchemy.orm import Query as SQLQuery
 from sqlalchemy.orm import Session
@@ -34,6 +35,11 @@ from app.ml_models.forecast import (
 )
 from app.models import models
 from app.services.category_service import normalize_category
+from app.services.formatting import (
+    EXCEL_MONEY_FORMAT,
+    format_axis_money,
+    format_money,
+)
 
 # Backend 'Agg' must be set before pyplot is imported to avoid the
 # library trying to open a display when running headless.
@@ -317,6 +323,13 @@ def _new_fig(*, figsize: tuple[float, float] = (8, 4)) -> tuple[Figure, Axes]:
     return plt.subplots(figsize=figsize)
 
 
+def _use_money_axis(ax: Axes) -> None:
+    """Show the vertical axis with comma thousands."""
+    ax.yaxis.set_major_formatter(
+        FuncFormatter(lambda value, _position: format_axis_money(value))
+    )
+
+
 def _save_fig_to_temp(fig: Figure, *, dpi: int = 150) -> str:
     """Persist a matplotlib figure to a temporary PNG and return its path."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
@@ -373,6 +386,12 @@ def export_excel(
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Historial de Ventas")
+        worksheet = writer.sheets["Historial de Ventas"]
+        amount_column = df.columns.get_loc("Monto") + 1
+        for (cell,) in worksheet.iter_rows(
+            min_row=2, min_col=amount_column, max_col=amount_column
+        ):
+            cell.number_format = EXCEL_MONEY_FORMAT
     output.seek(0)
 
     return StreamingResponse(
@@ -421,6 +440,7 @@ def export_pdf(
     )
     ax.set_title("Evolucion de Ventas Diarias", fontsize=12)
     ax.set_ylabel("Monto de Ventas ($)")
+    _use_money_axis(ax)
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
     chart_path = _save_fig_to_temp(fig)
@@ -442,7 +462,7 @@ def export_pdf(
     for v in ventas:
         pdf.cell(col_widths[0], 10, str(v.id_venta), 1, align="C")
         pdf.cell(col_widths[1], 10, v.producto[:28], 1)
-        pdf.cell(col_widths[2], 10, f"${v.monto:.2f}", 1, align="R")
+        pdf.cell(col_widths[2], 10, format_money(v.monto), 1, align="R")
         pdf.cell(col_widths[3], 10, str(v.categoria), 1)
         pdf.cell(col_widths[4], 10, v.fecha_venta.strftime("%Y-%m-%d %H:%M"), 1)
         pdf.ln()
@@ -504,6 +524,7 @@ def annual_forecast_pdf(
     )
     ax.set_xlabel("Linea de Tiempo Operativa")
     ax.set_ylabel("Ingresos ($)")
+    _use_money_axis(ax)
     ax.grid(True, linestyle="--", alpha=0.5)
     plt.xticks(rotation=45)
     ax.legend(loc="upper left", fontsize=10)
@@ -523,7 +544,7 @@ def annual_forecast_pdf(
     pdf.set_font("Arial", size=12)
     pdf.cell(
         0, 10,
-        text=f"Ingreso Acumulado Estimado (Proximos 12 meses): ${sum(predictions):,.2f}",
+        text=f"Ingreso Acumulado Estimado (Proximos 12 meses): {format_money(sum(predictions))}",
         new_x=XPos.LMARGIN, new_y=YPos.NEXT,
     )
     pdf.ln(5)
@@ -595,10 +616,11 @@ def monthly_report_pdf(
         fontsize=12, fontweight="bold",
     )
     ax.set_ylabel("Volumen de Ingresos ($)")
+    _use_money_axis(ax)
     ax.grid(True, axis="y", linestyle="--", alpha=0.5)
     for bar in bars:
         ax.annotate(
-            f"${bar.get_height():,.2f}",
+            format_money(bar.get_height()),
             xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
             xytext=(0, 3), textcoords="offset points",
             ha="center", va="bottom", fontsize=9,
@@ -684,6 +706,7 @@ def category_forecast_pdf(
     )
     ax.set_xlabel("Linea de Tiempo Operativa")
     ax.set_ylabel("Ventas Estimadas ($)")
+    _use_money_axis(ax)
     ax.grid(True, linestyle="--", alpha=0.6)
     plt.xticks(rotation=45)
     ax.legend(loc="upper left", fontsize=10)
@@ -717,11 +740,11 @@ def category_forecast_pdf(
     pdf.set_font("Arial", "", 11)
     for label, amount in zip(future_labels, predictions, strict=False):
         pdf.cell(90, 10, label, 1, align="C")
-        pdf.cell(90, 10, f"${amount:,.2f}", 1, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+        pdf.cell(90, 10, format_money(amount), 1, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_fill_color(220, 230, 240)
     pdf.cell(90, 10, "TOTAL ESTIMADO (12 MESES)", 1, align="C", fill=True)
-    pdf.cell(90, 10, f"${sum(predictions):,.2f}", 1, align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(90, 10, format_money(sum(predictions)), 1, align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     return _build_pdf_response(pdf, filename=f"Predicta_{cat_key}_Proyeccion.pdf")

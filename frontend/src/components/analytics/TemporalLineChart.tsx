@@ -1,7 +1,7 @@
 import { Line } from "react-chartjs-2";
 import { CategoryScale, Chart as ChartJS, Filler, Legend, LineElement, LinearScale, PointElement, Tooltip } from "chart.js";
 import type { TemporalMetric } from "../../types/analytics";
-import { formatCurrency } from "../../lib/formatters";
+import { formatAxisCurrency, formatCurrency } from "../../lib/formatters";
 import { EmptyState } from "../ui";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler);
@@ -46,7 +46,7 @@ export function TemporalLineChart({ data }: TemporalLineChartProps) {
           },
           scales: {
             x: { ticks: { color: "#8b949e" }, grid: { color: "#30363d" } },
-            y: { ticks: { color: "#8b949e", callback: (value) => formatCurrency(Number(value)) }, grid: { color: "#30363d" } },
+            y: { ticks: { color: "#8b949e", callback: (value) => formatAxisCurrency(Number(value)) }, grid: { color: "#30363d" } },
           },
         }}
       />
