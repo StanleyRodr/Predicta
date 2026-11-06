@@ -44,6 +44,9 @@ jobs:
       - run: ruff check app/
       - run: mypy
       - run: alembic upgrade head
+      - run: alembic check
+      - run: alembic downgrade -1
+      - run: alembic upgrade head
       - run: pytest --cov=app --cov-report=term-missing
 
   frontend:

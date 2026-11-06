@@ -24,7 +24,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 013 | Implementar dashboard y analytics | `docs/planning/plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
 | 014 | Implementar predicciones y reportes | `docs/planning/plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
 | 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | HECHO |
-| 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | EN PROGRESO |
+| 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | HECHO |
 | 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | TODO |
 | 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | HECHO |
 | 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | HECHO |
@@ -244,10 +244,10 @@ Plan: `docs/planning/plans/015-ci-calidad.md` | Depende de: ninguna | Esfuerzo: 
 
 Plan: `docs/planning/plans/016-alinear-migraciones.md` | Depende de: 015 | Esfuerzo: M
 
-- [ ] 016.1 Registrar las diferencias con `alembic check`. Verificar: coinciden con F-06 o se documenta lo adicional.
-- [ ] 016.2 Corregir tipos `Mapped[date]` e índices redundantes. Verificar: `mypy app/` y `pytest` pasan.
-- [ ] 016.3 Crear la migración `0003`. Verificar: `upgrade`, `check` y `downgrade -1` pasan en PostgreSQL.
-- [ ] 016.4 Activar `alembic check` en CI. Verificar: el job pasa.
+- [x] 016.1 Registrar las diferencias con `alembic check`. Verificar: coinciden con F-06 o se documenta lo adicional.
+- [x] 016.2 Corregir tipos `Mapped[date]` e índices redundantes. Verificar: `mypy app/` y `pytest` pasan.
+- [x] 016.3 Crear la migración `0003`. Verificar: `upgrade`, `check` y `downgrade -1` pasan en PostgreSQL.
+- [x] 016.4 Activar `alembic check` en CI. Verificar: el job pasa.
 
 ### Tarea 017 — Endurecer la ETL
 

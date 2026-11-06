@@ -5,7 +5,7 @@ must be made via Alembic migrations - never edit this file to alter
 an existing table once migrations are in place.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
@@ -77,7 +77,7 @@ class Venta(Base):
 
     id_venta: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     id_usuario: Mapped[int] = mapped_column(
-        Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), index=True
+        Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE")
     )
     producto: Mapped[str] = mapped_column(String(150), nullable=False)
     monto: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
@@ -85,8 +85,8 @@ class Venta(Base):
         DECIMAL(10, 2), nullable=False, default=1
     )
     categoria: Mapped[str | None] = mapped_column(String(100))
-    fecha_venta: Mapped[datetime] = mapped_column(
-        Date, default=lambda: datetime.now(UTC).date(), index=True
+    fecha_venta: Mapped[date] = mapped_column(
+        Date, default=lambda: datetime.now(UTC).date()
     )
 
     dueno: Mapped["Usuario"] = relationship("Usuario", back_populates="ventas")
@@ -108,12 +108,12 @@ class Prediccion(Base):
 
     id_prediccion: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     id_usuario: Mapped[int] = mapped_column(
-        Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE")
+        Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), index=True
     )
     producto_referencia: Mapped[str] = mapped_column(String(150), nullable=False)
     cantidad_proyectada: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
     monto_proyectado: Mapped[Decimal | None] = mapped_column(DECIMAL(10, 2))
-    fecha_proyeccion: Mapped[datetime] = mapped_column(Date, nullable=False)
+    fecha_proyeccion: Mapped[date] = mapped_column(Date, nullable=False)
     precision_estimada: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
