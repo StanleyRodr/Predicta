@@ -18,6 +18,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -99,6 +100,25 @@ class Venta(Base):
 
     def __repr__(self) -> str:
         return f"<Venta {self.id_venta} ${self.monto}>"
+
+
+class CargaArchivo(Base):
+    """Fingerprint of a loaded file, used to reject identical re-uploads."""
+
+    __tablename__ = "cargas_archivo"
+
+    id_carga: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_usuario: Mapped[int] = mapped_column(
+        Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE")
+    )
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    fecha_carga: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("id_usuario", "sha256", name="uq_cargas_usuario_sha256"),
+    )
 
 
 class Prediccion(Base):

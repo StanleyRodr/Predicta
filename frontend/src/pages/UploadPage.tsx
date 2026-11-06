@@ -67,6 +67,7 @@ export function UploadPage() {
 
       <Card className="grid gap-5">
         <UploadDropzone disabled={upload.isPending} onFileSelected={selectFile} />
+        <p className="text-sm text-terminal-muted">Escribe los montos como 1,234.56. Una coma seguida de 3 dígitos se lee como miles: 1,234 significa mil doscientos treinta y cuatro.</p>
         {file && (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-terminal-border bg-terminal-bg p-3">
             <span className="truncate font-mono text-sm text-terminal-text">{file.name}</span>
