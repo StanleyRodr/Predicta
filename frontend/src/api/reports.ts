@@ -2,7 +2,7 @@ import axios from "axios";
 import { http } from "./http";
 
 function filenameFromHeader(header: string | undefined, fallback: string): string {
-  const match = header?.match(/filename\*?=(?:UTF-8''|\")?([^;\"]+)/i);
+  const match = header?.match(/filename\*?=(?:UTF-8''|")?([^;"]+)/i);
   if (!match?.[1]) return fallback;
   try {
     return decodeURIComponent(match[1].trim().replace(/^"|"$/g, ""));

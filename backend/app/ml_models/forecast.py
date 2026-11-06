@@ -10,7 +10,6 @@ from sklearn.linear_model import LinearRegression
 
 from app.models import models
 
-
 METRIC_NAMES = ("r2", "mape", "rmse")
 
 

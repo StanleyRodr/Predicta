@@ -7,7 +7,6 @@ import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
-import { SectionPlaceholder } from "./pages/SectionPlaceholder";
 import { UploadPage } from "./pages/UploadPage";
 import { useAuthStore } from "./stores/authStore";
 

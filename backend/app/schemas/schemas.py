@@ -9,7 +9,6 @@ from datetime import datetime
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
-
 # Password policy: at least 8 chars, one uppercase, one lowercase, one digit.
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."

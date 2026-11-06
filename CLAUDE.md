@@ -29,13 +29,14 @@ Frontend (from `frontend/`):
 ```bash
 npm install
 npm run dev                          # Vite on http://localhost:5173
+npm run lint                         # eslint .
 npm run typecheck                    # tsc --noEmit
 npm test -- --run                    # Vitest, single run (plain `npm test` watches)
 npx vitest run src/api/auth.test.ts  # single test file
 npm run build                        # tsc -b && vite build
 ```
 
-Before submitting: backend `make lint`, `make typecheck`, `make test`; frontend `npm run typecheck`, `npm test -- --run`, `npm run build`.
+Before submitting: backend `make lint`, `make typecheck`, `make test`; frontend `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`.
 
 ## Environment
 

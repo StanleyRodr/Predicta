@@ -16,8 +16,11 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from fpdf import FPDF
+from fpdf.enums import XPos, YPos
 from matplotlib import dates as mdates
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 from sqlalchemy import func
 from sqlalchemy.orm import Query as SQLQuery
 from sqlalchemy.orm import Session
@@ -298,7 +301,7 @@ class _PDFReport(FPDF):
 
     def header(self) -> None:
         self.set_font("Arial", "B", 15)
-        self.cell(0, 10, "Predicta - Reporte", 0, 1, "C")
+        self.cell(0, 10, "Predicta - Reporte", align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
         self.set_draw_color(0, 80, 180)
         self.line(10, 22, 200, 22)
         self.ln(10)
@@ -306,15 +309,15 @@ class _PDFReport(FPDF):
     def footer(self) -> None:
         self.set_y(-15)
         self.set_font("Arial", "I", 8)
-        self.cell(0, 10, f"Pagina {self.page_no()}", 0, 0, "C")
+        self.cell(0, 10, f"Pagina {self.page_no()}", align="C")
 
 
-def _new_fig(*, figsize: tuple[float, float] = (8, 4)) -> tuple[object, object]:
+def _new_fig(*, figsize: tuple[float, float] = (8, 4)) -> tuple[Figure, Axes]:
     """Return a fresh matplotlib figure/axes pair."""
     return plt.subplots(figsize=figsize)
 
 
-def _save_fig_to_temp(fig: object, *, dpi: int = 150) -> str:
+def _save_fig_to_temp(fig: Figure, *, dpi: int = 150) -> str:
     """Persist a matplotlib figure to a temporary PNG and return its path."""
     with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
         fig.savefig(tmp.name, format="png", dpi=dpi, bbox_inches="tight")
@@ -433,13 +436,13 @@ def export_pdf(
     pdf.set_fill_color(230, 230, 230)
     pdf.set_font("Arial", "B", 10)
     for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 10, header, 1, 0, "C", 1)
+        pdf.cell(col_widths[i], 10, header, 1, align="C", fill=True)
     pdf.ln()
     pdf.set_font("Arial", size=10)
     for v in ventas:
-        pdf.cell(col_widths[0], 10, str(v.id_venta), 1, 0, "C")
+        pdf.cell(col_widths[0], 10, str(v.id_venta), 1, align="C")
         pdf.cell(col_widths[1], 10, v.producto[:28], 1)
-        pdf.cell(col_widths[2], 10, f"${v.monto:.2f}", 1, 0, "R")
+        pdf.cell(col_widths[2], 10, f"${v.monto:.2f}", 1, align="R")
         pdf.cell(col_widths[3], 10, str(v.categoria), 1)
         pdf.cell(col_widths[4], 10, v.fecha_venta.strftime("%Y-%m-%d %H:%M"), 1)
         pdf.ln()
@@ -510,15 +513,18 @@ def annual_forecast_pdf(
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, txt="Predicta - Planificacion y Proyeccion de la Demanda", ln=True, align="C")
+    pdf.cell(
+        0, 10, text="Predicta - Planificacion y Proyeccion de la Demanda",
+        align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT,
+    )
     pdf.set_draw_color(0, 80, 180)
     pdf.line(10, 20, 200, 20)
     pdf.ln(10)
     pdf.set_font("Arial", size=12)
     pdf.cell(
         0, 10,
-        txt=f"Ingreso Acumulado Estimado (Proximos 12 meses): ${sum(predictions):,.2f}",
-        ln=True,
+        text=f"Ingreso Acumulado Estimado (Proximos 12 meses): ${sum(predictions):,.2f}",
+        new_x=XPos.LMARGIN, new_y=YPos.NEXT,
     )
     pdf.ln(5)
     pdf.image(chart_path, x=10, y=45, w=190)
@@ -603,7 +609,10 @@ def monthly_report_pdf(
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 15)
-    pdf.cell(0, 10, txt="Predicta - Diagnostico Grafico Mensual", ln=True, align="C")
+    pdf.cell(
+        0, 10, text="Predicta - Diagnostico Grafico Mensual",
+        align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT,
+    )
     pdf.set_draw_color(0, 80, 180)
     pdf.line(10, 20, 200, 20)
     pdf.ln(15)
@@ -684,7 +693,10 @@ def category_forecast_pdf(
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Arial", "B", 16)
-    pdf.cell(0, 10, txt=f"Predicta - Analisis de Categoria: {canonical.upper()}", ln=True, align="C")
+    pdf.cell(
+        0, 10, text=f"Predicta - Analisis de Categoria: {canonical.upper()}",
+        align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT,
+    )
     pdf.set_draw_color(0, 80, 180)
     pdf.line(10, 20, 200, 20)
     pdf.ln(5)
@@ -693,20 +705,23 @@ def category_forecast_pdf(
 
     pdf.set_y(140)
     pdf.set_font("Arial", "B", 14)
-    pdf.cell(0, 10, txt="Desglose Mensual Operativo (Proyeccion)", ln=True, align="L")
+    pdf.cell(
+        0, 10, text="Desglose Mensual Operativo (Proyeccion)",
+        align="L", new_x=XPos.LMARGIN, new_y=YPos.NEXT,
+    )
     pdf.ln(2)
     pdf.set_fill_color(240, 240, 240)
     pdf.set_font("Arial", "B", 11)
-    pdf.cell(90, 10, "Periodo Evaluado", 1, 0, "C", 1)
-    pdf.cell(90, 10, "Proyeccion de Ingresos", 1, 1, "C", 1)
+    pdf.cell(90, 10, "Periodo Evaluado", 1, align="C", fill=True)
+    pdf.cell(90, 10, "Proyeccion de Ingresos", 1, align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("Arial", "", 11)
     for label, amount in zip(future_labels, predictions, strict=False):
-        pdf.cell(90, 10, label, 1, 0, "C")
-        pdf.cell(90, 10, f"${amount:,.2f}", 1, 1, "C")
+        pdf.cell(90, 10, label, 1, align="C")
+        pdf.cell(90, 10, f"${amount:,.2f}", 1, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.set_font("Arial", "B", 11)
     pdf.set_fill_color(220, 230, 240)
-    pdf.cell(90, 10, "TOTAL ESTIMADO (12 MESES)", 1, 0, "C", 1)
-    pdf.cell(90, 10, f"${sum(predictions):,.2f}", 1, 1, "C", 1)
+    pdf.cell(90, 10, "TOTAL ESTIMADO (12 MESES)", 1, align="C", fill=True)
+    pdf.cell(90, 10, f"${sum(predictions):,.2f}", 1, align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     return _build_pdf_response(pdf, filename=f"Predicta_{cat_key}_Proyeccion.pdf")
