@@ -26,8 +26,8 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | HECHO |
 | 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | TODO |
 | 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | TODO |
-| 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | TODO |
-| 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | TODO |
+| 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | HECHO |
+| 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | EN PROGRESO |
 | 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | TODO |
 | 021 | Corregir modelo y proyectar 12 meses | `docs/planning/plans/021-modelo-horizonte.md` | P1 | L | 020 | TODO |
 | 022 | Evaluación y modelos de referencia | `docs/planning/plans/022-evaluacion-baselines.md` | P1 | L | 021 | TODO |
@@ -265,10 +265,10 @@ Plan: `docs/planning/plans/017-etl-endurecida.md` | Depende de: 016 | Esfuerzo: 
 
 Plan: `docs/planning/plans/018-convencion-numerica.md` | Depende de: ninguna | Esfuerzo: S-M
 
-- [ ] 018.1 Centralizar formatos en `formatters.ts`. Verificar: `1234.5` se muestra como `$1,234.50`.
-- [ ] 018.2 Reemplazar formatos directos en componentes. Verificar: `toLocaleString` y `toFixed` solo aparecen en `formatters.ts`.
-- [ ] 018.3 Aplicar formatos a ejes y tooltips. Verificar: tests de callbacks.
-- [ ] 018.4 Aplicar la convención a PDF y Excel. Verificar: tests de `format_money` y `number_format`.
+- [x] 018.1 Centralizar formatos en `formatters.ts`. Verificar: `1234.5` se muestra como `$1,234.50`.
+- [x] 018.2 Reemplazar formatos directos en componentes. Verificar: `toLocaleString` y `toFixed` solo aparecen en `formatters.ts`.
+- [x] 018.3 Aplicar formatos a ejes y tooltips. Verificar: tests de callbacks.
+- [x] 018.4 Aplicar la convención a PDF y Excel. Verificar: tests de `format_money` y `number_format`.
 
 ### Tarea 019 — Sesión, errores y descargas en frontend
 

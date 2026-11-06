@@ -1,5 +1,5 @@
 import type { PredictionInterval } from "../../types/forecast";
-import { formatCurrency } from "../../lib/formatters";
+import { formatCurrency, formatNumber } from "../../lib/formatters";
 import { Card } from "../ui";
 
 interface ForecastMetricCardProps {
@@ -10,7 +10,7 @@ interface ForecastMetricCardProps {
 }
 
 export function ForecastMetricCard({ label, value, interval, quantity = false }: ForecastMetricCardProps) {
-  const format = (amount: number) => quantity ? amount.toLocaleString("es-CO", { maximumFractionDigits: 2 }) : formatCurrency(amount);
+  const format = quantity ? formatNumber : formatCurrency;
   return (
     <Card className="grid gap-4">
       <span className="text-sm text-terminal-muted">{label}</span>

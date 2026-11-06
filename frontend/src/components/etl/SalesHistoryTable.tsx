@@ -1,3 +1,4 @@
+import { formatCurrency } from "../../lib/formatters";
 import type { SalesHistoryResponse } from "../../types/etl";
 import { Button, EmptyState, Spinner } from "../ui";
 
@@ -33,7 +34,7 @@ export function SalesHistoryTable({ data, isLoading, page, onPageChange }: Sales
                 <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-terminal-muted">{sale.fecha}</td>
                 <td className="px-4 py-3">{sale.producto}</td>
                 <td className="px-4 py-3 text-terminal-muted">{sale.categoria ?? "General"}</td>
-                <td className="px-4 py-3 text-right font-mono text-terminal-amber">${sale.monto.toFixed(2)}</td>
+                <td className="px-4 py-3 text-right font-mono text-terminal-amber">{formatCurrency(sale.monto)}</td>
               </tr>
             ))}
           </tbody>

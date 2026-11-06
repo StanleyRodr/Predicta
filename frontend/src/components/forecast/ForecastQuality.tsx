@@ -1,3 +1,4 @@
+import { formatDecimal } from "../../lib/formatters";
 import type { ForecastMetrics } from "../../types/forecast";
 import { Card } from "../ui";
 
@@ -10,7 +11,7 @@ function Metric({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="grid gap-1">
       <span className="text-xs text-terminal-muted">{label}</span>
-      <strong className="font-mono text-lg">{value === null ? "No disponible" : value.toFixed(2)}</strong>
+      <strong className="font-mono text-lg">{value === null ? "No disponible" : formatDecimal(value)}</strong>
     </div>
   );
 }

@@ -1,5 +1,9 @@
 """Tests for analytics and prediction endpoints."""
 
+import io
+
+from openpyxl import load_workbook
+
 from app.models import models
 
 
@@ -219,6 +223,18 @@ def test_export_excel_returns_xlsx(client, auth_headers):
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     assert response.content[:2] == b"PK"
+
+
+def test_export_excel_keeps_amounts_numeric_with_thousands_format(client, auth_headers):
+    assert _upload_sales(
+        client, auth_headers, [("Arroz", 1234.5, "Abarrotes", "2026-01-01")]
+    ).status_code == 200
+
+    response = client.get("/analytics/export/excel", headers=auth_headers)
+
+    worksheet = load_workbook(io.BytesIO(response.content)).active
+    assert worksheet["C2"].value == 1234.5
+    assert worksheet["C2"].number_format == "#,##0.00"
 
 
 def test_export_pdf_returns_pdf(client, auth_headers):
