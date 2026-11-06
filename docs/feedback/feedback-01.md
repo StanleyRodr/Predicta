@@ -3,7 +3,7 @@
 **Fecha:** 2026-11-02
 **Base:** `main` en `367f878` (más cambios locales sin commitear en `backend/alembic/env.py`, `backend/alembic/versions/0002_schema_cantidad_predicciones.py` y `backend/requirements.txt`)
 **Alcance:** backend, modelo ML, frontend, pruebas, herramientas e higiene del repositorio.
-**Estado:** pendiente de autorización.
+**Estado:** autorizado el 2026-11-05. Ver la sección 7 y las tareas 015 a 031 en `docs/planning/TASKS.md`.
 
 > Este documento solo describe los hallazgos y la corrección propuesta.
 > Cuando autorices los puntos, cada uno pasará a una tarea en `docs/planning/TASKS.md`
@@ -101,7 +101,7 @@ Los problemas se concentran en cuatro frentes:
   - **Índices redundantes:** `index=True` en `id_usuario` y en `fecha_venta` duplican lo que ya cubre el índice compuesto.
   - Los tests usan SQLite con `create_all`, así que nunca validan las migraciones reales.
 - **Efecto:** el próximo `alembic revision --autogenerate` generará cambios inesperados, y la base de producción no coincide con lo que el código asume.
-- **Nota:** hay cambios locales sin commitear en `0002_schema_cantidad_predicciones.py` y `alembic/env.py`. Hay que revisarlos antes de tocar las migraciones.
+- **Nota:** los cambios en `0002_schema_cantidad_predicciones.py` y `alembic/env.py` que estaban sin commitear entraron en el commit `18e36df`.
 - **Corrección propuesta:** una migración `0003` que alinee los nombres, la nulabilidad (tras limpiar las filas con `NULL`), el índice de `predicciones.id_usuario` y los índices redundantes, junto con un `alembic check` en CI.
 - **Verificación sugerida:** `alembic upgrade head`, `alembic check` sin diferencias y `alembic downgrade -1`, en PostgreSQL.
 
@@ -310,7 +310,7 @@ Revisión de archivos sensibles (2026-11-02):
   - Bases de datos y dumps: `*.sqlite`, `*.sqlite3`, `*.db`, `*.dump`, `*.bak`, `backups/`
   - Hojas de cálculo: `*.xlsx`, `*.xls`
   - Configuración local: `.claude/settings.local.json`, `*.local.json`
-- **Pendiente de tu decisión:** `.claude/` y `CLAUDE.md` siguen sin seguimiento y sin ignorar. No tienen secretos (son skills y documentación). Opciones: commitearlos (recomendado para `CLAUDE.md`) o ignorarlos. `.claude/skills/` es una copia de `.agents/skills/`.
+- **Resuelto:** `.claude/` y `CLAUDE.md` se commitearon en `18e36df`. `.claude/skills/` es una copia de `.agents/skills/`.
 
 ---
 
@@ -332,20 +332,21 @@ Revisión de archivos sensibles (2026-11-02):
 
 Marca lo que autorizas. Lo no marcado queda fuera del plan.
 
-- [ ] Prioridad alta completa (F-01 a F-07)
-- [ ] Prioridad media completa (F-08 a F-20)
-- [ ] Modelo ML completo (F-21 a F-27)
-- [ ] Prioridad baja completa (F-28 a F-33)
-- [ ] F-34, documentación incluido `README.md` (excepción a la regla de `docs/planning/TASKS.md`)
+- [x] Prioridad alta completa (F-01 a F-07)
+- [x] Prioridad media completa (F-08 a F-20)
+- [x] Modelo ML completo (F-21 a F-27)
+- [x] Prioridad baja completa (F-28 a F-33)
+- [x] F-34, documentación incluido `README.md` (excepción a la regla de `docs/planning/TASKS.md`)
 
-**Decisiones de diseño necesarias:**
+**Decisiones de diseño:**
 
-- [ ] F-03: ¿se permiten montos negativos (devoluciones)? Recomendación: no.
-- [ ] F-08: ¿`Prediccion` se persiste con un historial consultable, o se deja de persistir?
-- [ ] F-13: ante un archivo duplicado, ¿se rechaza o solo se advierte?
-- [ ] F-27: ¿se agrega `statsmodels` como dependencia (para SARIMA/ETS e intervalos)?
-- [ ] `.claude/` y `CLAUDE.md`: ¿commitear o ignorar?
+- [x] F-03: no se permiten montos negativos ni en cero.
+- [x] F-08: `Prediccion` se guarda solo a pedido, con historial consultable. Consultar no escribe, así que la consulta sigue siendo GET; esto reemplaza la propuesta de pasar a POST.
+- [x] F-13: un archivo idéntico se rechaza.
+- [x] F-27: se agrega `statsmodels`.
+- [x] `.claude/` y `CLAUDE.md`: commiteados en `18e36df`.
 
 **Exclusiones o comentarios:**
 
-_(escribe aquí)_
+- F-22: no se devuelve 422 con menos de 24 meses. Se usa un modelo escalonado: menos de 6 meses, sin proyección mensual; de 6 a 23, solo tendencia; 24 o más, tendencia y estacionalidad. El horizonte es la mitad del historial, con máximo de 12 meses.
+- El detalle de las decisiones está en `docs/planning/TASKS.md`, sección "Fase 2".
