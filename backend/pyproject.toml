@@ -1,0 +1,16 @@
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI declares dependencies and parameters through default-argument calls.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Query",
+]
+
+[tool.mypy]
+files = ["app"]
+
+# Third-party packages without type information.
+[[tool.mypy.overrides]]
+module = ["pandas.*", "passlib.*", "sklearn.*"]
+ignore_missing_imports = true

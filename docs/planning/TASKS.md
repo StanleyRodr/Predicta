@@ -23,7 +23,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 012 | Implementar carga ETL e historial | `docs/planning/plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
 | 013 | Implementar dashboard y analytics | `docs/planning/plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
 | 014 | Implementar predicciones y reportes | `docs/planning/plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
-| 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | TODO |
+| 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | HECHO |
 | 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | TODO |
 | 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | TODO |
 | 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | TODO |
@@ -235,10 +235,10 @@ Plan: `docs/planning/plans/014-frontend-predicciones-reportes.md` | Depende de: 
 
 Plan: `docs/planning/plans/015-ci-calidad.md` | Depende de: ninguna | Esfuerzo: M
 
-- [ ] 015.1 Configurar ruff y mypy en `backend/pyproject.toml`. Verificar: `ruff check app/` y `mypy app/` sin errores nuevos.
-- [ ] 015.2 Configurar ESLint y el script `lint`. Verificar: `npm run lint` termina con código 0.
-- [ ] 015.3 Crear `.pre-commit-config.yaml`. Verificar: `pre-commit run --all-files` termina con código 0.
-- [ ] 015.4 Crear workflow con jobs de backend y frontend. Verificar: ambos pasan en una rama de prueba.
+- [x] 015.1 Configurar ruff y mypy en `backend/pyproject.toml`. Verificar: `ruff check app/` y `mypy app/` sin errores nuevos.
+- [x] 015.2 Configurar ESLint y el script `lint`. Verificar: `npm run lint` termina con código 0.
+- [x] 015.3 Crear `.pre-commit-config.yaml`. Verificar: `pre-commit run --all-files` termina con código 0.
+- [x] 015.4 Crear workflow con jobs de backend y frontend. Verificar: ambos pasan en una rama de prueba.
 
 ### Tarea 016 — Alinear modelos y migraciones
 
