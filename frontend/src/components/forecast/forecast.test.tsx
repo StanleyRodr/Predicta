@@ -26,6 +26,7 @@ function forecast(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyFore
     modelo: "tendencia",
     horizonte_aplicado: 2,
     meses_observados: 3,
+    advertencias: [],
     advertencia: null,
     historial: [
       { periodo: "2025-01", monto: 100, cantidad: 10 },
@@ -192,6 +193,38 @@ describe("SavedPredictions", () => {
     expect(screen.getByText(/total \$8,036\.56/)).toBeInTheDocument();
     expect(screen.getByText(/^0?1\/11\/2026$/)).toBeInTheDocument();
   });
+
+  it("explains the range and extrapolation once, above the list, not in every batch table", () => {
+    const monthlyBatch = (lote: string): SavedBatch => ({
+      lote,
+      tipo: "mensual",
+      categoria: null,
+      modelo: "tendencia",
+      horizonte: 2,
+      r2_validacion: null,
+      wape_validacion: null,
+      fecha_creacion: "2026-11-02T10:00:00Z",
+      puntos: ["2026-11-30", "2026-12-31"].map((fecha_proyeccion, index) => ({
+        fecha_proyeccion,
+        extrapolacion: index === 1,
+        monto_proyectado: 100,
+        monto_inferior: 90,
+        monto_superior: 110,
+        cantidad_proyectada: 1,
+        cantidad_inferior: 0,
+        cantidad_superior: 2,
+      })),
+    });
+
+    render(<SavedPredictions batches={[monthlyBatch("a"), monthlyBatch("b")]} />);
+
+    expect(screen.getAllByRole("button", { name: "Qué significa intervalo del 95 %" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Qué significa extrapolación" })).toHaveLength(1);
+    for (const table of screen.getAllByRole("table", { hidden: true })) {
+      expect(within(table).queryAllByRole("button", { hidden: true, name: /Qué significa/ })).toHaveLength(0);
+      expect(within(table).getAllByText("Extrapolación")).toHaveLength(1);
+    }
+  });
 });
 
 describe("forecast cards", () => {
@@ -227,8 +260,21 @@ describe("ForecastQuality", () => {
     origenes: 0,
   };
 
+  // Six evaluated months of $10,000 and 100 units: the scale of the typical margin.
+  const history = Array.from({ length: 8 }, (_, index) => ({
+    periodo: `2025-${String(index + 1).padStart(2, "0")}`,
+    monto: 10_000,
+    cantidad: 100,
+  }));
+
+  function grades(region: HTMLElement) {
+    return within(region)
+      .getAllByTestId("grade")
+      .map((badge) => badge.textContent);
+  }
+
   it("uses plain titles and the right unit for each measure", () => {
-    render(<ForecastQuality amount={good} quantity={{ ...good, mape: 55, rmse: 3.5 }} />);
+    render(<ForecastQuality amount={good} history={history} quantity={{ ...good, mape: 55, rmse: 3.5 }} />);
 
     const amount = screen.getByRole("region", { name: "Calidad de monto" });
     const quantity = screen.getByRole("region", { name: "Calidad de cantidad" });
@@ -237,25 +283,48 @@ describe("ForecastQuality", () => {
     expect(within(amount).getByText("Se desvía en promedio un 12.50% del valor real.")).toBeInTheDocument();
     expect(within(amount).getByText("Suele fallar por unos $1,250.00.")).toBeInTheDocument();
     expect(within(quantity).getByText("Suele fallar por unos 3.5 unidades.")).toBeInTheDocument();
-    expect(within(amount).getByText("Buena")).toBeInTheDocument();
-    expect(within(quantity).getByText("Baja")).toBeInTheDocument();
-    expect(within(amount).getByText(/^Calidad buena: en los últimos 6 meses evaluados/)).toBeInTheDocument();
+    expect(within(amount).getByText(/^Calidad buena según 4 indicadores, medida en los últimos 6 meses evaluados/)).toBeInTheDocument();
     expect(screen.getByText(/Las etiquetas son orientativas/)).toBeInTheDocument();
+  });
+
+  it("labels every metric and averages them next to the measure", () => {
+    render(<ForecastQuality amount={good} history={history} quantity={{ ...good, mape: 55, rmse: 3.5 }} />);
+
+    const amount = screen.getByRole("region", { name: "Calidad de monto" });
+    const quantity = screen.getByRole("region", { name: "Calidad de cantidad" });
+    // Error 12.5 %, margin 12.5 % of a month, pattern 0.8, 18 % better than the baseline.
+    expect(grades(amount)).toEqual(["Error promedio: Buena", "Margen típico: Buena", "Patrón explicado: Muy buena", "Frente a un cálculo simple: Buena"]);
+    expect(within(amount).getByTestId("overall-grade")).toHaveTextContent("Calidad general: Buena");
+    // Error 55 % is low, margin 3.5 % of a month is very good: (1 + 4 + 4 + 3) / 4 = 3.
+    expect(grades(quantity)[0]).toBe("Error promedio: Baja");
+    expect(grades(quantity)[1]).toBe("Margen típico: Muy buena");
+    expect(within(quantity).getByTestId("overall-grade")).toHaveTextContent("Buena");
+  });
+
+  it("shows Sin dato for missing metrics and leaves them out of the average", () => {
+    render(<ForecastQuality amount={{ ...good, r2: null, mejora_vs_referencia: null, referencia: null }} history={history} quantity={empty} />);
+
+    const amount = screen.getByRole("region", { name: "Calidad de monto" });
+    expect(grades(amount)).toEqual(["Error promedio: Buena", "Margen típico: Buena", "Patrón explicado: Sin dato", "Frente a un cálculo simple: Sin dato"]);
+    expect(within(amount).getByText(/según 2 indicadores/)).toBeInTheDocument();
+    const quantity = screen.getByRole("region", { name: "Calidad de cantidad" });
+    expect(within(quantity).queryByTestId("overall-grade")).not.toBeInTheDocument();
   });
 
   it("explains each metric on demand", async () => {
     const user = userEvent.setup();
-    render(<ForecastQuality amount={good} quantity={good} />);
+    render(<ForecastQuality amount={good} history={history} quantity={good} />);
 
     const [hint] = screen.getAllByRole("button", { name: "Qué significa margen típico" });
     await user.click(hint);
 
     expect(screen.getByRole("note")).toHaveTextContent(/Penaliza más los errores grandes/);
+    expect(screen.getByRole("note")).toHaveTextContent(/frente a las ventas de un mes promedio: muy buena si es menos del 10%/);
   });
 
   it("folds the technical detail and opens and closes it", async () => {
     const user = userEvent.setup();
-    render(<ForecastQuality amount={good} quantity={empty} />);
+    render(<ForecastQuality amount={good} history={history} quantity={empty} />);
     const toggle = screen.getByRole("button", { name: "Detalle técnico" });
 
     expect(toggle).toHaveAttribute("aria-expanded", "false");
@@ -276,7 +345,7 @@ describe("ForecastQuality", () => {
   });
 
   it("does not represent null metrics as zero and says why they are missing", () => {
-    render(<ForecastQuality amount={empty} quantity={empty} />);
+    render(<ForecastQuality amount={empty} history={history} quantity={empty} />);
 
     expect(screen.getAllByText(/^No disponible\. Tu historial todavía no deja meses/)).toHaveLength(8);
     expect(screen.getAllByText(/^Aún no se puede calificar/)).toHaveLength(2);

@@ -42,6 +42,7 @@ def forecast_payload(categoria: str | None, forecast: MonthlyForecast) -> dict[s
         "modelo": forecast.modelo,
         "horizonte_aplicado": forecast.horizonte,
         "meses_observados": forecast.meses_observados,
+        "advertencias": forecast.advertencias,
         "advertencia": forecast.advertencia,
         "historial": [
             {"periodo": _period(row.fecha), "monto": round(float(row.monto), 2), "cantidad": round(float(row.cantidad), 2)}

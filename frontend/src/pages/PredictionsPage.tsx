@@ -4,11 +4,13 @@ import { useState } from "react";
 import { getCategoryStats } from "../api/analytics";
 import { getForecast, getMonthlyForecast, listSavedPredictions, savePrediction } from "../api/forecast";
 import {
+  ConceptHint,
   FORECAST_MEASURES,
   ForecastChart,
   ForecastMetricCard,
   ForecastQuality,
   ForecastTable,
+  formatForecastValue,
   MonthDetail,
   SavedPredictions,
   type ForecastMeasure,
@@ -16,14 +18,11 @@ import {
 } from "../components/forecast";
 import { Alert, Button, Card, Segmented, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
+import { MODEL_NAMES } from "../lib/conceptExplanations";
 import { formatDate } from "../lib/formatters";
+import { periodLabel } from "../lib/seriesTransforms";
 import { useAuthStore } from "../stores/authStore";
 import type { MonthlyForecastResponse } from "../types/forecast";
-
-const MODEL_NAMES: Record<MonthlyForecastResponse["modelo"], string> = {
-  tendencia: "solo tendencia",
-  tendencia_estacional: "tendencia y temporada",
-};
 
 /** 422 means the history cannot support a forecast yet; it is not a failure. */
 function isUnprocessable(error: unknown): boolean {
@@ -170,17 +169,29 @@ export function PredictionsPage() {
                 <h2 className="text-lg font-semibold">
                   {forecast.categoria ? `Proyección de ${forecast.categoria}` : "Proyección de todas las categorías"}
                 </h2>
-                <p className="text-sm text-terminal-muted">
-                  {forecast.horizonte_aplicado} meses con {MODEL_NAMES[forecast.modelo]}, a partir de {forecast.meses_observados} meses
-                  completos.
+                <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-terminal-muted">
+                  {forecast.horizonte_aplicado} meses con {MODEL_NAMES[forecast.modelo]} <ConceptHint concept="modelo" />, a partir de{" "}
+                  {forecast.meses_observados} meses completos.
                 </p>
-                <p className="text-sm text-terminal-muted">
-                  La zona sombreada es el intervalo del 95 %: el valor real probablemente caerá dentro de esta zona.
+                <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-terminal-muted">
+                  La zona sombreada es el intervalo del 95 % <ConceptHint concept="intervalo" />: el valor real probablemente caerá
+                  dentro de esta zona.
                 </p>
               </div>
               <Segmented label="Medida" onChange={setMeasure} options={FORECAST_MEASURES} value={measure} />
             </div>
-            {forecast.advertencia && <Alert tone="info">Confiabilidad limitada: {forecast.advertencia}</Alert>}
+            {forecast.advertencias.length > 0 && (
+              <Alert className="grid gap-2" tone="info">
+                <p className="flex items-center gap-2 font-medium text-terminal-text">
+                  Toma esta proyección con cautela <ConceptHint concept="cautela" />
+                </p>
+                <ul className="grid list-disc gap-1 pl-5">
+                  {forecast.advertencias.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+              </Alert>
+            )}
             {modelsDiffer && reference && (
               <Alert tone="info">
                 Esta categoría usa {MODEL_NAMES[forecast.modelo]} con {forecast.horizonte_aplicado} meses, y el total usa{" "}
@@ -190,8 +201,15 @@ export function PredictionsPage() {
             )}
             <ForecastChart forecast={forecast} measure={measure} onSelect={setSelected} selected={current.periodo} />
             {forecast.proyeccion.some((month) => month.extrapolacion) && (
-              <p className="text-sm text-terminal-muted">
-                Los rombos huecos y el trazo más fino marcan extrapolación: meses que tu historial no permite validar.
+              <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-terminal-muted">
+                Los rombos huecos y el trazo más fino marcan extrapolación <ConceptHint concept="extrapolacion" />: meses que tu
+                historial no permite validar.
+              </p>
+            )}
+            {forecast.mes_parcial && (
+              <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-terminal-muted">
+                El punto hueco es el mes en curso, {periodLabel(forecast.mes_parcial.periodo)} <ConceptHint concept="mesParcial" />:
+                lleva {formatForecastValue(measure, forecast.mes_parcial[measure])} hasta ahora y se proyecta completo.
               </p>
             )}
           </Card>
@@ -218,7 +236,7 @@ export function PredictionsPage() {
             />
           </Card>
 
-          <ForecastQuality amount={forecast.metricas.monto} quantity={forecast.metricas.cantidad} />
+          <ForecastQuality amount={forecast.metricas.monto} history={forecast.historial} quantity={forecast.metricas.cantidad} />
         </>
       )}
 
@@ -246,7 +264,9 @@ export function PredictionsPage() {
       )}
 
       <section aria-label="Proyecciones guardadas" className="grid gap-4">
-        <h2 className="font-semibold">Proyecciones guardadas</h2>
+        <h2 className="flex items-center gap-2 font-semibold">
+          Proyecciones guardadas <ConceptHint concept="guardadas" />
+        </h2>
         {saved.error && <Alert tone="error">{getApiErrorMessage(saved.error, "No se pudieron cargar las proyecciones guardadas.")}</Alert>}
         {saved.data && <SavedPredictions batches={saved.data.lotes} />}
       </section>

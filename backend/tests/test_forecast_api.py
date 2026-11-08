@@ -96,6 +96,20 @@ def test_forecast_with_twelve_months_warns_that_seasons_are_not_modeled(client, 
 
     assert body["horizonte_aplicado"] == 6
     assert "tendencia" in body["advertencia"]
+    assert len(body["advertencias"]) == 1
+    assert body["advertencias"][0] == body["advertencia"]
+
+
+def test_forecast_lists_each_warning_and_keeps_the_joined_text(client, auth_headers):
+    _upload(client, auth_headers, _months(24))
+
+    body = client.get("/analytics/forecast", headers=auth_headers).json()
+
+    assert body["horizonte_aplicado"] == 12
+    assert len(body["advertencias"]) == 2
+    assert "tendencia" in body["advertencias"][0]
+    assert "extrapolación" in body["advertencias"][1]
+    assert " ".join(body["advertencias"]) == body["advertencia"]
 
 
 def test_forecast_reports_the_incomplete_last_month_apart(client, auth_headers):

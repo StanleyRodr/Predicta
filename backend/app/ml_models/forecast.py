@@ -112,6 +112,9 @@ class MonthlyForecast:
     modelo: MonthlyModel
     horizonte: int
     meses_observados: int
+    #: Every reason that limits the projection, one sentence each.
+    advertencias: list[str]
+    #: The same reasons joined in one text, as the PDF reports print them.
     advertencia: str | None
     #: Complete months the model was fitted on.
     historial: pd.DataFrame
@@ -336,6 +339,7 @@ def monthly_forecast_series(
         modelo="tendencia_estacional" if seasonal else "tendencia",
         horizonte=horizon,
         meses_observados=observed,
+        advertencias=warnings,
         advertencia=" ".join(warnings) or None,
         historial=history,
         mes_parcial=partial,

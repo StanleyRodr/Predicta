@@ -1,6 +1,6 @@
 // Plain-language wording for the monthly forecast metrics. Every new metric
 // gets a title, a sentence built from its real value, and an explanation here.
-import type { BaselineName, ValidationMetrics } from "../types/forecast";
+import type { BaselineName, MonthTotals, ValidationMetrics } from "../types/forecast";
 import { formatCurrency, formatDecimal, formatNumber, formatPercent } from "./formatters";
 
 export type MetricMeasure = "monto" | "cantidad";
@@ -25,25 +25,26 @@ const TITLES: Record<MetricKey, { title: string; acronym: string; explanation: s
   mape: {
     title: "Error promedio",
     acronym: "MAPE",
-    explanation: "Cuánto se equivoca el modelo en promedio, en porcentaje del valor real. Menos es mejor.",
+    explanation:
+      "Cuánto se equivoca el modelo en promedio, en porcentaje del valor real. Menos es mejor. Muy buena: menos de 10%; buena: de 10% a 20%; aceptable: de 20% a 50%; baja: más de 50%.",
   },
   rmse: {
     title: "Margen típico",
     acronym: "RMSE",
     explanation:
-      "El tamaño habitual del error, en dinero o en unidades. Penaliza más los errores grandes que los pequeños. Menos es mejor.",
+      "El tamaño habitual del error, en dinero o en unidades. Penaliza más los errores grandes que los pequeños. Menos es mejor. Se califica frente a las ventas de un mes promedio: muy buena si es menos del 10%; buena, de 10% a 20%; aceptable, de 20% a 50%; baja, más del 50%.",
   },
   r2: {
     title: "Patrón explicado",
     acronym: "R²",
     explanation:
-      "Cuánto de la subida y bajada de las ventas entre los meses evaluados captura el modelo. Si es negativo, rinde peor que usar el promedio de esos meses.",
+      "Cuánto de la subida y bajada de las ventas entre los meses evaluados captura el modelo. Si es negativo, rinde peor que usar el promedio de esos meses. Muy buena: 0.6 o más; buena: de 0.3 a 0.6; aceptable: de 0 a 0.3; baja: negativo.",
   },
   mejora: {
     title: "Frente a un cálculo simple",
     acronym: "Mejora vs. referencia",
     explanation:
-      "Compara el error total del modelo con el del mejor cálculo simple (repetir el mes anterior, el mismo mes del año anterior o el promedio de 3 meses) sobre los mismos meses.",
+      "Compara el error total del modelo con el del mejor cálculo simple (repetir el mes anterior, el mismo mes del año anterior o el promedio de 3 meses) sobre los mismos meses. Muy buena: se equivoca 20% menos o mejor; buena: de 5% a 20% menos; aceptable: empata, entre 5% más y 5% menos; baja: se equivoca más de 5% más.",
   },
 };
 
@@ -129,17 +130,74 @@ export function qualityLabel(mape: number | null): QualityLabel | null {
   return "Baja";
 }
 
+const GRADE_SCORES: Record<QualityLabel, number> = { "Muy buena": 4, Buena: 3, Aceptable: 2, Baja: 1 };
+const LABELS_BY_SCORE: QualityLabel[] = ["Baja", "Aceptable", "Buena", "Muy buena"];
+
+/** Average of a measure over the evaluated months: the last ``origenes`` complete months. */
+export function averageEvaluatedMonth(history: MonthTotals[], measure: MetricMeasure, origenes: number): number | null {
+  const evaluated = origenes > 0 ? history.slice(-origenes) : [];
+  if (!evaluated.length) return null;
+  return evaluated.reduce((total, month) => total + month[measure], 0) / evaluated.length;
+}
+
+/** Orientative label of one metric; null when the metric, or what it is compared with, is missing. */
+export function metricGrade(key: MetricKey, metrics: ValidationMetrics, averageMonth: number | null): QualityLabel | null {
+  switch (key) {
+    case "mape":
+      return qualityLabel(metrics.mape);
+    case "rmse":
+      // Money or units have no scale of their own: compare with an average month.
+      if (metrics.rmse === null || averageMonth === null || averageMonth <= 0) return null;
+      return qualityLabel((metrics.rmse / averageMonth) * 100);
+    case "r2": {
+      const { r2 } = metrics;
+      if (r2 === null) return null;
+      if (r2 >= 0.6) return "Muy buena";
+      if (r2 >= 0.3) return "Buena";
+      if (r2 >= 0) return "Aceptable";
+      return "Baja";
+    }
+    case "mejora": {
+      const value = metrics.mejora_vs_referencia;
+      if (value === null) return null;
+      if (value >= 20) return "Muy buena";
+      if (value >= 5) return "Buena";
+      if (value >= -5) return "Aceptable";
+      return "Baja";
+    }
+  }
+}
+
+export interface OverallGrade {
+  label: QualityLabel;
+  /** How many metrics had a label. */
+  indicators: number;
+}
+
+/** Average of the available metric labels, rounded down so it never promises more. */
+export function overallGrade(metrics: ValidationMetrics, averageMonth: number | null): OverallGrade | null {
+  const grades = METRIC_KEYS.map((key) => metricGrade(key, metrics, averageMonth)).filter(
+    (grade): grade is QualityLabel => grade !== null,
+  );
+  if (!grades.length) return null;
+  const average = grades.reduce((total, grade) => total + GRADE_SCORES[grade], 0) / grades.length;
+  return { label: LABELS_BY_SCORE[Math.floor(average) - 1], indicators: grades.length };
+}
+
 const MEASURE_NAMES: Record<MetricMeasure, string> = { monto: "el monto", cantidad: "la cantidad" };
 
 /** One sentence that sums up the quality of one measure. */
-export function qualitySummary(metrics: ValidationMetrics, measure: MetricMeasure): string {
-  const { mape } = metrics;
-  if (mape === null) {
+export function qualitySummary(metrics: ValidationMetrics, measure: MetricMeasure, averageMonth: number | null): string {
+  const overall = overallGrade(metrics, averageMonth);
+  if (overall === null) {
     return `Aún no se puede calificar ${MEASURE_NAMES[measure]}. ${unavailableReason("mape", metrics)}`;
   }
-  const label = qualityLabel(mape) ?? "";
+  const indicators = overall.indicators === 1 ? "1 indicador" : `${overall.indicators} indicadores`;
   const months = metrics.origenes === 1 ? "el último mes evaluado" : `los últimos ${metrics.origenes} meses evaluados`;
-  return `Calidad ${label.toLowerCase()}: en ${months}, ${MEASURE_NAMES[measure]} se desvió en promedio un ${formatPercent(mape)} del valor real.`;
+  const base = `Calidad ${overall.label.toLowerCase()} según ${indicators}, medida en ${months}.`;
+  return metrics.mape === null
+    ? base
+    : `${base} En promedio, ${MEASURE_NAMES[measure]} se desvió un ${formatPercent(metrics.mape)} del valor real.`;
 }
 
 export interface TechnicalRow {

@@ -230,7 +230,10 @@ class MonthlyForecastResponse(BaseModel):
     modelo: Literal["tendencia", "tendencia_estacional"]
     horizonte_aplicado: int
     meses_observados: int
-    advertencia: str | None
+    advertencias: list[str] = Field(
+        default_factory=list, description="Cada motivo que limita la proyección, uno por elemento."
+    )
+    advertencia: str | None = Field(None, description="Los mismos motivos unidos en un solo texto.")
     historial: list[MonthTotals]
     mes_parcial: MonthTotals | None = Field(
         None, description="Último mes, todavía incompleto: se proyecta y no entra en el ajuste."

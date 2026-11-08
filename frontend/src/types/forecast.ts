@@ -75,6 +75,9 @@ export interface MonthlyForecastResponse {
   modelo: MonthlyModel;
   horizonte_aplicado: number;
   meses_observados: number;
+  /** Every reason that limits the projection, one sentence each. */
+  advertencias: string[];
+  /** The same reasons joined in one text. */
   advertencia: string | null;
   historial: MonthTotals[];
   /** The last, still incomplete month: projected, not fitted. */
