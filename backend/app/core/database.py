@@ -1,22 +1,19 @@
 """Database engine and session factory.
 
-SQLAlchemy 2.0 setup with PostgreSQL. The connection string is read
-from the ``DATABASE_URL`` environment variable. Schema is managed via
+SQLAlchemy 2.0 setup with PostgreSQL. The connection string comes
+from ``DATABASE_URL`` through ``app.core.config``. Schema is managed via
 Alembic (see ``alembic/``); ``Base.metadata.create_all`` is intentionally
 not called at runtime.
 """
 
 from collections.abc import Generator
 
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
-load_dotenv()
+from app.core.config import settings
 
-import os
-
-SQLALCHEMY_DATABASE_URL: str = os.environ["DATABASE_URL"]
+SQLALCHEMY_DATABASE_URL: str = settings.database_url
 
 # pool_pre_ping=True drops dead connections automatically, important
 # for long-running services and after DB restarts.

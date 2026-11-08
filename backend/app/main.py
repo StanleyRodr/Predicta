@@ -1,7 +1,7 @@
 """FastAPI application factory for the Predicta API.
 
 Bootstraps:
-- CORS middleware (origins from ``CORS_ORIGINS`` env var)
+- CORS middleware (origins from ``CORS_ORIGINS``, see ``app.core.config``)
 - Rate limiting on the login endpoint
 - Structured logging via loguru
 - API routers (users, ETL, analytics)
@@ -10,11 +10,9 @@ Schema is managed via Alembic. Run ``alembic upgrade head`` before
 starting the server for the first time.
 """
 
-import os
 import sys
 from contextlib import asynccontextmanager
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
@@ -24,10 +22,9 @@ from sqlalchemy import text
 from starlette.responses import JSONResponse
 
 from app.api import analytics_routes, etl_routes, user_routes
+from app.core.config import settings
 from app.core.database import engine
 from app.core.rate_limit import limiter
-
-load_dotenv()
 
 # ============================================================
 # Logging
@@ -35,7 +32,7 @@ load_dotenv()
 logger.remove()
 logger.add(
     sys.stdout,
-    level=os.getenv("LOG_LEVEL", "INFO"),
+    level=settings.log_level,
     format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
     "<level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan> - "
     "<level>{message}</level>",
@@ -69,17 +66,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS: comma-separated list in env, "*" only for local dev.
-cors_origins_raw = os.getenv("CORS_ORIGINS", "*")
-cors_origins: list[str] = (
-    ["*"] if cors_origins_raw.strip() == "*" else [o.strip() for o in cors_origins_raw.split(",")]
-)
+# CORS: explicit origins; "*" is only accepted in development (see config).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.state.limiter = limiter

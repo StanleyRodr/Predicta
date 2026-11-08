@@ -6,6 +6,9 @@ import os
 # engine at module load time, so configure SQLite before importing the app.
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
+# Do not inherit a developer's CORS settings from backend/.env.
+os.environ["ENVIRONMENT"] = "test"
+os.environ["CORS_ORIGINS"] = "http://localhost:5173"
 
 import pytest
 from fastapi.testclient import TestClient
@@ -16,6 +19,7 @@ from sqlalchemy.pool import StaticPool
 from app.core.database import Base, get_db
 from app.core.rate_limit import limiter
 from app.main import app
+from app.models import models
 
 
 @pytest.fixture(scope="function")
@@ -28,6 +32,10 @@ def test_db():
     )
     Base.metadata.create_all(bind=engine)
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    # Same roles that migration 0001 seeds.
+    with TestingSessionLocal() as session:
+        session.add_all([models.Rol(nombre_rol="Administrador"), models.Rol(nombre_rol="Usuario")])
+        session.commit()
     yield TestingSessionLocal
     Base.metadata.drop_all(bind=engine)
 

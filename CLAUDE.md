@@ -40,7 +40,8 @@ Before submitting: backend `make lint`, `make typecheck`, `make test`; frontend 
 
 ## Environment
 
-- `backend/.env` (from `.env.example`) must define `DATABASE_URL` (`postgresql+psycopg2://...`) and `SECRET_KEY`. `app/core/database.py` reads `os.environ["DATABASE_URL"]` at import time, so importing the app without it fails. `CORS_ORIGINS` (comma-separated, default `*`) and `LOG_LEVEL` are optional.
+- `app/core/config.py` (`pydantic-settings`) is the only place that reads the environment and `backend/.env`; declare every new variable there and in `.env.example`. `DATABASE_URL` (`postgresql+psycopg2://...`) and `SECRET_KEY` are required, so importing the app without them fails. Optional: `ENVIRONMENT` (`development`/`test`/`production`, unset means production), `CORS_ORIGINS` (comma-separated, default `http://localhost:5173`; `*` only with `ENVIRONMENT=development`), `ACCESS_TOKEN_EXPIRE_MINUTES`, `LOG_LEVEL`, `MAX_UPLOAD_ROWS`.
+- Passwords are hashed with `bcrypt` directly (no `passlib`) and limited to 72 bytes; new users get the `Usuario` role looked up by name.
 - App startup (`lifespan` in `app/main.py`) runs `SELECT 1` and aborts if the database is unreachable.
 - `tests/conftest.py` sets `DATABASE_URL=sqlite:///:memory:` *before* importing the app, overrides `get_db` with a fresh in-memory SQLite DB per test (built via `Base.metadata.create_all`, test-only), and disables the slowapi rate limiter. Use the `client`, `user_credentials`, and `auth_headers` fixtures for authenticated requests.
 - Frontend reads `VITE_API_URL` (default `http://localhost:8000`).

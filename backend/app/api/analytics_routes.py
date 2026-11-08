@@ -5,8 +5,11 @@ Aggregations live in ``analytics_service``; Excel and PDF files in
 ``report_service``; saved forecasts in ``prediction_service``. No GET writes.
 """
 
+import re
+import unicodedata
 from collections.abc import Callable
 from datetime import date
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
@@ -43,6 +46,17 @@ def _forecast[T](build: Callable[[], T]) -> T:
         raise HTTPException(status_code=422, detail=exc.detail) from exc
 
 
+def content_disposition(filename: str) -> str:
+    """Attachment header that survives non-ASCII names (RFC 6266 / RFC 5987).
+
+    ``filename`` is an ASCII fallback without accents or unsafe characters;
+    ``filename*`` carries the exact UTF-8 name for browsers that support it.
+    """
+    ascii_name = unicodedata.normalize("NFKD", filename).encode("ascii", "ignore").decode("ascii")
+    ascii_name = re.sub(r"[^A-Za-z0-9._-]", "_", ascii_name) or "reporte"
+    return f"attachment; filename=\"{ascii_name}\"; filename*=UTF-8''{quote(filename, safe='')}"
+
+
 def _download(build: Callable[[], report_service.Report]) -> Response:
     """Wrap a generated report in a downloadable response."""
     try:
@@ -53,7 +67,7 @@ def _download(build: Callable[[], report_service.Report]) -> Response:
         content=report.content,
         media_type=report.media_type,
         headers={
-            "Content-Disposition": f'attachment; filename="{report.filename}"',
+            "Content-Disposition": content_disposition(report.filename),
             "Access-Control-Expose-Headers": "Content-Disposition",
         },
     )

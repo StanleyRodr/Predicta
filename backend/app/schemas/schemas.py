@@ -13,6 +13,9 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 # Password policy: at least 8 chars, one uppercase, one lowercase, one digit.
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
 PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."
+# bcrypt ignores everything past 72 bytes, so longer passwords are refused.
+MAX_PASSWORD_BYTES = 72
+PASSWORD_TOO_LONG = "La contraseña no puede superar 72 bytes (las letras con tilde ocupan 2)."
 
 
 class UserBase(BaseModel):
@@ -30,6 +33,8 @@ class UserCreate(UserBase):
     @field_validator("password")
     @classmethod
     def _validate_password_strength(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > MAX_PASSWORD_BYTES:
+            raise ValueError(PASSWORD_TOO_LONG)
         if not PASSWORD_PATTERN.match(value):
             raise ValueError(PASSWORD_HINT)
         return value

@@ -37,7 +37,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | HECHO |
 | 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | HECHO |
 | 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | HECHO |
-| 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | TODO |
+| 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | HECHO |
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | TODO |
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | TODO |
 
@@ -373,10 +373,10 @@ Plan: `docs/planning/plans/028-accesibilidad.md` | Depende de: 025, 026 | Esfuer
 
 Plan: `docs/planning/plans/029-configuracion-auth.md` | Depende de: 015 | Esfuerzo: M
 
-- [ ] 029.1 Centralizar configuración y cerrar CORS. Verificar: `os.getenv` solo en `config.py` y `*` rechazado en producción.
-- [ ] 029.2 Reemplazar `passlib`. Verificar: los hashes existentes siguen validando.
-- [ ] 029.3 Limitar contraseña a 72 bytes y buscar el rol por nombre. Verificar: tests de ambos.
-- [ ] 029.4 Capturar `IntegrityError` y corregir `Content-Disposition`. Verificar: tests de ambos.
+- [x] 029.1 Centralizar configuración y cerrar CORS. Verificar: `os.getenv` solo en `config.py` y `*` rechazado en producción.
+- [x] 029.2 Reemplazar `passlib`. Verificar: los hashes existentes siguen validando.
+- [x] 029.3 Limitar contraseña a 72 bytes y buscar el rol por nombre. Verificar: tests de ambos.
+- [x] 029.4 Capturar `IntegrityError` y corregir `Content-Disposition`. Verificar: tests de ambos.
 
 ### Tarea 030 — Cerrar huecos de pruebas
 

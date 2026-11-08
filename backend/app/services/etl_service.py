@@ -9,7 +9,6 @@ import csv
 import hashlib
 import io
 import math
-import os
 import re
 import zipfile
 from datetime import date
@@ -20,13 +19,14 @@ from loguru import logger
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models import models
 from app.services.category_service import normalize_category
 
 ALLOWED_EXTENSIONS = {"csv", "xlsx", "sql"}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
 MAX_XLSX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024  # 200 MB
-MAX_ROWS = int(os.getenv("MAX_UPLOAD_ROWS", "200000"))
+MAX_ROWS = settings.max_upload_rows
 MAX_REPORTED_ERRORS = 20
 READ_CHUNK_BYTES = 1024 * 1024
 REQUIRED_COLUMNS = {"producto", "monto", "fecha"}
