@@ -112,7 +112,7 @@ def test_fewer_than_six_months_explains_how_many_are_missing():
 
 @pytest.mark.parametrize(
     ("months", "model", "horizon"),
-    [(6, "tendencia", 3), (23, "tendencia", 11), (24, "tendencia_estacional", 12), (36, "tendencia_estacional", 12)],
+    [(6, "tendencia", 3), (23, "tendencia", 11), (24, "tendencia", 12), (35, "tendencia", 12), (36, "tendencia_estacional", 12)],
 )
 def test_model_and_horizon_follow_observed_months(months, model, horizon):
     monthly = _monthly(months)
@@ -140,8 +140,18 @@ def test_short_history_warns_that_seasons_are_not_modeled():
     assert "temporada" in forecast.advertencia
 
 
+def test_two_years_still_use_trend_and_say_when_seasons_start():
+    monthly = _monthly(30)
+
+    forecast = monthly_forecast_series(monthly, _last_day(monthly))
+
+    assert forecast.modelo == "tendencia"
+    assert forecast.horizonte == 12
+    assert "desde 36 meses" in forecast.advertencia
+
+
 def test_seasonality_needs_every_calendar_month_observed():
-    monthly = _monthly(26, skip_months=(8,))
+    monthly = _monthly(38, skip_months=(8,))
 
     forecast = monthly_forecast_series(monthly, _last_day(monthly))
 
@@ -209,13 +219,36 @@ def test_interval_widens_further_from_the_data():
     assert points[-1].superior - points[-1].inferior > points[0].superior - points[0].inferior
 
 
-def test_metrics_come_from_a_chronological_holdout():
+def test_metrics_come_from_one_month_ahead_predictions_of_the_last_months():
     monthly = _monthly(24)
 
     metrics = monthly_forecast_series(monthly, _last_day(monthly)).objetivos["monto"].metricas
 
-    assert set(metrics) == {"r2", "mape", "rmse"}
-    assert metrics["rmse"] is not None and metrics["rmse"] >= 0
+    assert set(metrics) == {"r2", "mape", "rmse", "wape", "mase", "mejora_vs_referencia", "referencia", "origenes"}
+    assert metrics["origenes"] == 6
+    assert metrics["rmse"] >= 0 and metrics["wape"] >= 0 and metrics["mase"] >= 0
+    assert metrics["referencia"] in {"ultimo_valor", "mismo_mes_anio_anterior", "promedio_movil_3"}
+    assert metrics["mejora_vs_referencia"] is not None
+
+
+def test_metrics_stay_null_when_no_month_can_be_predicted_unseen():
+    monthly = _monthly(6)
+
+    metrics = monthly_forecast_series(monthly, _last_day(monthly)).objetivos["monto"].metricas
+
+    assert metrics["origenes"] == 0
+    for name in ("r2", "mape", "rmse", "wape", "mase", "mejora_vs_referencia", "referencia"):
+        assert metrics[name] is None
+
+
+def test_a_single_unseen_month_leaves_r2_null_but_scores_the_error():
+    monthly = _monthly(7)
+
+    metrics = monthly_forecast_series(monthly, _last_day(monthly)).objetivos["monto"].metricas
+
+    assert metrics["origenes"] == 1
+    assert metrics["r2"] is None
+    assert metrics["wape"] is not None
 
 
 def test_category_projections_add_up_to_the_total():

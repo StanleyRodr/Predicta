@@ -1,0 +1,6 @@
+categoria,wape_regla,wape_estacional_forzada,wape_ets,mejor_referencia,wape_referencia,mejora_regla_pct
+Abarrotes,7.6805,15.3261,7.0755,promedio_movil_3,8.9882,14.5488
+Bebidas,13.0498,13.2185,11.287,mismo_mes_anio_anterior,14.2395,8.3544
+Cuidado Personal,8.5447,12.8009,8.0882,promedio_movil_3,13.5406,36.8958
+Limpieza,18.1755,23.8087,16.1142,promedio_movil_3,7.1655,-153.6512
+Lácteos,6.1022,15.9884,5.4401,promedio_movil_3,8.2047,25.626

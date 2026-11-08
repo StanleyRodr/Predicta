@@ -9,8 +9,13 @@ Monthly model, chosen per series from its complete observed months:
 
 - fewer than 6: no projection (``InsufficientHistoryError``);
 - 6 to 23: trend only, horizon of half the months (3 to 11);
-- 24 or more, with every calendar month observed: trend plus 11 month dummies
+- 24 to 35: trend only, horizon of 12;
+- 36 or more, with every calendar month observed: trend plus 11 month dummies
   (January is the reference), horizon of 12.
+
+Seasonality starts at 36 months, three observations per calendar month. With
+24 the seasonal specification lost to the same-month-last-year baseline in
+4 of 6 backtest horizons (``docs/evaluacion/resultados.md``).
 
 Months without sales are absent from the data, never filled with zero.
 """
@@ -25,11 +30,18 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-METRIC_NAMES = ("r2", "mape", "rmse")
+from app.ml_models.evaluation import ModelFn, one_step_metrics, point_metrics
+
+DAILY_METRIC_NAMES = ("r2", "mape", "rmse")
 TARGETS = ("monto", "cantidad")
 MIN_MONTHS = 6
-SEASONAL_MONTHS = 24
+#: History length from which the full 12-month horizon is projected.
+FULL_HORIZON_MONTHS = 24
+SEASONAL_MONTHS = 36
 MAX_HORIZON = 12
+# Fewest training months that leave one degree of freedom per specification.
+TREND_MIN_FIT = 3
+SEASONAL_MIN_FIT = 14
 # Points past this many months ahead are extrapolation and are flagged as such.
 RELIABLE_MONTHS = 6
 # The weekday model needs two observations of each weekday.
@@ -41,7 +53,7 @@ MONTH_NAMES = (
 )
 
 MonthlyModel = Literal["tendencia", "tendencia_estacional"]
-Metrics = dict[str, float | None]
+Metrics = dict[str, Any]
 
 
 class SaleRecord(Protocol):
@@ -167,19 +179,9 @@ def _with_constant(features: pd.DataFrame) -> pd.DataFrame:
 
 
 def _metrics(actual: np.ndarray, predicted: np.ndarray) -> Metrics:
-    """Calculate metrics on a temporal holdout, never on training rows."""
-    if len(actual) == 0:
-        return {name: None for name in METRIC_NAMES}
-    errors = actual - predicted
-    nonzero = actual != 0
-    spread = np.sum((actual - actual.mean()) ** 2)
-    return {
-        "r2": float(1 - np.sum(errors**2) / spread) if len(actual) > 1 and spread > 0 else None,
-        "mape": float(np.mean(np.abs(errors[nonzero] / actual[nonzero])) * 100)
-        if np.any(nonzero)
-        else None,
-        "rmse": float(np.sqrt(np.mean(errors**2))),
-    }
+    """R², MAPE, and RMSE on a temporal holdout, never on training rows."""
+    scores = point_metrics(actual, predicted, np.array([]))
+    return {name: scores[name] for name in DAILY_METRIC_NAMES}
 
 
 def _holdout_metrics(features: pd.DataFrame, y: np.ndarray) -> Metrics:
@@ -208,6 +210,41 @@ def _missing_calendar_months(history: pd.DataFrame) -> list[str]:
     return [MONTH_NAMES[month - 1] for month in range(1, 13) if month not in seen]
 
 
+def _monthly_design(dates: Sequence[pd.Timestamp], seasonal: bool) -> pd.DataFrame:
+    series = pd.Series(list(dates))
+    index = months_elapsed(series)
+    if seasonal:
+        return build_seasonal_features(index, series.dt.month)
+    return pd.DataFrame({"mes_indice": index.astype(float)})
+
+
+def monthly_regression(seasonal: bool) -> ModelFn:
+    """The monthly OLS as a model function, for the final fit and for backtests.
+
+    It returns ``None`` when the window cannot support the specification: the
+    seasonal one needs every calendar month and one degree of freedom left.
+    Predictions and bounds are clipped at zero, as the user sees them.
+    """
+
+    def model(train: pd.DataFrame, target: str, future_dates: Sequence[pd.Timestamp]) -> pd.DataFrame | None:
+        if len(train) < (SEASONAL_MIN_FIT if seasonal else TREND_MIN_FIT):
+            return None
+        if seasonal and _missing_calendar_months(train):
+            return None
+        design = _monthly_design(list(train["fecha"]) + list(future_dates), seasonal)
+        fitted = sm.OLS(train[target].to_numpy(dtype=float), _with_constant(design.iloc[: len(train)])).fit()
+        frame = fitted.get_prediction(_with_constant(design.iloc[len(train) :])).summary_frame(alpha=ALPHA)
+        return pd.DataFrame(
+            {
+                "mean": frame["mean"].clip(lower=0).to_numpy(),
+                "lower": frame["obs_ci_lower"].clip(lower=0).to_numpy(),
+                "upper": frame["obs_ci_upper"].clip(lower=0).to_numpy(),
+            }
+        )
+
+    return model
+
+
 def _split_partial_month(
     monthly: pd.DataFrame, last_sale: date
 ) -> tuple[pd.DataFrame, pd.Series | None]:
@@ -221,6 +258,13 @@ def _split_partial_month(
     return ordered, None
 
 
+def applied_model(observed: int, history: pd.DataFrame, max_horizon: int = MAX_HORIZON) -> tuple[bool, int]:
+    """Whether the seasonal specification applies, and the horizon, for a history."""
+    seasonal = observed >= SEASONAL_MONTHS and not _missing_calendar_months(history)
+    horizon = min(max_horizon, MAX_HORIZON if observed >= FULL_HORIZON_MONTHS else observed // 2)
+    return seasonal, horizon
+
+
 def monthly_forecast_series(
     monthly: pd.DataFrame, last_sale: date, max_horizon: int = MAX_HORIZON
 ) -> MonthlyForecast:
@@ -229,6 +273,10 @@ def monthly_forecast_series(
     ``monthly`` holds one row per observed month (month-end ``fecha``, ``monto``,
     ``cantidad``), as ``monthly_aggregates`` returns it. ``last_sale`` is the date
     of the latest sale, which tells whether the last month is complete.
+
+    Metrics come from refitting the same specification at each of the last
+    months and predicting the next one unseen, against the baselines in
+    ``evaluation``. They are ``None`` when the history leaves no such month.
     """
     history, partial = _split_partial_month(monthly, last_sale)
     observed = len(history)
@@ -239,14 +287,13 @@ def monthly_forecast_series(
         )
 
     missing = _missing_calendar_months(history)
-    seasonal = observed >= SEASONAL_MONTHS and not missing
-    horizon = min(max_horizon, MAX_HORIZON if observed >= SEASONAL_MONTHS else observed // 2)
+    seasonal, horizon = applied_model(observed, history, max_horizon)
 
     warnings: list[str] = []
     if observed < SEASONAL_MONTHS:
         warnings.append(
             f"Con {observed} meses completos la proyección es una tendencia: no anticipa "
-            f"temporadas. Se proyectan {horizon} meses."
+            f"temporadas, que se modelan desde {SEASONAL_MONTHS} meses. Se proyectan {horizon} meses."
         )
     elif missing:
         warnings.append(
@@ -255,34 +302,30 @@ def monthly_forecast_series(
         )
     if horizon > RELIABLE_MONTHS:
         warnings.append(
-            f"Los meses {RELIABLE_MONTHS + 1} a {horizon} son extrapolación: su incertidumbre es mayor."
+            f"Los meses {RELIABLE_MONTHS + 1} a {horizon} son extrapolación sin validar: "
+            "su incertidumbre es mayor."
         )
 
     first_future = partial["fecha"] if partial is not None else history["fecha"].iloc[-1] + pd.offsets.MonthEnd(1)
     future_dates = [first_future + pd.offsets.MonthEnd(step) for step in range(horizon)]
-    all_dates = pd.Series(list(history["fecha"]) + future_dates)
-    index = months_elapsed(all_dates)
-    calendar = all_dates.dt.month
-    if seasonal:
-        features = build_seasonal_features(index, calendar)
-    else:
-        features = pd.DataFrame({"mes_indice": index.astype(float)})
-    fitted, future = features.iloc[:observed], features.iloc[observed:].reset_index(drop=True)
+    model = monthly_regression(seasonal)
 
     objetivos: dict[str, TargetForecast] = {}
     for target in TARGETS:
-        projection, metrics = _fit_and_project(fitted, history[target].to_numpy(dtype=float), future)
-        points = []
-        for step, (moment, row) in enumerate(zip(future_dates, projection.itertuples(), strict=True), start=1):
-            points.append(
-                ForecastPoint(
-                    fecha=moment,
-                    prediccion=max(0.0, float(row.mean)),
-                    inferior=max(0.0, float(row.obs_ci_lower)),
-                    superior=max(0.0, float(row.obs_ci_upper)),
-                    extrapolacion=step > RELIABLE_MONTHS,
-                )
+        projection = model(history, target, future_dates)
+        if projection is None:  # unreachable: the rule only picks specifications the history supports
+            raise InsufficientHistoryError("No se pudo ajustar el modelo con este historial.")
+        points = [
+            ForecastPoint(
+                fecha=moment,
+                prediccion=float(row.mean),
+                inferior=float(row.lower),
+                superior=float(row.upper),
+                extrapolacion=step > RELIABLE_MONTHS,
             )
+            for step, (moment, row) in enumerate(zip(future_dates, projection.itertuples(), strict=True), start=1)
+        ]
+        metrics = one_step_metrics(history, target, model, min_train=MIN_MONTHS)
         objetivos[target] = TargetForecast(puntos=points, metricas=metrics)
 
     return MonthlyForecast(

@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** MED
@@ -15,6 +15,22 @@
 
 Responder con evidencia a la pregunta del tribunal: "¿mejor que qué?". Evaluar
 por horizonte y comparar contra modelos simples y uno más fuerte.
+
+## Decisiones tomadas
+
+- El backtest evalúa por separado la regla aplicada (con 18 a 23 meses, solo
+  tendencia) y la especificación estacional forzada.
+- Las métricas de runtime salen de un origen móvil a 1 mes sobre los últimos 6
+  meses, con la misma especificación del modelo final.
+- El modelo fuerte es ETS con tendencia amortiguada, solo en el script. ETS
+  estacional necesita 2 ciclos completos y el entrenamiento tiene 18 meses.
+- MASE se escala con el error del último valor; el promedio móvil es de 3 meses;
+  la mejora se mide en WAPE contra el mejor modelo simple.
+- Las tablas y gráficos se guardan en `docs/evaluacion/`, dentro del repo.
+- **STOP:** la especificación estacional perdió contra el mismo mes del año
+  anterior en 4 de 6 horizontes. Se decidió con el usuario subir el umbral de
+  estacionalidad de 24 a 36 meses. Con 24 a 35 meses se usa tendencia con 12
+  meses de horizonte. Esto cambia la tabla de decisiones del plan 021.
 
 ## Alcance
 

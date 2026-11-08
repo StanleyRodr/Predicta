@@ -1,0 +1,4 @@
+meses_de_historial,modelo,horizonte,meses_comparados,wape,mape,cobertura_95,wape_ultimo_valor,wape_mismo_mes_anio_anterior
+6,tendencia,3,3,29.1549,28.6699,100.0,11.8127,
+12,tendencia,6,6,28.2913,34.7821,100.0,21.5397,22.8373
+18,tendencia,9,6,7.9791,7.7658,100.0,6.8783,11.6384
