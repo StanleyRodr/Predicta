@@ -3,17 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { categoryChartData } from "./CategoryBarChart";
 import { DateRangeFilter } from "./DateRangeFilter";
-import { temporalChartData } from "./TemporalLineChart";
 
 describe("analytics components", () => {
   it("builds chart data from backend values without re-aggregating", () => {
     expect(categoryChartData([{ categoria: "Abarrotes", ingresos_totales: 20, cantidad_ventas: 2, ticket_promedio: 10 }])).toEqual({
       labels: ["Abarrotes"],
       values: [20],
-    });
-    expect(temporalChartData([{ fecha: "2026-01-01", ingresos: 12, ventas_realizadas: 1 }])).toEqual({
-      labels: ["2026-01-01"],
-      values: [12],
     });
   });
 

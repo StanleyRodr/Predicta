@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** MED
@@ -24,6 +24,21 @@ por vistas que el usuario elige.
   ve su detalle diario. El filtro de categoría aplica en todas las vistas.
 - **Medida:** selector Monto / Cantidad, con Monto por defecto. Nunca se mezclan
   dinero y unidades en un mismo eje.
+- **Comparación entre categorías:** una línea por categoría sobre los meses del
+  rango, con `por_categoria=true`. Si hay más de 8 categorías, se comparan las 8
+  de mayor ingreso, porque más líneas no conservan colores distinguibles.
+- **Por mes:** barras con los 12 meses del año elegido; un clic en una barra, o
+  los selectores Año y Mes, abren el detalle diario. Arranca en el último mes
+  con ventas.
+- **Por categoría:** el selector elige la categoría de los años superpuestos y
+  arranca en la de mayor ingreso. La comparación y las barras de totales
+  incluyen siempre todas. En las demás vistas el selector filtra y admite
+  "Todas"; la categoría por defecto de esta vista no pasa a las otras.
+- La línea diaria de todo el historial se elimina; las barras de ingresos por
+  categoría pasan a la vista "Por categoría".
+- La vista y sus filtros viven en el estado de la página, no en la URL.
+- **Colores:** paleta categórica validada sobre el fondo `#161b22`. Cada año y
+  cada categoría tienen un color fijo, que no cambia al filtrar.
 
 ## Diseño
 

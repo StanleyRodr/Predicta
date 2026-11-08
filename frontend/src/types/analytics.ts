@@ -37,3 +37,32 @@ export interface TemporalStatsResponse {
   usuario: string;
   evolucion_diaria: TemporalMetric[];
 }
+
+export type Granularity = "mes" | "dia";
+
+export type Measure = "ingresos" | "cantidad";
+
+export interface SeriesParams extends DateRange {
+  granularidad?: Granularity;
+  categoria?: string;
+  por_categoria?: boolean;
+}
+
+export interface SeriesPoint {
+  periodo: string;
+  anio: number;
+  mes: number;
+  dia: number | null;
+  categoria: string | null;
+  ingresos: number;
+  cantidad: number;
+  ventas_realizadas: number;
+}
+
+export interface SeriesResponse {
+  usuario: string;
+  granularidad: Granularity;
+  categoria: string | null;
+  por_categoria: boolean;
+  puntos: SeriesPoint[];
+}
