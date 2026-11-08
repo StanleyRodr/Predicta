@@ -2,6 +2,7 @@ import { cn } from "../../lib/cn";
 import { formatCurrency, formatNumber } from "../../lib/formatters";
 import { periodLabel } from "../../lib/seriesTransforms";
 import { Badge } from "../ui";
+import { ConceptHint } from "./ConceptHint";
 import type { ForecastMeasure } from "./forecastChartData";
 
 export interface ForecastRow {
@@ -38,6 +39,8 @@ interface ForecastTableProps {
 /** Projected months with amount, units, and the 95 % range; a null value is shown as missing, never as zero. */
 export function ForecastTable({ rows, measure, selected = null, onSelect, caption }: ForecastTableProps) {
   const range = measure === "monto" ? money : units;
+  // One explanation per table: on the first extrapolated month only.
+  const firstExtrapolated = rows.find((row) => row.extrapolacion)?.periodo;
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[32rem] text-left text-sm">
@@ -48,7 +51,10 @@ export function ForecastTable({ rows, measure, selected = null, onSelect, captio
             <th className="py-2 pr-3 text-right font-medium" scope="col">Monto</th>
             <th className="py-2 pr-3 text-right font-medium" scope="col">Cantidad</th>
             <th className="py-2 pr-3 text-right font-medium" scope="col">
-              Rango 95 % ({measure === "monto" ? "monto" : "cantidad"})
+              <span className="inline-flex items-center gap-1.5">
+                Rango 95 % ({measure === "monto" ? "monto" : "cantidad"})
+                <ConceptHint concept="intervalo" />
+              </span>
             </th>
           </tr>
         </thead>
@@ -73,6 +79,11 @@ export function ForecastTable({ rows, measure, selected = null, onSelect, captio
                     <Badge className="ml-2" tone="warning">
                       Extrapolación
                     </Badge>
+                  )}
+                  {row.periodo === firstExtrapolated && (
+                    <span className="ml-1.5 inline-flex align-middle">
+                      <ConceptHint concept="extrapolacion" />
+                    </span>
                   )}
                 </th>
                 <td className="py-2 pr-3 text-right font-mono tabular-nums">{money(row.monto)}</td>

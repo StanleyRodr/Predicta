@@ -8,6 +8,18 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ## [Unreleased]
 
+### Phase 3 - user review (task 032)
+
+#### Added
+- Info buttons on /predictions for the 95 % interval, extrapolation, the caution notice, the month in progress, the model type, the next-day range, and saved projections (032).
+- A label per forecast metric (error, typical margin against an average month, explained pattern, and improvement over a simple calculation), with its ranges in its info button; missing metrics show "Sin dato" (032).
+- `advertencias` on `GET /analytics/forecast`: each reason that limits the projection, one per item; `advertencia` keeps the joined text (032).
+
+#### Changed
+- The label next to Monto and Cantidad is the average of the metric labels, rounded down, and the summary says how many indicators support it (032).
+- "Confiabilidad limitada" is now "Toma esta proyección con cautela", with its reasons as a list (032).
+- The next-day card says "Rango probable" instead of "Rango operativo" (032).
+
 ### Phase 2 - feedback 01 and user requests (tasks 015-031)
 
 #### Added

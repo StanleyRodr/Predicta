@@ -40,7 +40,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | HECHO |
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | HECHO |
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
-| 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | TODO |
+| 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | HECHO |
 
 ## Reglas de ejecución
 
@@ -412,11 +412,11 @@ Plan: `docs/planning/plans/031-limpieza-documentacion.md` | Depende de: 015-030 
 
 Plan: `docs/planning/plans/032-explicaciones-predicciones.md` | Depende de: 027, 028 | Esfuerzo: M
 
-- [ ] 032.1 Agregar `advertencias` al pronóstico mensual sin cambiar `advertencia`. Verificar: tests con y sin motivos.
-- [ ] 032.2 Centralizar los textos de los conceptos. Verificar: cada concepto tiene título y explicación.
-- [ ] 032.3 Calcular la etiqueta de cada métrica y la general. Verificar: tests de rangos, límites, `null` y promedio.
-- [ ] 032.4 Mostrar los badges, la etiqueta general y el resumen. Verificar: RTL de cada badge y de "Sin dato".
-- [ ] 032.5 Agregar el "i" en cada concepto y la lista de motivos del aviso. Verificar: RTL con clic, Enter y Escape.
+- [x] 032.1 Agregar `advertencias` al pronóstico mensual sin cambiar `advertencia`. Verificar: tests con y sin motivos.
+- [x] 032.2 Centralizar los textos de los conceptos. Verificar: cada concepto tiene título y explicación.
+- [x] 032.3 Calcular la etiqueta de cada métrica y la general. Verificar: tests de rangos, límites, `null` y promedio.
+- [x] 032.4 Mostrar los badges, la etiqueta general y el resumen. Verificar: RTL de cada badge y de "Sin dato".
+- [x] 032.5 Agregar el "i" en cada concepto y la lista de motivos del aviso. Verificar: RTL con clic, Enter y Escape.
 
 ## Verificación global
 

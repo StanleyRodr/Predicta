@@ -51,6 +51,7 @@ function monthly(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyForec
     modelo: "tendencia",
     horizonte_aplicado: 7,
     meses_observados: 24,
+    advertencias: [],
     advertencia: null,
     historial: [
       { periodo: "2026-09", monto: 9000, cantidad: 90 },
@@ -163,7 +164,7 @@ describe("PredictionsPage", () => {
 
     expect(await screen.findByRole("heading", { name: "Proyección de todas las categorías" })).toBeInTheDocument();
     expect(getMonthlyForecast).toHaveBeenCalledWith(undefined);
-    expect(screen.getByText(/7 meses con solo tendencia, a partir de 24 meses/)).toBeInTheDocument();
+    expect(screen.getByText(/7 meses con solo tendencia.*a partir de 24 meses/)).toBeInTheDocument();
     const labels = lastChart().map((dataset) => dataset.label);
     expect(labels).toEqual(["Intervalo del 95 %", "", "Historial", "Proyección"]);
     expect(screen.getByText(/el valor real probablemente caerá dentro de esta zona/)).toBeInTheDocument();
@@ -175,6 +176,57 @@ describe("PredictionsPage", () => {
     expect(lastChart()[3].data).toEqual([null, 9500, 10000, 12000, 8000, 8100, 9000, 9500, 9900]);
     expect(await screen.findByText("Mañana, todas las categorías")).toBeInTheDocument();
     expect(screen.getByText("$321.50")).toBeInTheDocument();
+  });
+
+  it("explains every forecast concept behind an info button", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getMonthlyForecast).mockResolvedValueOnce(
+      monthly({
+        mes_parcial: { periodo: "2026-11", monto: 4200, cantidad: 40 },
+        advertencias: ["Los meses 7 a 7 son extrapolación sin validar: su incertidumbre es mayor."],
+        advertencia: "Los meses 7 a 7 son extrapolación sin validar: su incertidumbre es mayor.",
+      }),
+    );
+    renderPage();
+
+    await calculate(user);
+    await screen.findByText("Toma esta proyección con cautela");
+    await screen.findByText("Mañana, todas las categorías");
+    await screen.findAllByText(/Rango probable/);
+
+    for (const concept of [
+      "intervalo del 95 %",
+      "extrapolación",
+      "tomar la proyección con cautela",
+      "mes en curso",
+      "tipo de modelo",
+      "rango del día siguiente",
+      "proyecciones guardadas",
+    ]) {
+      expect(screen.getAllByRole("button", { name: `Qué significa ${concept}` }).length).toBeGreaterThan(0);
+    }
+    expect(screen.getByText(/El punto hueco es el mes en curso, Nov 2026/)).toHaveTextContent("lleva $4,200.00 hasta ahora");
+
+    const [interval] = screen.getAllByRole("button", { name: "Qué significa intervalo del 95 %" });
+    interval.focus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("note")).toHaveTextContent(/de cada 100 meses, unos 95/);
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("note")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Qué significa tomar la proyección con cautela" }));
+    expect(screen.getByRole("note")).toHaveTextContent(/cargar más meses de ventas/);
+  });
+
+  it("explains extrapolation once in the monthly table", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    await calculate(user);
+
+    const table = await screen.findByRole("table", { name: "Meses proyectados" });
+    expect(within(table).getAllByRole("button", { name: "Qué significa extrapolación" })).toHaveLength(1);
+    expect(within(table).getByRole("button", { name: "Qué significa intervalo del 95 %" })).toBeInTheDocument();
   });
 
   it("marks extrapolated months with a note", async () => {
@@ -192,18 +244,24 @@ describe("PredictionsPage", () => {
   it("shows the backend warning, and nothing when there is none", async () => {
     const user = userEvent.setup();
     vi.mocked(getMonthlyForecast).mockResolvedValueOnce(
-      monthly({ horizonte_aplicado: 6, advertencia: "Con 12 meses completos la proyección es una tendencia." }),
+      monthly({
+        horizonte_aplicado: 6,
+        advertencias: ["Con 12 meses completos la proyección es una tendencia.", "Los meses 7 a 12 son extrapolación sin validar."],
+        advertencia: "Con 12 meses completos la proyección es una tendencia. Los meses 7 a 12 son extrapolación sin validar.",
+      }),
     );
     renderPage();
 
     await calculate(user);
 
-    expect(await screen.findByText("Confiabilidad limitada: Con 12 meses completos la proyección es una tendencia.")).toBeInTheDocument();
+    expect(await screen.findByText("Toma esta proyección con cautela")).toBeInTheDocument();
+    const reasons = screen.getAllByRole("listitem").map((item) => item.textContent);
+    expect(reasons).toEqual(["Con 12 meses completos la proyección es una tendencia.", "Los meses 7 a 12 son extrapolación sin validar."]);
     expect(screen.getByText(/6 meses con solo tendencia/)).toBeInTheDocument();
 
     vi.mocked(getMonthlyForecast).mockResolvedValueOnce(monthly());
     await calculate(user);
-    await waitFor(() => expect(screen.queryByText(/Confiabilidad limitada/)).not.toBeInTheDocument());
+    await waitFor(() => expect(screen.queryByText("Toma esta proyección con cautela")).not.toBeInTheDocument());
   });
 
   it("switches to units without asking the backend again", async () => {

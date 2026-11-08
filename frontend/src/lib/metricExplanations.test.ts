@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { ValidationMetrics } from "../types/forecast";
-import { explainMetric, qualityLabel, qualitySummary, technicalRows } from "./metricExplanations";
+import {
+  averageEvaluatedMonth,
+  explainMetric,
+  metricGrade,
+  overallGrade,
+  qualityLabel,
+  qualitySummary,
+  technicalRows,
+} from "./metricExplanations";
 
 function metrics(overrides: Partial<ValidationMetrics> = {}): ValidationMetrics {
   return {
@@ -82,18 +90,110 @@ describe("qualityLabel", () => {
   });
 });
 
+describe("metricGrade", () => {
+  it.each([
+    [0.6, "Muy buena"],
+    [0.5999, "Buena"],
+    [0.3, "Buena"],
+    [0.2999, "Aceptable"],
+    [0, "Aceptable"],
+    [-0.01, "Baja"],
+    [null, null],
+  ])("grades an R² of %s as %s", (r2, label) => {
+    expect(metricGrade("r2", metrics({ r2 }), 10_000)).toBe(label);
+  });
+
+  it.each([
+    [20, "Muy buena"],
+    [19.99, "Buena"],
+    [5, "Buena"],
+    [4.99, "Aceptable"],
+    [-5, "Aceptable"],
+    [-5.01, "Baja"],
+    [null, null],
+  ])("grades an improvement of %s as %s", (mejora_vs_referencia, label) => {
+    expect(metricGrade("mejora", metrics({ mejora_vs_referencia }), 10_000)).toBe(label);
+  });
+
+  it.each([
+    [999, "Muy buena"],
+    [1000, "Buena"],
+    [1999, "Buena"],
+    [2000, "Aceptable"],
+    [5000, "Aceptable"],
+    [5001, "Baja"],
+  ])("grades a margin of %s against a $10,000 month as %s", (rmse, label) => {
+    expect(metricGrade("rmse", metrics({ rmse }), 10_000)).toBe(label);
+  });
+
+  it("cannot grade the margin without a month to compare with", () => {
+    expect(metricGrade("rmse", metrics(), null)).toBeNull();
+    expect(metricGrade("rmse", metrics(), 0)).toBeNull();
+    expect(metricGrade("rmse", metrics({ rmse: null }), 10_000)).toBeNull();
+  });
+
+  it("grades the average error with its own ranges", () => {
+    expect(metricGrade("mape", metrics({ mape: 10 }), null)).toBe("Buena");
+  });
+});
+
+describe("averageEvaluatedMonth", () => {
+  const history = [
+    { periodo: "2025-01", monto: 900, cantidad: 9 },
+    { periodo: "2025-02", monto: 100, cantidad: 1 },
+    { periodo: "2025-03", monto: 300, cantidad: 3 },
+  ];
+
+  it("averages only the evaluated months, the last ones", () => {
+    expect(averageEvaluatedMonth(history, "monto", 2)).toBe(200);
+    expect(averageEvaluatedMonth(history, "cantidad", 3)).toBeCloseTo(13 / 3);
+  });
+
+  it("has no average without evaluated months", () => {
+    expect(averageEvaluatedMonth(history, "monto", 0)).toBeNull();
+    expect(averageEvaluatedMonth([], "monto", 3)).toBeNull();
+  });
+});
+
+describe("overallGrade", () => {
+  it("averages the available labels and rounds down", () => {
+    // Buena, Buena, Muy buena, Buena: 3.25 -> Buena.
+    expect(overallGrade(metrics(), 10_000)).toEqual({ label: "Buena", indicators: 4 });
+    // Muy buena (4) and Aceptable (2): 3 -> Buena.
+    expect(overallGrade(metrics({ mape: 5, rmse: null, r2: 0.1, mejora_vs_referencia: null }), null)).toEqual({ label: "Buena", indicators: 2 });
+    // Muy buena (4) and Baja (1): 2.5 -> Aceptable, never rounded up.
+    expect(overallGrade(metrics({ mape: 5, rmse: null, r2: -1, mejora_vs_referencia: null }), null)).toEqual({ label: "Aceptable", indicators: 2 });
+  });
+
+  it("has no label when nothing could be graded", () => {
+    expect(overallGrade(empty, null)).toBeNull();
+  });
+});
+
 describe("qualitySummary", () => {
   it("sums up the quality in one sentence", () => {
-    expect(qualitySummary(metrics(), "monto")).toBe(
-      "Calidad buena: en los últimos 6 meses evaluados, el monto se desvió en promedio un 12.50% del valor real.",
+    expect(qualitySummary(metrics(), "monto", 10_000)).toBe(
+      "Calidad buena según 4 indicadores, medida en los últimos 6 meses evaluados. En promedio, el monto se desvió un 12.50% del valor real.",
     );
-    expect(qualitySummary(metrics({ mape: 4, origenes: 1 }), "cantidad")).toBe(
-      "Calidad muy buena: en el último mes evaluado, la cantidad se desvió en promedio un 4.00% del valor real.",
+    expect(qualitySummary(metrics({ mape: 4, rmse: null, r2: null, mejora_vs_referencia: null, origenes: 1 }), "cantidad", null)).toBe(
+      "Calidad muy buena según 1 indicador, medida en el último mes evaluado. En promedio, la cantidad se desvió un 4.00% del valor real.",
     );
   });
 
-  it("does not grade a measure without an average error", () => {
-    expect(qualitySummary(empty, "monto")).toBe(
+  it("leaves out the average error when it is missing", () => {
+    expect(qualitySummary(metrics({ mape: null }), "monto", 10_000)).toBe(
+      "Calidad buena según 3 indicadores, medida en los últimos 6 meses evaluados.",
+    );
+  });
+
+  it("explains each metric with its ranges", () => {
+    for (const key of ["mape", "rmse", "r2", "mejora"] as const) {
+      expect(explainMetric(key, metrics(), "monto").explanation).toMatch(/[Mm]uy buena.*buena.*aceptable.*baja/);
+    }
+  });
+
+  it("does not grade a measure without any metric", () => {
+    expect(qualitySummary(empty, "monto", null)).toBe(
       "Aún no se puede calificar el monto. Tu historial todavía no deja meses para comprobar el modelo.",
     );
   });
