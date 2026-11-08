@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import models
+from app.schemas import schemas
 from app.services import etl_service
 
 router = APIRouter(prefix="/etl", tags=["ETL"])
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/etl", tags=["ETL"])
 
 # Declared as a plain function so FastAPI runs this blocking work in its
 # threadpool instead of stalling the event loop for every other request.
-@router.post("/upload-ventas")
+@router.post("/upload-ventas", response_model=schemas.UploadResponse)
 def upload_ventas(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -47,16 +48,16 @@ def upload_ventas(
             db, current_user.id_usuario, extension, contents, file_hash
         )
     except etl_service.FileTooLargeError as exc:
-        raise HTTPException(status_code=413, detail=str(exc)) from exc
+        raise HTTPException(status_code=413, detail=exc.detail) from exc
     except etl_service.DuplicateUploadError as exc:
         raise HTTPException(
             status_code=409,
             detail="Este archivo ya fue cargado. Purga el historial si deseas cargarlo de nuevo.",
         ) from exc
     except etl_service.FileValidationError as exc:
-        raise HTTPException(status_code=400, detail=f"No se pudo leer el archivo: {exc}") from exc
+        raise HTTPException(status_code=400, detail=f"No se pudo leer el archivo: {exc.detail}") from exc
     except etl_service.UnreadableFileError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=exc.detail) from exc
     except Exception as exc:
         logger.exception("Error al guardar el archivo de ventas.")
         raise HTTPException(
@@ -70,7 +71,7 @@ def upload_ventas(
     }
 
 
-@router.delete("/clear-history")
+@router.delete("/clear-history", response_model=schemas.ClearHistoryResponse)
 def clear_history(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),

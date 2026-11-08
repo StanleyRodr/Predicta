@@ -70,7 +70,11 @@ class SaleRecord(Protocol):
 
 
 class InsufficientHistoryError(ValueError):
-    """Too few complete months to project; the message is safe to show."""
+    """Too few complete months to project; ``detail`` is safe to show."""
+
+    @property
+    def detail(self) -> str:
+        return str(self.args[0])
 
 
 @dataclass(frozen=True)

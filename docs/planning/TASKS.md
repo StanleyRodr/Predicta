@@ -31,7 +31,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | HECHO |
 | 021 | Corregir modelo y proyectar 12 meses | `docs/planning/plans/021-modelo-horizonte.md` | P1 | L | 020 | HECHO |
 | 022 | Evaluación y modelos de referencia | `docs/planning/plans/022-evaluacion-baselines.md` | P1 | L | 021 | HECHO |
-| 023 | Contrato de predicción y esquemas | `docs/planning/plans/023-contrato-prediccion.md` | P1 | L | 016, 022 | TODO |
+| 023 | Contrato de predicción y esquemas | `docs/planning/plans/023-contrato-prediccion.md` | P1 | L | 016, 022 | HECHO |
 | 024 | Series de analítica por dimensión | `docs/planning/plans/024-analitica-dimensiones.md` | P1 | M | 020 | HECHO |
 | 025 | Dashboard general, categoría y mes | `docs/planning/plans/025-dashboard-explorador.md` | P1 | L | 018, 019, 024 | HECHO |
 | 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | TODO |

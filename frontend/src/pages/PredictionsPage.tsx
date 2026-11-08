@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { useState } from "react";
 import { getForecast } from "../api/forecast";
 import { ForecastMetricCard, ForecastQuality } from "../components/forecast";
@@ -6,7 +7,11 @@ import { Alert, Button, Card, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { formatDate } from "../lib/formatters";
 import { useAuthStore } from "../stores/authStore";
-import { isForecastAvailable } from "../types/forecast";
+
+/** 422 means the history cannot support a forecast yet; it is not a failure. */
+function isUnprocessable(error: unknown): boolean {
+  return isAxiosError(error) && error.response?.status === 422;
+}
 
 export function PredictionsPage() {
   const userId = useAuthStore((state) => state.user?.id_usuario ?? null);
@@ -17,6 +22,8 @@ export function PredictionsPage() {
     enabled: false,
     refetchOnWindowFocus: false,
     staleTime: Infinity,
+    // Asking again cannot add sales history.
+    retry: (failures, error) => !isUnprocessable(error) && failures < 1,
   });
 
   async function calculate() {
@@ -24,8 +31,8 @@ export function PredictionsPage() {
     await forecast.refetch();
   }
 
-  const result = forecast.data;
-  const available = result && isForecastAvailable(result) ? result : null;
+  const available = forecast.data;
+  const insufficient = isUnprocessable(forecast.error);
 
   return (
     <div className="grid gap-8">
@@ -40,8 +47,14 @@ export function PredictionsPage() {
         </Button>
       </header>
       {!requested && <Card><p className="text-terminal-muted">La prediccion se ejecuta solo cuando la solicitas.</p></Card>}
-      {forecast.error && <Alert tone="error">{getApiErrorMessage(forecast.error, "No se pudo calcular la prediccion.")}</Alert>}
-      {result && !isForecastAvailable(result) && <Alert tone="info">{result.error} Carga mas dias de ventas y vuelve a intentarlo.</Alert>}
+      {forecast.error && insufficient && (
+        <Alert tone="info">
+          {getApiErrorMessage(forecast.error, "Todavía no hay suficientes ventas para proyectar.")} Carga más días de ventas y vuelve a intentarlo.
+        </Alert>
+      )}
+      {forecast.error && !insufficient && (
+        <Alert tone="error">{getApiErrorMessage(forecast.error, "No se pudo calcular la predicción.")}</Alert>
+      )}
       {available && (
         <>
           <div className="grid gap-4 sm:grid-cols-2">

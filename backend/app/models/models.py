@@ -10,9 +10,11 @@ from decimal import Decimal
 
 from sqlalchemy import (
     DECIMAL,
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -122,7 +124,12 @@ class CargaArchivo(Base):
 
 
 class Prediccion(Base):
-    """Stored forecast produced by the ML pipeline."""
+    """One projected period of a forecast the user chose to save.
+
+    Rows saved together share ``lote``. ``tipo`` is ``mensual`` for saved monthly
+    projections and ``diaria`` for next-day forecasts stored before saving became
+    explicit. A null ``categoria`` means the projection covers every category.
+    """
 
     __tablename__ = "predicciones"
 
@@ -130,11 +137,28 @@ class Prediccion(Base):
     id_usuario: Mapped[int] = mapped_column(
         Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), index=True
     )
+    lote: Mapped[str] = mapped_column(String(40), nullable=False)
+    tipo: Mapped[str] = mapped_column(String(10), nullable=False, server_default="mensual")
+    categoria: Mapped[str | None] = mapped_column(String(100))
     producto_referencia: Mapped[str] = mapped_column(String(150), nullable=False)
-    cantidad_proyectada: Mapped[Decimal] = mapped_column(DECIMAL(10, 2), nullable=False)
-    monto_proyectado: Mapped[Decimal | None] = mapped_column(DECIMAL(10, 2))
     fecha_proyeccion: Mapped[date] = mapped_column(Date, nullable=False)
-    precision_estimada: Mapped[Decimal | None] = mapped_column(DECIMAL(5, 2))
+    monto_proyectado: Mapped[Decimal | None] = mapped_column(DECIMAL(12, 2))
+    monto_inferior: Mapped[Decimal | None] = mapped_column(DECIMAL(12, 2))
+    monto_superior: Mapped[Decimal | None] = mapped_column(DECIMAL(12, 2))
+    cantidad_proyectada: Mapped[Decimal] = mapped_column(DECIMAL(12, 2), nullable=False)
+    cantidad_inferior: Mapped[Decimal | None] = mapped_column(DECIMAL(12, 2))
+    cantidad_superior: Mapped[Decimal | None] = mapped_column(DECIMAL(12, 2))
+    modelo: Mapped[str | None] = mapped_column(String(30))
+    horizonte: Mapped[int | None] = mapped_column(Integer)
+    extrapolacion: Mapped[bool | None] = mapped_column(Boolean)
+    # Out-of-sample R² can be far below zero, so it is not a bounded decimal.
+    r2_validacion: Mapped[float | None] = mapped_column(Float)
+    wape_validacion: Mapped[float | None] = mapped_column(Float)
     fecha_creacion: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
+    )
+
+    __table_args__ = (
+        CheckConstraint("tipo IN ('mensual', 'diaria')", name="ck_predicciones_tipo"),
+        Index("idx_predicciones_usuario_lote", "id_usuario", "lote"),
     )

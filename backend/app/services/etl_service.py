@@ -44,19 +44,27 @@ SQL_INSERT = re.compile(
 )
 
 
-class RowValidationError(ValueError):
+class UserFacingError(ValueError):
+    """An error whose ``detail`` was written for the user and is safe to show."""
+
+    @property
+    def detail(self) -> str:
+        return str(self.args[0]) if self.args else ""
+
+
+class RowValidationError(UserFacingError):
     """A row problem whose message is safe to show to the user."""
 
 
-class FileValidationError(ValueError):
+class FileValidationError(UserFacingError):
     """A file problem whose message is safe to show to the user."""
 
 
-class FileTooLargeError(ValueError):
+class FileTooLargeError(UserFacingError):
     """The file, its expanded content, or its row count exceeds a limit."""
 
 
-class UnreadableFileError(ValueError):
+class UnreadableFileError(UserFacingError):
     """The file could not be parsed; the cause is logged, not shown."""
 
 
@@ -338,7 +346,7 @@ def load_sales(
             ventas_creadas += 1
         except RowValidationError as exc:
             if len(errores) < MAX_REPORTED_ERRORS:
-                errores.append({"fila": row_number, "error": str(exc)})
+                errores.append({"fila": row_number, "error": exc.detail})
         except (TypeError, ValueError):
             if len(errores) < MAX_REPORTED_ERRORS:
                 errores.append({"fila": row_number, "error": "la fila tiene valores no validos"})

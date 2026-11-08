@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** MED
@@ -20,6 +20,18 @@ escribir en la base, y guardarla debe ser una acción explícita y consultable.
 
 Se guarda solo a pedido. Esto reemplaza la propuesta de F-08 de pasar `/predict`
 a POST: si consultar ya no escribe, GET es el verbo correcto.
+
+- Las 4 filas existentes (la misma proyección diaria guardada en cada consulta)
+  se conservan como `tipo = 'diaria'`, cada una en su lote `legado-<id>`.
+- Cada fila guarda los límites de monto y de cantidad, `modelo`, `horizonte`,
+  `extrapolacion`, `r2_validacion` y `wape_validacion`.
+- `precision_estimada` se renombra a `r2_validacion`, no a `r2_holdout`: desde el
+  plan 022 el R² sale del origen móvil, no de un holdout único.
+- Una categoría sin ventas responde 422, igual que el historial corto.
+- La categoría se resuelve como en el plan 024: sin tildes, contra las
+  categorías guardadas del usuario. El PDF por categoría usa la misma regla.
+- Los errores mostrados al usuario usan un `detail` explícito; ninguna respuesta
+  usa `str(exc)`.
 
 ## Contrato
 

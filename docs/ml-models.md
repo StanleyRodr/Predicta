@@ -103,6 +103,30 @@ Si el historial no deja ningún mes para evaluar (6 meses), todas las métricas
 son `null` y `origenes` es 0. Una métrica que no se puede calcular nunca se
 muestra como cero.
 
+## Contrato de la API
+
+Consultar nunca escribe en la base; guardar es una acción explícita.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /analytics/predict` | Proyección del día siguiente: punto, intervalo del 95 % y métricas del holdout. Con menos de 2 días con ventas, 422. |
+| `GET /analytics/forecast?categoria=` | Serie mensual: `historial`, `mes_parcial`, `proyeccion` (por mes: `prediccion`, `inferior`, `superior` de monto y cantidad, y `extrapolacion`), `metricas`, `modelo`, `horizonte_aplicado` y `advertencia`. Sin `categoria`, cubre todas. |
+| `POST /analytics/predicciones` | Recibe solo `categoria`, recalcula la proyección en el servidor y guarda una fila por mes proyectado, todas con el mismo `lote`. Responde 201 con el lote guardado. |
+| `GET /analytics/predicciones?skip=&limit=` | Lotes guardados del usuario, del más reciente al más antiguo. |
+
+La categoría se compara sin distinguir mayúsculas, espacios ni tildes, también
+en las categorías que creó el usuario. Cuando no hay ventas, la categoría no
+tiene ventas o faltan meses completos, `/forecast` y `POST /predicciones`
+responden 422 con un `detail` en español, por ejemplo: "Se necesitan al menos 6
+meses completos de ventas para proyectar; hay 5 y faltan 1."
+
+Cada fila guardada (`predicciones`) conserva los límites de monto y cantidad,
+`modelo`, `horizonte`, `extrapolacion`, `r2_validacion` y `wape_validacion` del
+monto. `r2_validacion` es un número de punto flotante, porque un R² fuera de la
+muestra puede ser muy negativo. Las filas anteriores a este contrato eran
+proyecciones del día siguiente que `/predict` guardaba en cada consulta: se
+conservan con `tipo = 'diaria'`, cada una en su propio lote `legado-<id>`.
+
 ## Evaluación para la tesis
 
 `backend/scripts/evaluate_models.py` genera

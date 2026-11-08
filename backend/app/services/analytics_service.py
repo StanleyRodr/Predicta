@@ -6,6 +6,7 @@ only already-aggregated rows reach Python.
 """
 
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -14,7 +15,12 @@ from typing import Any, Literal
 from sqlalchemy import extract, func
 from sqlalchemy.orm import Query, Session
 
-from app.ml_models.forecast import daily_predictions
+from app.ml_models.forecast import (
+    InsufficientHistoryError,
+    MonthlyForecast,
+    daily_predictions,
+    forecast_from_sales,
+)
 from app.models import models
 from app.services.category_service import category_key, normalize_category
 
@@ -22,7 +28,20 @@ Granularity = Literal["mes", "dia"]
 
 
 class InvalidDateRangeError(ValueError):
-    """The requested start date is after the end date."""
+    """The requested start date is after the end date; ``detail`` is safe to show."""
+
+    detail = "fecha_desde no puede ser posterior a fecha_hasta."
+
+    def __init__(self) -> None:
+        super().__init__(self.detail)
+
+
+class ForecastUnavailableError(ValueError):
+    """The history cannot support a projection; ``detail`` is safe to show."""
+
+    def __init__(self, detail: str) -> None:
+        super().__init__(detail)
+        self.detail = detail
 
 
 @dataclass(frozen=True)
@@ -41,7 +60,7 @@ def _user_sales(db: Session, user_id: int, *columns: Any) -> Query:
 
 def _check_date_range(fecha_desde: date | None, fecha_hasta: date | None) -> None:
     if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
-        raise InvalidDateRangeError("fecha_desde no puede ser posterior a fecha_hasta.")
+        raise InvalidDateRangeError
 
 
 def _apply_date_range(
@@ -107,7 +126,8 @@ def category_breakdown(
     )
     return [
         {
-            "categoria": row.categoria,
+            # Ingestion files uncategorized sales under "General"; older null rows read the same.
+            "categoria": row.categoria if row.categoria is not None else normalize_category(None),
             "ingresos_totales": float(row.total_ingresos),
             "cantidad_ventas": row.numero_ventas,
             "ticket_promedio": round(float(row.total_ingresos / row.numero_ventas), 2),
@@ -147,11 +167,13 @@ def daily_revenue(
 
 
 def daily_sales(
-    db: Session, user_id: int, categoria: str | None = None
+    db: Session, user_id: int, categorias: Sequence[str] | None = None
 ) -> list[DailySales]:
     """Return amount and units per observed day, oldest first.
 
-    Days without sales are absent, never zero-filled.
+    ``categorias`` holds stored spellings of one category, as ``resolve_category``
+    returns them; ``None`` covers every category. Days without sales are absent,
+    never zero-filled.
     """
     query = _user_sales(
         db,
@@ -160,8 +182,8 @@ def daily_sales(
         func.sum(models.Venta.monto),
         func.sum(func.coalesce(models.Venta.cantidad, 1)),
     )
-    if categoria is not None:
-        query = query.filter(models.Venta.categoria == categoria)
+    if categorias is not None:
+        query = query.filter(models.Venta.categoria.in_(list(categorias)))
     rows = query.group_by(models.Venta.fecha_venta).order_by(models.Venta.fecha_venta).all()
     return [
         DailySales(fecha_venta=day, monto=Decimal(amount), cantidad=Decimal(units))
@@ -316,11 +338,11 @@ def sales_for_export(db: Session, user_id: int) -> list[Any]:
     ).all()
 
 
-def predict_next_day(db: Session, user_id: int) -> dict[str, Any] | None:
-    """Forecast the day after the last sale and store it, or ``None`` without data."""
+def predict_next_day(db: Session, user_id: int) -> dict[str, Any]:
+    """Forecast the day after the last sale without storing anything."""
     daily = daily_sales(db, user_id)
     if len(daily) < 2:
-        return None
+        raise ForecastUnavailableError("Se necesitan al menos 2 días con ventas para proyectar.")
 
     next_date, forecasts = daily_predictions(
         [day.fecha_venta for day in daily],
@@ -329,23 +351,6 @@ def predict_next_day(db: Session, user_id: int) -> dict[str, Any] | None:
     )
     amount = forecasts["monto"]
     quantity = forecasts["cantidad"]
-
-    db.add(
-        models.Prediccion(
-            id_usuario=user_id,
-            producto_referencia="GLOBAL",
-            cantidad_proyectada=round(quantity.prediction, 2),
-            monto_proyectado=round(amount.prediction, 2),
-            fecha_proyeccion=next_date,
-            precision_estimada=(
-                round(amount.metrics["r2"], 2)
-                if amount.metrics["r2"] is not None
-                else None
-            ),
-        )
-    )
-    db.commit()
-
     return {
         "proxima_fecha": str(next_date),
         "monto_predicho": round(amount.prediction, 2),
@@ -359,8 +364,31 @@ def predict_next_day(db: Session, user_id: int) -> dict[str, Any] | None:
             },
         },
         "metricas": {"monto": amount.metrics, "cantidad": quantity.metrics},
-        "mensaje": "Prediccion ajustada: los valores negativos se nivelan a cero.",
+        "mensaje": "Predicción ajustada: los valores negativos se nivelan a cero.",
     }
+
+
+def monthly_projection(
+    db: Session, user_id: int, categoria: str | None = None
+) -> tuple[str | None, MonthlyForecast]:
+    """Project the user's monthly sales, overall or for one category, without storing.
+
+    Returns the category's display name (``None`` for every category) and the
+    forecast. Raises ``ForecastUnavailableError`` when no projection is possible.
+    """
+    display: str | None = None
+    stored: list[str] | None = None
+    if categoria is not None:
+        display, stored = resolve_category(db, user_id, categoria)
+        if not stored:
+            raise ForecastUnavailableError(f"No hay ventas de la categoría '{display}' para proyectar.")
+    daily = daily_sales(db, user_id, stored)
+    if not daily:
+        raise ForecastUnavailableError("No hay ventas para proyectar.")
+    try:
+        return display, forecast_from_sales(daily)
+    except InsufficientHistoryError as exc:
+        raise ForecastUnavailableError(exc.detail) from exc
 
 
 def top_sales(db: Session, user_id: int, limit: int) -> list[Any]:

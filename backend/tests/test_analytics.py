@@ -166,8 +166,8 @@ def test_predict_with_insufficient_data_returns_error(client, auth_headers):
 
     response = client.get("/analytics/predict", headers=auth_headers)
 
-    assert response.status_code == 200
-    assert "error" in response.json()
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Se necesitan al menos 2 días con ventas para proyectar."
 
 
 def test_predict_with_two_days_returns_forecast(client, auth_headers):
@@ -188,7 +188,7 @@ def test_predict_with_two_days_returns_forecast(client, auth_headers):
     assert response.json()["cantidad_predicha"] >= 0
 
 
-def test_predict_persists_amount_and_quantity(client, auth_headers, test_db):
+def test_predict_never_stores_a_forecast(client, auth_headers, test_db):
     assert _upload_sales(
         client,
         auth_headers,
@@ -198,15 +198,14 @@ def test_predict_persists_amount_and_quantity(client, auth_headers, test_db):
         ],
     ).status_code == 200
 
-    response = client.get("/analytics/predict", headers=auth_headers)
+    first = client.get("/analytics/predict", headers=auth_headers)
+    second = client.get("/analytics/predict", headers=auth_headers)
 
-    assert response.status_code == 200
+    assert first.status_code == second.status_code == 200
+    assert first.json()["monto_predicho"] == second.json()["monto_predicho"]
     session = test_db()
     try:
-        prediction = session.query(models.Prediccion).one()
-        assert prediction.producto_referencia == "GLOBAL"
-        assert prediction.monto_proyectado is not None
-        assert prediction.cantidad_proyectada is not None
+        assert session.query(models.Prediccion).count() == 0
     finally:
         session.close()
 

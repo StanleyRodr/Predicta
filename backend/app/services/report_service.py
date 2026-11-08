@@ -122,16 +122,16 @@ def _pdf_bytes(pdf: FPDF) -> bytes:
 
 
 def _projection(
-    db: Session, user_id: int, *, no_data: str, categoria: str | None = None
+    db: Session, user_id: int, *, no_data: str, categorias: list[str] | None = None
 ) -> MonthlyForecast:
     """Project the user's monthly sales, or explain why that is not possible."""
-    daily = analytics_service.daily_sales(db, user_id, categoria)
+    daily = analytics_service.daily_sales(db, user_id, categorias)
     if not daily:
         raise ReportError(400, no_data)
     try:
         return forecast_from_sales(daily)
     except InsufficientHistoryError as exc:
-        raise ReportError(400, str(exc)) from exc
+        raise ReportError(400, exc.detail) from exc
 
 
 def _plot_projection(
@@ -509,13 +509,15 @@ def monthly_report_pdf(db: Session, user_id: int, mes: str) -> Report:
 
 def category_forecast_pdf(db: Session, user_id: int, categoria: str) -> Report:
     """Return a PDF with the monthly projection of a single category."""
-    canonical = normalize_category(categoria)
-    cat_key = canonical.lower().replace(" ", "-")
+    canonical, stored = analytics_service.resolve_category(db, user_id, categoria)
+    cat_key = normalize_category(categoria).lower().replace(" ", "-")
+    if not stored:
+        raise ReportError(400, f"No hay registros historicos para la categoria '{canonical}'.")
 
     forecast = _projection(
         db,
         user_id,
-        categoria=canonical,
+        categorias=stored,
         no_data=f"No hay registros historicos para la categoria '{canonical}'.",
     )
     points = forecast.objetivos["monto"].puntos

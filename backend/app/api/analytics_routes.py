@@ -2,7 +2,7 @@
 
 Routes only validate input, call a service, and shape the HTTP response.
 Aggregations live in ``analytics_service``; Excel and PDF files in
-``report_service``.
+``report_service``; saved forecasts in ``prediction_service``. No GET writes.
 """
 
 from collections.abc import Callable
@@ -16,7 +16,7 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import models
 from app.schemas import schemas
-from app.services import analytics_service, report_service
+from app.services import analytics_service, prediction_service, report_service
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
@@ -32,7 +32,15 @@ def _in_date_range[T](build: Callable[[], T]) -> T:
     try:
         return build()
     except analytics_service.InvalidDateRangeError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+        raise HTTPException(status_code=422, detail=exc.detail) from exc
+
+
+def _forecast[T](build: Callable[[], T]) -> T:
+    """Turn a history that cannot be projected into the public 422 response."""
+    try:
+        return build()
+    except analytics_service.ForecastUnavailableError as exc:
+        raise HTTPException(status_code=422, detail=exc.detail) from exc
 
 
 def _download(build: Callable[[], report_service.Report]) -> Response:
@@ -56,7 +64,7 @@ def _download(build: Callable[[], report_service.Report]) -> Response:
 # =====================================================================
 
 
-@router.get("/stats")
+@router.get("/stats", response_model=schemas.GlobalStatsResponse)
 def global_stats(
     fecha_desde: date | None = DATE_FROM,
     fecha_hasta: date | None = DATE_TO,
@@ -72,7 +80,7 @@ def global_stats(
     return {"usuario": current_user.nombre_usuario, "metricas_globales": metrics}
 
 
-@router.get("/stats/categories")
+@router.get("/stats/categories", response_model=schemas.CategoryStatsResponse)
 def category_stats(
     fecha_desde: date | None = DATE_FROM,
     fecha_hasta: date | None = DATE_TO,
@@ -88,7 +96,7 @@ def category_stats(
     return {"usuario": current_user.nombre_usuario, "analisis_por_categoria": breakdown}
 
 
-@router.get("/stats/temporal")
+@router.get("/stats/temporal", response_model=schemas.TemporalStatsResponse)
 def temporal_stats(
     fecha_desde: date | None = DATE_FROM,
     fecha_hasta: date | None = DATE_TO,
@@ -178,16 +186,57 @@ def sales_history(
 # =====================================================================
 
 
-@router.get("/predict")
+@router.get("/predict", response_model=schemas.DailyForecastResponse)
 def predict_next_day(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
-    """Forecast the revenue for the day following the last recorded sale."""
-    forecast = analytics_service.predict_next_day(db, current_user.id_usuario)
-    if forecast is None:
-        return {"error": "Se necesitan al menos 2 dias de datos para predecir."}
+    """Forecast the day after the last recorded sale; nothing is stored."""
+    forecast = _forecast(lambda: analytics_service.predict_next_day(db, current_user.id_usuario))
     return {"usuario": current_user.nombre_usuario, **forecast}
+
+
+@router.get("/forecast", response_model=schemas.MonthlyForecastResponse)
+def monthly_forecast(
+    categoria: str | None = CATEGORY,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user),
+) -> dict:
+    """Return history, monthly projection, intervals, and validation metrics; nothing is stored."""
+    resolved, forecast = _forecast(
+        lambda: analytics_service.monthly_projection(db, current_user.id_usuario, categoria)
+    )
+    return {"usuario": current_user.nombre_usuario, **prediction_service.forecast_payload(resolved, forecast)}
+
+
+@router.post("/predicciones", response_model=schemas.SavedBatch, status_code=201)
+def save_prediction(
+    payload: schemas.SavePredictionRequest,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user),
+) -> dict:
+    """Recompute the monthly projection on the server and save every month as one batch."""
+    return _forecast(
+        lambda: prediction_service.save_projection(db, current_user.id_usuario, payload.categoria)
+    )
+
+
+@router.get("/predicciones", response_model=schemas.SavedBatchPage)
+def saved_predictions(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user),
+) -> dict:
+    """Return the user's saved projections, newest batch first."""
+    total, batches = prediction_service.list_batches(db, current_user.id_usuario, skip, limit)
+    return {
+        "usuario": current_user.nombre_usuario,
+        "total_lotes": total,
+        "pagina_actual": (skip // limit) + 1,
+        "total_paginas": (total + limit - 1) // limit,
+        "lotes": batches,
+    }
 
 
 # =====================================================================
