@@ -8,25 +8,25 @@
 
 ## Setup And Runtime
 
-- Use Python 3.14 (the CI version; the code needs 3.12+) and install from `backend/`: `pip install -r requirements.txt -r requirements-dev.txt` (or from the root: `make install-dev`).
+- Use Python 3.14 (the CI version; the code needs 3.12+) and install from `backend/`: `pip install -r requirements.txt -r requirements-dev.txt`.
 - Copy `backend/.env.example` to `backend/.env` and set `DATABASE_URL` and a real `SECRET_KEY` before importing or running the app. `app/core/config.py` is the only module that reads the environment; importing the app without both values fails. `CORS_ORIGINS` defaults to `http://localhost:5173`, and `*` is accepted only with `ENVIRONMENT=development`.
-- PostgreSQL is required for normal runtime and migrations. Apply pending migrations from the root with `make migrate`, or from `backend/` with `alembic upgrade head`, before starting the API.
-- Start the development server with `make run` or, from `backend/`, `uvicorn app.main:app --reload`. Startup performs a live database connectivity check.
+- PostgreSQL is required for normal runtime and migrations. Apply pending migrations from `backend/` with `alembic upgrade head` before starting the API.
+- Start the development server from `backend/` with `uvicorn app.main:app --reload`. Startup performs a live database connectivity check.
 
 ## Verification
 
-- Run focused tests from `backend/`, for example `pytest tests/test_auth.py` or `pytest -k test_register`; run the full suite with `make test` from the root.
+- Run focused tests from `backend/`, for example `pytest tests/test_auth.py` or `pytest -k test_register`; run the full suite with `pytest --cov=app --cov-report=term-missing`.
 - Tests do not need PostgreSQL: `backend/tests/conftest.py` sets `DATABASE_URL=sqlite:///:memory:` before importing the app and gives each test a fresh in-memory SQLite database. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database to run the same suite on PostgreSQL.
 - Every private endpoint must appear in `backend/tests/test_isolation.py::PRIVATE_CASES`; a test fails when a route is missing.
-- Before submitting backend changes, run `make lint`, `make typecheck`, and `make test`; use `make format` only when intentionally applying Ruff fixes/formatting.
+- Before submitting backend changes, run from `backend/`: `ruff check app/`, `mypy app/`, and `pytest --cov=app --cov-report=term-missing`; run `ruff check --fix app/ && ruff format app/` only when intentionally applying Ruff fixes/formatting.
 - Before submitting frontend changes, run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test -- --run`, and `npm run build`.
-- `.github/workflows/ci.yml` runs lint, types, migrations (`upgrade`, `check`, `downgrade`), the backend suite on SQLite and PostgreSQL, and the frontend checks; `.pre-commit-config.yaml` runs the quick checks locally.
+- `.github/workflows/ci.yml` runs lint, types, migrations (`upgrade`, `check`, `downgrade`), the backend suite on SQLite and PostgreSQL, and the frontend checks on every push.
 
 ## Data And Schema Changes
 
 - Do not restore runtime `Base.metadata.create_all()`: schema management is intentionally Alembic-only.
-- After changing SQLAlchemy models, create a migration with `make migration msg="description"` from the root, review it, then apply it with `make migrate`.
-- Generate synthetic data with `make seed`; it writes the ignored `backend/ventas_*.csv` artifact.
+- After changing SQLAlchemy models, create a migration from `backend/` with `alembic revision --autogenerate -m "description"`, review it, then apply it with `alembic upgrade head`.
+- Generate synthetic data with `python scripts/generate_dataset.py` from `backend/`; it writes the ignored `backend/ventas_*.csv` artifact.
 - Never commit `.env`, credentials, generated datasets, coverage/cache directories, or saved model artifacts; the root `.gitignore` excludes them.
 
 ## Code Conventions

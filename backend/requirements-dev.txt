@@ -17,5 +17,3 @@ ruff==0.17.1
 mypy==2.4.0
 sqlalchemy[mypy]==2.1.5
 
-# Pre-commit hooks
-pre-commit==4.7.0

@@ -70,7 +70,7 @@ Predicta helps small and medium retail businesses ingest their sales data, visua
 **Tooling**
 - [Ruff](https://github.com/astral-sh/ruff), [mypy](https://mypy-lang.org/), [pytest](https://docs.pytest.org/) - Backend quality
 - ESLint, `tsc`, Vitest + React Testing Library - Frontend quality
-- GitHub Actions and pre-commit
+- GitHub Actions
 
 ## Project Structure
 
@@ -96,7 +96,6 @@ Predicta/
 ├── .github/                  # CI workflow and templates
 ├── AGENTS.md / CLAUDE.md     # Instructions for coding agents
 ├── CHANGELOG.md
-├── Makefile
 └── README.md
 ```
 
@@ -173,21 +172,28 @@ This writes a `ventas_*.csv` file in `backend/` (ignored by git) that you can up
 
 ## Available Commands
 
-The root `Makefile` wraps the backend commands. On Windows without GNU Make, run the command after `cd backend &&` in each target.
+Backend, from `backend/` with the virtual environment active:
 
 ```bash
-make help         # List all available commands
-make install      # Install production deps
-make install-dev  # Install dev + test deps
-make run          # Run dev server
-make test         # Run tests with coverage
-make lint         # Run linter
-make format       # Auto-format code
-make typecheck    # Run mypy
-make migrate      # Apply DB migrations
-make migration msg="description"  # Create new migration
-make seed         # Generate sample dataset
-make clean        # Remove cache files
+pip install -r requirements.txt -r requirements-dev.txt  # Install dependencies
+uvicorn app.main:app --reload                            # Run the dev server
+pytest --cov=app --cov-report=term-missing               # Run tests with coverage
+ruff check app/                                          # Lint
+ruff check --fix app/ && ruff format app/                # Auto-format
+mypy app/                                                # Type check
+alembic upgrade head                                     # Apply migrations
+alembic revision --autogenerate -m "description"         # Create a migration
+python scripts/generate_dataset.py                       # Generate a sample dataset
+```
+
+Frontend, from `frontend/`:
+
+```bash
+npm run dev            # Dev server
+npm run lint           # ESLint
+npm run typecheck      # TypeScript
+npm test -- --run      # Vitest
+npm run build          # Production build
 ```
 
 ## Testing

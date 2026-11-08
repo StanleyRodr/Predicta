@@ -34,7 +34,7 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 - CORS defaults to the Vite origin and rejects `*` outside development (029).
 - New users get the `Usuario` role by name instead of a fixed id (029).
 - The connection error message names `VITE_API_URL` instead of a fixed URL (031).
-- `AGENTS.md`, `README.md`, the frontend README, and the `Makefile` describe the current system (031).
+- `AGENTS.md`, `README.md`, and the frontend README describe the current system and list the commands directly (031).
 
 #### Fixed
 - Concurrent duplicate registrations or profile changes answer 400 instead of 500 (029).
@@ -44,8 +44,9 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 #### Removed
 - `passlib`: passwords use `bcrypt` directly and existing hashes keep validating (029).
-- The text-date patch of the daily forecast, unused `app/utils/`, `SectionPlaceholder.tsx`, and the Docker targets without a docker-compose file (030, 031).
-- The MIT license file.
+- The text-date patch of the daily forecast, unused `app/utils/`, and `SectionPlaceholder.tsx` (030, 031).
+- The `Makefile` and the pre-commit configuration: `make` was not available on the development machine and the hook was never installed; CI runs the same checks.
+- The license file.
 
 #### Security
 - Passwords are limited to 72 bytes, counted in UTF-8 (029).

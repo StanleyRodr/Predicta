@@ -6,20 +6,18 @@ Predicta is a thesis project: a sales analytics and forecasting platform for ret
 
 ## Commands
 
-The host is Windows and GNU Make may be unavailable; each `make` target is a thin wrapper, so run the underlying command from `backend/` when needed.
-
-Backend (from `backend/`):
+Backend (from `backend/`, with `venv` active):
 
 ```bash
-pip install -r requirements.txt -r requirements-dev.txt   # make install-dev
-uvicorn app.main:app --reload                             # make run (port 8000)
-alembic upgrade head                                      # make migrate
-alembic revision --autogenerate -m "description"          # make migration msg="..."
-python scripts/generate_dataset.py                        # make seed -> backend/ventas_*.csv (gitignored)
-ruff check app/                                           # make lint
-ruff check --fix app/ && ruff format app/                 # make format (only when intentionally reformatting)
-mypy app/                                                 # make typecheck
-pytest --cov=app --cov-report=term-missing                # make test
+pip install -r requirements.txt -r requirements-dev.txt
+uvicorn app.main:app --reload                             # port 8000
+alembic upgrade head
+alembic revision --autogenerate -m "description"
+python scripts/generate_dataset.py                        # -> backend/ventas_*.csv (gitignored)
+ruff check app/                                           # lint
+ruff check --fix app/ && ruff format app/                 # only when intentionally reformatting
+mypy app/                                                 # typecheck
+pytest --cov=app --cov-report=term-missing                # full suite
 pytest tests/test_auth.py                                 # single file
 pytest -k test_register                                   # single test by name
 ```
@@ -36,7 +34,7 @@ npx vitest run src/api/auth.test.ts  # single test file
 npm run build                        # tsc -b && vite build
 ```
 
-Before submitting: backend `make lint`, `make typecheck`, `make test`; frontend `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`.
+Before submitting: backend `ruff check app/`, `mypy app/`, `pytest --cov=app`; frontend `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`.
 
 ## Environment
 
