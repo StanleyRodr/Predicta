@@ -1,6 +1,7 @@
 import { formatCurrency, formatDate } from "../../lib/formatters";
 import type { SavedBatch } from "../../types/forecast";
 import { EmptyState } from "../ui";
+import { ConceptHint } from "./ConceptHint";
 import { ForecastTable, type ForecastRow } from "./ForecastTable";
 
 const MODEL_LABELS: Record<string, string> = {
@@ -42,7 +43,12 @@ export function SavedPredictions({ batches }: SavedPredictionsProps) {
     return <EmptyState description="Usa “Guardar proyección” para conservar la que estás viendo." title="Aún no guardas proyecciones" />;
   }
   return (
-    <ul className="grid gap-3">
+    <div className="grid gap-3">
+      <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-terminal-muted">
+        Cada proyección muestra su rango del 95 % <ConceptHint concept="intervalo" /> y marca los meses en extrapolación{" "}
+        <ConceptHint concept="extrapolacion" />.
+      </p>
+      <ul className="grid gap-3">
       {batches.map((batch) => {
         const sum = total(batch);
         return (
@@ -59,12 +65,13 @@ export function SavedPredictions({ batches }: SavedPredictionsProps) {
                 </span>
               </summary>
               <div className="mt-3">
-                <ForecastTable caption={`Meses de ${batchTitle(batch)}`} measure="monto" rows={savedRows(batch)} />
+                <ForecastTable caption={`Meses de ${batchTitle(batch)}`} hints={false} measure="monto" rows={savedRows(batch)} />
               </div>
             </details>
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </div>
   );
 }

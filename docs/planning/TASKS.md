@@ -41,6 +41,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | HECHO |
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
 | 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | HECHO |
+| 033 | Panel del "i" sin barras de desplazamiento | `docs/planning/plans/033-panel-info-flotante.md` | P2 | S | 032 | HECHO |
 
 ## Reglas de ejecución
 
@@ -417,6 +418,14 @@ Plan: `docs/planning/plans/032-explicaciones-predicciones.md` | Depende de: 027,
 - [x] 032.3 Calcular la etiqueta de cada métrica y la general. Verificar: tests de rangos, límites, `null` y promedio.
 - [x] 032.4 Mostrar los badges, la etiqueta general y el resumen. Verificar: RTL de cada badge y de "Sin dato".
 - [x] 032.5 Agregar el "i" en cada concepto y la lista de motivos del aviso. Verificar: RTL con clic, Enter y Escape.
+
+### Tarea 033 — Panel del "i" sin barras de desplazamiento
+
+Plan: `docs/planning/plans/033-panel-info-flotante.md` | Depende de: 032 | Esfuerzo: S
+
+- [x] 033.1 Calcular la posición del panel en `placeHint`. Verificar: tests de abajo, arriba y bordes.
+- [x] 033.2 Dibujar el panel en un portal que siga al botón. Verificar: RTL de portal, clic fuera y Escape.
+- [x] 033.3 Explicar una vez el rango y la extrapolación en las proyecciones guardadas. Verificar: RTL sin "i" en las tablas de lotes.
 
 ## Verificación global
 

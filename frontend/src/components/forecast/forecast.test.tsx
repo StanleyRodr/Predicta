@@ -193,6 +193,38 @@ describe("SavedPredictions", () => {
     expect(screen.getByText(/total \$8,036\.56/)).toBeInTheDocument();
     expect(screen.getByText(/^0?1\/11\/2026$/)).toBeInTheDocument();
   });
+
+  it("explains the range and extrapolation once, above the list, not in every batch table", () => {
+    const monthlyBatch = (lote: string): SavedBatch => ({
+      lote,
+      tipo: "mensual",
+      categoria: null,
+      modelo: "tendencia",
+      horizonte: 2,
+      r2_validacion: null,
+      wape_validacion: null,
+      fecha_creacion: "2026-11-02T10:00:00Z",
+      puntos: ["2026-11-30", "2026-12-31"].map((fecha_proyeccion, index) => ({
+        fecha_proyeccion,
+        extrapolacion: index === 1,
+        monto_proyectado: 100,
+        monto_inferior: 90,
+        monto_superior: 110,
+        cantidad_proyectada: 1,
+        cantidad_inferior: 0,
+        cantidad_superior: 2,
+      })),
+    });
+
+    render(<SavedPredictions batches={[monthlyBatch("a"), monthlyBatch("b")]} />);
+
+    expect(screen.getAllByRole("button", { name: "Qué significa intervalo del 95 %" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Qué significa extrapolación" })).toHaveLength(1);
+    for (const table of screen.getAllByRole("table", { hidden: true })) {
+      expect(within(table).queryAllByRole("button", { hidden: true, name: /Qué significa/ })).toHaveLength(0);
+      expect(within(table).getAllByText("Extrapolación")).toHaveLength(1);
+    }
+  });
 });
 
 describe("forecast cards", () => {

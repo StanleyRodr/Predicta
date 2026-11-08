@@ -34,10 +34,12 @@ interface ForecastTableProps {
   selected?: string | null;
   onSelect?: (periodo: string) => void;
   caption: string;
+  /** Explain the range and extrapolation with info buttons; off when a list explains them once. */
+  hints?: boolean;
 }
 
 /** Projected months with amount, units, and the 95 % range; a null value is shown as missing, never as zero. */
-export function ForecastTable({ rows, measure, selected = null, onSelect, caption }: ForecastTableProps) {
+export function ForecastTable({ rows, measure, selected = null, onSelect, caption, hints = true }: ForecastTableProps) {
   const range = measure === "monto" ? money : units;
   // One explanation per table: on the first extrapolated month only.
   const firstExtrapolated = rows.find((row) => row.extrapolacion)?.periodo;
@@ -53,7 +55,7 @@ export function ForecastTable({ rows, measure, selected = null, onSelect, captio
             <th className="py-2 pr-3 text-right font-medium" scope="col">
               <span className="inline-flex items-center gap-1.5">
                 Rango 95 % ({measure === "monto" ? "monto" : "cantidad"})
-                <ConceptHint concept="intervalo" />
+                {hints && <ConceptHint concept="intervalo" />}
               </span>
             </th>
           </tr>
@@ -80,7 +82,7 @@ export function ForecastTable({ rows, measure, selected = null, onSelect, captio
                       Extrapolación
                     </Badge>
                   )}
-                  {row.periodo === firstExtrapolated && (
+                  {hints && row.periodo === firstExtrapolated && (
                     <span className="ml-1.5 inline-flex align-middle">
                       <ConceptHint concept="extrapolacion" />
                     </span>
