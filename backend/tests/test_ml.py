@@ -272,7 +272,7 @@ def test_category_projections_add_up_to_the_total():
 
 
 def test_daily_prediction_returns_metrics_and_non_negative_interval():
-    dates = ["2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08"]
+    dates = [date(2026, 1, day) for day in (5, 6, 7, 8)]
 
     next_date, forecasts = daily_predictions(dates, [10, 12, 14, 16], [2, 3, 4, 5])
 
@@ -284,7 +284,7 @@ def test_daily_prediction_returns_metrics_and_non_negative_interval():
 
 
 def test_daily_prediction_with_two_days_uses_their_mean():
-    next_date, forecasts = daily_predictions(["2026-01-05", "2026-01-06"], [10, 20], [1, 3])
+    next_date, forecasts = daily_predictions([date(2026, 1, 5), date(2026, 1, 6)], [10, 20], [1, 3])
 
     assert next_date.isoformat() == "2026-01-07"
     assert forecasts["monto"].prediction == pytest.approx(15.0)

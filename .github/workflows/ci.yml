@@ -47,7 +47,15 @@ jobs:
       - run: alembic check
       - run: alembic downgrade -1
       - run: alembic upgrade head
-      - run: pytest --cov=app --cov-report=term-missing
+      - name: pytest (SQLite)
+        run: pytest --cov=app --cov-report=term-missing
+      - name: pytest (PostgreSQL)
+        env:
+          PGPASSWORD: predicta
+          TEST_DATABASE_URL: postgresql+psycopg2://predicta:predicta@localhost:5432/predicta_test
+        run: |
+          createdb -h localhost -U predicta predicta_test
+          pytest
 
   frontend:
     runs-on: ubuntu-latest

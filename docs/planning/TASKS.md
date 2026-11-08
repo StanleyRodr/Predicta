@@ -38,7 +38,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | HECHO |
 | 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | HECHO |
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | HECHO |
-| 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | TODO |
+| 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | HECHO |
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | TODO |
 
 ## Reglas de ejecución
@@ -382,10 +382,10 @@ Plan: `docs/planning/plans/029-configuracion-auth.md` | Depende de: 015 | Esfuer
 
 Plan: `docs/planning/plans/030-cobertura-tests.md` | Depende de: 017, 023, 024 | Esfuerzo: M
 
-- [ ] 030.1 Crear `second_user` y corregir el test de purga. Verificar: falla si se quita el filtro.
-- [ ] 030.2 Crear tests de aislamiento por endpoint. Verificar: la lista cubre todas las rutas privadas.
-- [ ] 030.3 Completar rutas sin prueba. Verificar: informe de cobertura.
-- [ ] 030.4 Correr la suite en PostgreSQL y quitar el parche de fechas. Verificar: ambos motores pasan.
+- [x] 030.1 Crear `second_user` y corregir el test de purga. Verificar: falla si se quita el filtro.
+- [x] 030.2 Crear tests de aislamiento por endpoint. Verificar: la lista cubre todas las rutas privadas.
+- [x] 030.3 Completar rutas sin prueba. Verificar: informe de cobertura.
+- [x] 030.4 Correr la suite en PostgreSQL y quitar el parche de fechas. Verificar: ambos motores pasan.
 
 ### Tarea 031 — Limpieza y documentación
 

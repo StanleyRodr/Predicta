@@ -12,7 +12,7 @@ os.environ["CORS_ORIGINS"] = "http://localhost:5173"
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -21,23 +21,73 @@ from app.core.rate_limit import limiter
 from app.main import app
 from app.models import models
 
+# Set it to a disposable PostgreSQL database to run the suite on the production
+# engine; every table in it is emptied before each test.
+TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+def _seed_roles(session_factory):
+    """Insert the same roles that migration 0001 seeds."""
+    with session_factory() as session:
+        session.add_all([models.Rol(nombre_rol="Administrador"), models.Rol(nombre_rol="Usuario")])
+        session.commit()
+
+
+@pytest.fixture(scope="session")
+def postgres_engine():
+    """One schema for the whole session on ``TEST_DATABASE_URL``."""
+    if not TEST_DATABASE_URL:
+        pytest.skip("TEST_DATABASE_URL no está definido.")
+    engine = create_engine(TEST_DATABASE_URL)
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    yield engine
+    Base.metadata.drop_all(bind=engine)
+    engine.dispose()
+
 
 @pytest.fixture(scope="function")
-def test_db():
-    """Provide an in-memory SQLite database for tests."""
+def test_db(request):
+    """Provide an empty database per test: in-memory SQLite, or PostgreSQL if configured."""
+    if TEST_DATABASE_URL:
+        engine = request.getfixturevalue("postgres_engine")
+        tables = ", ".join(table.name for table in Base.metadata.sorted_tables)
+        with engine.begin() as connection:
+            connection.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
+        session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+        _seed_roles(session_factory)
+        yield session_factory
+        return
+
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
     Base.metadata.create_all(bind=engine)
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    # Same roles that migration 0001 seeds.
-    with TestingSessionLocal() as session:
-        session.add_all([models.Rol(nombre_rol="Administrador"), models.Rol(nombre_rol="Usuario")])
-        session.commit()
-    yield TestingSessionLocal
+    session_factory = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    _seed_roles(session_factory)
+    yield session_factory
     Base.metadata.drop_all(bind=engine)
+
+
+def register_and_login(client, nombre_usuario, correo_electronico, password="StrongPass1"):
+    """Create a user and return its Bearer headers."""
+    credentials = {
+        "nombre_usuario": nombre_usuario,
+        "correo_electronico": correo_electronico,
+        "password": password,
+    }
+    assert client.post("/users/register", json=credentials).status_code == 201
+    login = client.post("/users/login", data={"username": correo_electronico, "password": password})
+    assert login.status_code == 200
+    return {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+
+@pytest.fixture
+def second_user(client):
+    """Bearer headers of a second user, distinct from ``auth_headers``."""
+    return register_and_login(client, "second_user", "second@example.com")
 
 
 @pytest.fixture(scope="function")

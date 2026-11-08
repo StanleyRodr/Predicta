@@ -369,7 +369,7 @@ def _daily_features(indices: np.ndarray, weekdays: pd.Series, use_weekdays: bool
 
 
 def daily_predictions(
-    dates: Sequence[date | str],
+    dates: Sequence[date],
     amounts: Sequence[float],
     quantities: Sequence[float],
 ) -> tuple[date, dict[str, ForecastResult]]:
@@ -381,7 +381,8 @@ def daily_predictions(
     """
     if len(dates) < 2 or len(dates) != len(amounts) or len(dates) != len(quantities):
         raise ValueError("Se necesitan al menos 2 dias de datos para predecir.")
-    parsed = [date.fromisoformat(value) if isinstance(value, str) else value for value in dates]
+    # SQLAlchemy returns ``date`` objects on both SQLite and PostgreSQL.
+    parsed = list(dates)
     first = parsed[0]
     next_date = parsed[-1] + timedelta(days=1)
     indices = np.array([(day - first).days for day in parsed + [next_date]])
