@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** LOW
@@ -26,6 +26,19 @@ por categoría, agrupadas en SQL.
 
 Cada punto trae `periodo`, `anio`, `mes`, `dia` (nulo en `granularidad=mes`),
 `ingresos`, `cantidad` y `ventas_realizadas`. `/stats/temporal` no cambia.
+
+## Decisiones tomadas
+
+- `por_categoria=true` separa cada periodo por categoría en una sola consulta,
+  para la comparación entre categorías del dashboard. Cada punto trae entonces
+  su `categoria`; sin ese parámetro, `categoria` es nulo.
+- Una categoría sin ventas responde 200 con `puntos` vacío.
+- `granularidad=dia` se permite sin rango de fechas.
+- El filtro de categoría compara contra las categorías guardadas del usuario,
+  sin distinguir mayúsculas, espacios ni tildes, también en las que el usuario
+  creó. Incluye las escrituras anteriores a la normalización (`lacteos`).
+- La respuesta trae `categoria` con el nombre resuelto, `granularidad` y
+  `por_categoria`.
 
 ## Alcance
 

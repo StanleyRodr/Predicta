@@ -15,12 +15,16 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.models import models
+from app.schemas import schemas
 from app.services import analytics_service, report_service
 
 router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 DATE_FROM = Query(None, description="Fecha inicial inclusiva en formato YYYY-MM-DD.")
 DATE_TO = Query(None, description="Fecha final inclusiva en formato YYYY-MM-DD.")
+CATEGORY = Query(
+    None, description="Categoría; no distingue mayúsculas, espacios ni tildes."
+)
 
 
 def _in_date_range[T](build: Callable[[], T]) -> T:
@@ -100,15 +104,57 @@ def temporal_stats(
     return {"usuario": current_user.nombre_usuario, "evolucion_diaria": evolucion}
 
 
-@router.get("/ventas")
+@router.get("/stats/series", response_model=schemas.SeriesResponse)
+def sales_series(
+    granularidad: analytics_service.Granularity = Query(
+        "mes", description="mes agrupa por año y mes; dia, por fecha."
+    ),
+    categoria: str | None = CATEGORY,
+    por_categoria: bool = Query(
+        False, description="Separa cada periodo por categoría para compararlas."
+    ),
+    fecha_desde: date | None = DATE_FROM,
+    fecha_hasta: date | None = DATE_TO,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user),
+) -> dict:
+    """Return sales totals per month or per day, overall or by category."""
+    resolved, points = _in_date_range(
+        lambda: analytics_service.sales_series(
+            db,
+            current_user.id_usuario,
+            granularidad,
+            categoria,
+            por_categoria,
+            fecha_desde,
+            fecha_hasta,
+        )
+    )
+    return {
+        "usuario": current_user.nombre_usuario,
+        "granularidad": granularidad,
+        "categoria": resolved,
+        "por_categoria": por_categoria,
+        "puntos": points,
+    }
+
+
+@router.get("/ventas", response_model=schemas.SalesPageResponse)
 def sales_history(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=200),
+    categoria: str | None = CATEGORY,
+    fecha_desde: date | None = DATE_FROM,
+    fecha_hasta: date | None = DATE_TO,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
     """Return a paginated slice of the user's sales, newest first."""
-    total, ventas = analytics_service.sales_page(db, current_user.id_usuario, skip, limit)
+    total, ventas = _in_date_range(
+        lambda: analytics_service.sales_page(
+            db, current_user.id_usuario, skip, limit, categoria, fecha_desde, fecha_hasta
+        )
+    )
     return {
         "usuario": current_user.nombre_usuario,
         "total_registros": total,

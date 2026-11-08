@@ -5,16 +5,20 @@ before anything else. Totals are computed with ``GROUP BY`` in the database;
 only already-aggregated rows reach Python.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
-from sqlalchemy import func
+from sqlalchemy import extract, func
 from sqlalchemy.orm import Query, Session
 
 from app.ml_models.forecast import daily_predictions
 from app.models import models
+from app.services.category_service import category_key, normalize_category
+
+Granularity = Literal["mes", "dia"]
 
 
 class InvalidDateRangeError(ValueError):
@@ -35,14 +39,18 @@ def _user_sales(db: Session, user_id: int, *columns: Any) -> Query:
     return db.query(*columns).filter(models.Venta.id_usuario == user_id)
 
 
+def _check_date_range(fecha_desde: date | None, fecha_hasta: date | None) -> None:
+    if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
+        raise InvalidDateRangeError("fecha_desde no puede ser posterior a fecha_hasta.")
+
+
 def _apply_date_range(
     query: Query,
     fecha_desde: date | None,
     fecha_hasta: date | None,
 ) -> Query:
     """Apply inclusive date bounds after the mandatory user filter."""
-    if fecha_desde and fecha_hasta and fecha_desde > fecha_hasta:
-        raise InvalidDateRangeError("fecha_desde no puede ser posterior a fecha_hasta.")
+    _check_date_range(fecha_desde, fecha_hasta)
     if fecha_desde:
         query = query.filter(models.Venta.fecha_venta >= fecha_desde)
     if fecha_hasta:
@@ -161,11 +169,137 @@ def daily_sales(
     ]
 
 
-def sales_page(db: Session, user_id: int, skip: int, limit: int) -> tuple[int, list[models.Venta]]:
+def resolve_category(db: Session, user_id: int, value: str) -> tuple[str, list[str]]:
+    """Return a category's display name and every stored spelling of it.
+
+    Matching ignores case, spacing, and accents, also for categories the user
+    created, so ``electronica`` finds ``Electrónica``. Rows stored before
+    ingestion normalized names (``lacteos``) are found as well.
+    """
+    wanted = category_key(value)
+    stored = [
+        name
+        for (name,) in _user_sales(db, user_id, models.Venta.categoria).distinct()
+        if name is not None and category_key(name) == wanted
+    ]
+    display = normalize_category(value)
+    if stored and display not in stored:
+        # Show the user's own spelling, preferring a capitalized one over legacy lowercase.
+        display = max(stored, key=lambda name: (name != name.lower(), name))
+    return display, stored
+
+
+def _point(
+    granularidad: Granularity,
+    anio: int,
+    mes: int,
+    dia: int | None,
+    categoria: str | None,
+    totals: list[Any],
+) -> dict[str, Any]:
+    periodo = f"{anio:04d}-{mes:02d}" if dia is None else f"{anio:04d}-{mes:02d}-{dia:02d}"
+    return {
+        "periodo": periodo,
+        "anio": anio,
+        "mes": mes,
+        "dia": dia if granularidad == "dia" else None,
+        "categoria": categoria,
+        "ingresos": round(float(totals[0]), 2),
+        "cantidad": round(float(totals[1]), 2),
+        "ventas_realizadas": int(totals[2]),
+    }
+
+
+def sales_series(
+    db: Session,
+    user_id: int,
+    granularidad: Granularity = "mes",
+    categoria: str | None = None,
+    por_categoria: bool = False,
+    fecha_desde: date | None = None,
+    fecha_hasta: date | None = None,
+) -> tuple[str | None, list[dict[str, Any]]]:
+    """Return revenue, units, and sale count per month or day, oldest first.
+
+    Periods without sales are absent, never zero-filled. With ``por_categoria``
+    each point also carries its category, and spellings of one category merge.
+    Returns the resolved category name, if one was requested, and the points.
+    """
+    _check_date_range(fecha_desde, fecha_hasta)
+    display: str | None = None
+    stored: list[str] = []
+    if categoria is not None:
+        display, stored = resolve_category(db, user_id, categoria)
+        if not stored:
+            return display, []
+
+    if granularidad == "mes":
+        period: list[Any] = [
+            extract("year", models.Venta.fecha_venta),
+            extract("month", models.Venta.fecha_venta),
+        ]
+    else:
+        period = [models.Venta.fecha_venta]
+    groups = period + ([models.Venta.categoria] if por_categoria else [])
+
+    query = _user_sales(
+        db,
+        user_id,
+        *groups,
+        func.sum(models.Venta.monto),
+        func.sum(func.coalesce(models.Venta.cantidad, 1)),
+        func.count(models.Venta.id_venta),
+    )
+    if stored:
+        query = query.filter(models.Venta.categoria.in_(stored))
+    rows = _apply_date_range(query, fecha_desde, fecha_hasta).group_by(*groups).all()
+
+    merged: dict[tuple[int, int, int | None, str | None], list[Any]] = defaultdict(
+        lambda: [Decimal(0), Decimal(0), 0]
+    )
+    for row in rows:
+        if granularidad == "mes":
+            key_period: tuple[int, int, int | None] = (int(row[0]), int(row[1]), None)
+        else:
+            day = row[0]
+            key_period = (day.year, day.month, day.day)
+        name = normalize_category(row[len(period)]) if por_categoria else None
+        totals = merged[(*key_period, name)]
+        for index, value in enumerate(row[len(groups):]):
+            totals[index] += Decimal(str(value or 0)) if index < 2 else int(value or 0)
+
+    ordered = sorted(merged.items(), key=lambda item: (item[0][:3], item[0][3] or ""))
+    return display, [
+        _point(granularidad, anio, mes, dia, name, totals)
+        for (anio, mes, dia, name), totals in ordered
+    ]
+
+
+def sales_page(
+    db: Session,
+    user_id: int,
+    skip: int,
+    limit: int,
+    categoria: str | None = None,
+    fecha_desde: date | None = None,
+    fecha_hasta: date | None = None,
+) -> tuple[int, list[models.Venta]]:
     """Return the total count and one page of sales, newest first."""
-    base = db.query(models.Venta).filter(models.Venta.id_usuario == user_id)
+    base = _apply_date_range(
+        db.query(models.Venta).filter(models.Venta.id_usuario == user_id),
+        fecha_desde,
+        fecha_hasta,
+    )
+    if categoria is not None:
+        _, stored = resolve_category(db, user_id, categoria)
+        base = base.filter(models.Venta.categoria.in_(stored))
     total = base.count()
-    ventas = base.order_by(models.Venta.fecha_venta.desc()).offset(skip).limit(limit).all()
+    ventas = (
+        base.order_by(models.Venta.fecha_venta.desc(), models.Venta.id_venta.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return total, ventas
 
 

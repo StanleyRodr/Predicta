@@ -6,6 +6,7 @@ also drive the auto-generated OpenAPI documentation at ``/docs``.
 
 import re
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -49,3 +50,48 @@ class UserUpdate(BaseModel):
 
     nombre_usuario: str | None = Field(None, min_length=3, max_length=50)
     correo_electronico: EmailStr | None = None
+
+
+class SeriesPoint(BaseModel):
+    """Totals of one observed month or day; periods without sales are absent."""
+
+    periodo: str = Field(..., description="YYYY-MM con granularidad mes; YYYY-MM-DD con dia.")
+    anio: int
+    mes: int = Field(..., ge=1, le=12)
+    dia: int | None = Field(None, description="Nulo con granularidad mes.")
+    categoria: str | None = Field(None, description="Solo con por_categoria=true.")
+    ingresos: float
+    cantidad: float
+    ventas_realizadas: int
+
+
+class SeriesResponse(BaseModel):
+    """Response of ``GET /analytics/stats/series``."""
+
+    usuario: str
+    granularidad: Literal["mes", "dia"]
+    categoria: str | None = Field(
+        None, description="Nombre de la categoría filtrada, tal como se muestra."
+    )
+    por_categoria: bool
+    puntos: list[SeriesPoint]
+
+
+class SaleRecord(BaseModel):
+    """One sale as listed by ``GET /analytics/ventas``."""
+
+    id: int
+    producto: str
+    monto: float
+    categoria: str | None
+    fecha: str = Field(..., description="YYYY-MM-DD HH:MM:SS.")
+
+
+class SalesPageResponse(BaseModel):
+    """Response of ``GET /analytics/ventas``."""
+
+    usuario: str
+    total_registros: int
+    pagina_actual: int
+    total_paginas: int
+    registros: list[SaleRecord]
