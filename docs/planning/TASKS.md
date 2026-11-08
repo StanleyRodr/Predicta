@@ -40,6 +40,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | HECHO |
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | HECHO |
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
+| 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | TODO |
 
 ## Reglas de ejecución
 
@@ -396,25 +397,47 @@ Plan: `docs/planning/plans/031-limpieza-documentacion.md` | Depende de: 015-030 
 - [x] 031.3 Actualizar `AGENTS.md`, `README.md`, `Makefile` y `CHANGELOG.md`. Verificar: coinciden con el sistema final.
 - [x] 031.4 Ejecutar la verificación global. Verificar: todos los comandos terminan con código 0.
 
+## Fase 3: revisión del usuario
+
+**Base:** commit `39d3d7a` (merge del PR #2). **Origen:** revisión de `/predictions` por el usuario y entrevista de diseño del 2026-11-08.
+
+**Decisiones tomadas:**
+
+- Un botón "i" en cada aparición de intervalo del 95 %, extrapolación y el aviso de cautela; también en mes en curso, tipo de modelo, rango del día siguiente y proyecciones guardadas.
+- Etiqueta por métrica: MAPE y RMSE relativo al mes promedio con los rangos del MAPE; R² con 0.6 / 0.3 / 0; mejora con 20 % / 5 % / −5 %. Sin valor: "Sin dato".
+- La etiqueta general es el promedio de las etiquetas disponibles, redondeado hacia abajo.
+- El aviso se llama "Toma esta proyección con cautela" y lista los motivos que el backend envía en `advertencias`.
+
+### Tarea 032 — Explicaciones claras en predicciones
+
+Plan: `docs/planning/plans/032-explicaciones-predicciones.md` | Depende de: 027, 028 | Esfuerzo: M
+
+- [ ] 032.1 Agregar `advertencias` al pronóstico mensual sin cambiar `advertencia`. Verificar: tests con y sin motivos.
+- [ ] 032.2 Centralizar los textos de los conceptos. Verificar: cada concepto tiene título y explicación.
+- [ ] 032.3 Calcular la etiqueta de cada métrica y la general. Verificar: tests de rangos, límites, `null` y promedio.
+- [ ] 032.4 Mostrar los badges, la etiqueta general y el resumen. Verificar: RTL de cada badge y de "Sin dato".
+- [ ] 032.5 Agregar el "i" en cada concepto y la lista de motivos del aviso. Verificar: RTL con clic, Enter y Escape.
+
 ## Verificación global
 
-Desde la raíz, cuando el entorno esté preparado:
+Desde `backend/`, con el entorno virtual activo:
 
 ```bash
-make lint
-make typecheck
-make test
-```
-
-En Windows sin GNU Make, ejecutar los comandos equivalentes desde `backend/`:
-
-```powershell
 ruff check app/
 mypy app/
 pytest --cov=app --cov-report=term-missing
 ```
 
-Antes de ejecutar pruebas se requiere `backend/.env`, `DATABASE_URL` configurado y PostgreSQL accesible.
+Desde `frontend/`:
+
+```bash
+npm run lint
+npm run typecheck
+npm test -- --run
+npm run build
+```
+
+Las pruebas del backend no necesitan PostgreSQL: usan SQLite en memoria. Con `TEST_DATABASE_URL` apuntando a una base desechable, la misma suite corre sobre PostgreSQL.
 
 ## Fase posterior: frontend
 
