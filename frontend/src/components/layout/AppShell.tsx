@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/authStore";
 import { Badge, Button } from "../ui";
@@ -14,7 +14,7 @@ const navigation = [
 
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <nav aria-label="Navegacion principal" className="grid gap-1">
+    <nav aria-label="Navegación principal" className="grid gap-1">
       {navigation.map((item) => (
         <NavLink
           className={({ isActive }) =>
@@ -38,9 +38,28 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const menuId = useId();
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
+
+  // Escape closes the mobile menu and sends the focus back to its button.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setMobileOpen(false);
+      toggleRef.current?.focus();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
+
+  function closeMenu() {
+    setMobileOpen(false);
+    toggleRef.current?.focus();
+  }
 
   function logout() {
     clearSession();
@@ -54,21 +73,25 @@ export function AppShell() {
           PREDICTA
         </NavLink>
         <Button
+          aria-controls={menuId}
           aria-expanded={mobileOpen}
-          aria-label="Abrir menu"
+          aria-label={mobileOpen ? "Cerrar menú de navegación" : "Abrir menú de navegación"}
           onClick={() => setMobileOpen((open) => !open)}
+          ref={toggleRef}
           variant="ghost"
         >
-          MENU
+          <span aria-hidden="true">☰</span> Menú
         </Button>
       </header>
 
       <aside
+        aria-label="Menú lateral"
         className={cn(
           "fixed inset-y-0 left-0 z-40 w-64 border-r border-terminal-border bg-terminal-bg p-5",
           "lg:block",
           mobileOpen ? "block" : "hidden",
         )}
+        id={menuId}
       >
         <div className="flex h-full flex-col gap-8">
           <div className="flex items-start justify-between">
@@ -79,12 +102,12 @@ export function AppShell() {
               <span className="font-mono text-xs text-terminal-muted">ventas / señales</span>
             </div>
             <button
-              aria-label="Cerrar menu"
-              className="text-terminal-muted lg:hidden"
-              onClick={() => setMobileOpen(false)}
+              aria-label="Cerrar menú de navegación"
+              className="rounded-md px-2 text-lg text-terminal-muted hover:text-terminal-text lg:hidden"
+              onClick={closeMenu}
               type="button"
             >
-              X
+              <span aria-hidden="true">×</span>
             </button>
           </div>
           <Navigation onNavigate={() => setMobileOpen(false)} />
@@ -94,7 +117,7 @@ export function AppShell() {
               <Badge>{user?.correo_electronico}</Badge>
             </div>
             <Button onClick={logout} variant="ghost">
-              Cerrar sesion
+              Cerrar sesión
             </Button>
           </div>
         </div>

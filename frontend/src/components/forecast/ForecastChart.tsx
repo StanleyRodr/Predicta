@@ -15,6 +15,7 @@ import { CHART_GRID, CHART_MUTED, CHART_SURFACE, CHART_TEXT, SERIES_COLORS } fro
 import { formatAxisCurrency, formatCurrency, formatNumber } from "../../lib/formatters";
 import { periodLabel } from "../../lib/seriesTransforms";
 import type { MonthlyForecastResponse } from "../../types/forecast";
+import { ChartFrame, type ChartTable } from "../ui";
 import { FORECAST_MEASURES, forecastChartData, type ForecastMeasure } from "./forecastChartData";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
@@ -35,6 +36,37 @@ interface ForecastChartProps {
   /** YYYY-MM of the highlighted projected month. */
   selected: string | null;
   onSelect: (periodo: string) => void;
+}
+
+/** Text equivalent of the chart: one row per period, with the range and the extrapolation mark. */
+export function forecastChartTable(forecast: MonthlyForecastResponse, measure: ForecastMeasure): ChartTable {
+  const data = forecastChartData(forecast, measure);
+  const projected = new Set(data.indiceProyeccion);
+  const show = (value: number | null) => (value === null ? "—" : formatForecastValue(measure, value));
+  return {
+    rowHeader: "Mes",
+    columns: ["Historial", "Proyección", BAND_LABEL, "Nota"],
+    rows: data.periodos.map((periodo, index) => {
+      const partial = data.parcial[index];
+      // History holds only months the backend sent, so a null here is a future month.
+      const history = data.historial[index] ?? partial;
+      const notes = [
+        partial !== null ? "Mes en curso (parcial)" : "",
+        data.extrapolacion[index] ? "Extrapolación sin validar" : "",
+      ].filter(Boolean);
+      return {
+        label: periodLabel(periodo),
+        values: [
+          show(history),
+          projected.has(index) ? show(data.proyeccion[index]) : "—",
+          projected.has(index) && data.inferior[index] !== null && data.superior[index] !== null
+            ? `${show(data.inferior[index])} a ${show(data.superior[index])}`
+            : "—",
+          notes.join("; ") || "—",
+        ],
+      };
+    }),
+  };
 }
 
 /** Solid history, dashed projection, and the 95 % band between its bounds. */
@@ -87,10 +119,11 @@ export function ForecastChart({ forecast, measure, selected, onSelect }: Forecas
   };
 
   return (
-    <div
-      aria-label={`${FORECAST_MEASURES[measure]}: historial y proyección de ${forecast.horizonte_aplicado} meses con intervalo del 95 %`}
+    <ChartFrame
       className="h-80 sm:h-96"
-      role="img"
+      description="Historial en línea continua, proyección en línea punteada y la zona sombreada del intervalo del 95 %. Los meses en extrapolación usan rombos huecos y un trazo más fino."
+      label={`${FORECAST_MEASURES[measure]}: historial y proyección de ${forecast.horizonte_aplicado} meses con intervalo del 95 %`}
+      table={forecastChartTable(forecast, measure)}
     >
       <Line
         data={{
@@ -161,6 +194,6 @@ export function ForecastChart({ forecast, measure, selected, onSelect }: Forecas
         }}
         options={options}
       />
-    </div>
+    </ChartFrame>
   );
 }

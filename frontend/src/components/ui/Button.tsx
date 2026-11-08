@@ -1,9 +1,9 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 import { cn } from "../../lib/cn";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ComponentProps<"button"> {
   variant?: ButtonVariant;
 }
 

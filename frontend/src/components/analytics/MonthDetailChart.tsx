@@ -3,8 +3,8 @@ import type { ChartOptions } from "chart.js";
 import { SERIES_COLORS } from "../../lib/chartColors";
 import { MONTH_LABELS, MONTH_NAMES, monthDaysData, yearMonthsData } from "../../lib/seriesTransforms";
 import type { Measure, SeriesPoint } from "../../types/analytics";
-import { EmptyState } from "../ui";
-import { lineDataset, MEASURE_LABELS, barChartOptions, lineChartOptions } from "./seriesChart";
+import { ChartFrame, chartTableRows, EmptyState } from "../ui";
+import { barChartOptions, formatMeasure, lineChartOptions, lineDataset, MEASURE_LABELS } from "./seriesChart";
 
 const BAR_COLOR = SERIES_COLORS[0];
 const BAR_DIMMED = "rgb(57 135 229 / 0.45)";
@@ -32,7 +32,16 @@ export function MonthTotalsChart({ points, year, measure, selectedMonth, onSelec
   };
 
   return (
-    <div aria-label={`${MEASURE_LABELS[measure]} por mes de ${year}; elige un mes para ver sus días`} className="h-64 sm:h-72" role="img">
+    <ChartFrame
+      className="h-64 sm:h-72"
+      description="Elige un mes en el gráfico o en el selector para ver sus días."
+      label={`${MEASURE_LABELS[measure]} por mes de ${year}`}
+      table={{
+        rowHeader: "Mes",
+        columns: [MEASURE_LABELS[measure]],
+        rows: chartTableRows(MONTH_NAMES, [values], (value) => formatMeasure(measure, value)),
+      }}
+    >
       <Bar
         data={{
           labels: MONTH_LABELS,
@@ -49,7 +58,7 @@ export function MonthTotalsChart({ points, year, measure, selectedMonth, onSelec
         }}
         options={options}
       />
-    </div>
+    </ChartFrame>
   );
 }
 
@@ -67,11 +76,19 @@ export function MonthDetailChart({ points, year, month, measure }: MonthDetailCh
   const data = monthDaysData(points, year, month, measure);
 
   return (
-    <div aria-label={`${MEASURE_LABELS[measure]} por día de ${title}`} className="h-64 sm:h-72" role="img">
+    <ChartFrame
+      className="h-64 sm:h-72"
+      label={`${MEASURE_LABELS[measure]} por día de ${title}`}
+      table={{
+        rowHeader: "Día",
+        columns: [MEASURE_LABELS[measure]],
+        rows: chartTableRows(data.labels.map(String), [data.series[0].values], (value) => formatMeasure(measure, value)),
+      }}
+    >
       <Line
         data={{ labels: data.labels, datasets: [lineDataset(title, data.series[0].values, SERIES_COLORS[0])] }}
         options={lineChartOptions(measure, { legend: false })}
       />
-    </div>
+    </ChartFrame>
   );
 }

@@ -36,7 +36,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 025 | Dashboard general, categoría y mes | `docs/planning/plans/025-dashboard-explorador.md` | P1 | L | 018, 019, 024 | HECHO |
 | 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | HECHO |
 | 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | HECHO |
-| 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | TODO |
+| 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | HECHO |
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | TODO |
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | TODO |
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | TODO |
@@ -365,9 +365,9 @@ Plan: `docs/planning/plans/027-metricas-comprensibles.md` | Depende de: 026 | Es
 
 Plan: `docs/planning/plans/028-accesibilidad.md` | Depende de: 025, 026 | Esfuerzo: M
 
-- [ ] 028.1 Corregir foco, Escape e ids de `Modal`. Verificar: RTL de cada comportamiento.
-- [ ] 028.2 Dar equivalente en texto a todos los gráficos. Verificar: RTL encuentra la tabla.
-- [ ] 028.3 Corregir el menú móvil. Verificar: botón con nombre accesible.
+- [x] 028.1 Corregir foco, Escape e ids de `Modal`. Verificar: RTL de cada comportamiento.
+- [x] 028.2 Dar equivalente en texto a todos los gráficos. Verificar: RTL encuentra la tabla.
+- [x] 028.3 Corregir el menú móvil. Verificar: botón con nombre accesible.
 
 ### Tarea 029 — Configuración y autenticación
 

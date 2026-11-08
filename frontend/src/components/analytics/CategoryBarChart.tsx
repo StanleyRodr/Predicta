@@ -2,7 +2,7 @@ import { Bar } from "react-chartjs-2";
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip } from "chart.js";
 import type { CategoryMetric } from "../../types/analytics";
 import { formatAxisCurrency, formatCurrency } from "../../lib/formatters";
-import { EmptyState } from "../ui";
+import { ChartFrame, chartTableRows, EmptyState } from "../ui";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -18,17 +18,22 @@ export function categoryChartData(data: CategoryMetric[]) {
 }
 
 export function CategoryBarChart({ data }: CategoryBarChartProps) {
-  if (!data.length) return <EmptyState description="No hay categorias en este rango." title="Sin categorias" />;
+  if (!data.length) return <EmptyState description="No hay categorías en este rango." title="Sin categorías" />;
+  const chart = categoryChartData(data);
 
   return (
-    <div aria-label="Ingresos por categoria" className="h-80">
+    <ChartFrame
+      className="h-80"
+      label="Ingresos por categoría"
+      table={{ rowHeader: "Categoría", columns: ["Ingresos"], rows: chartTableRows(chart.labels, [chart.values], formatCurrency) }}
+    >
       <Bar
         data={{
-          labels: categoryChartData(data).labels,
+          labels: chart.labels,
           datasets: [
             {
               label: "Ingresos",
-              data: categoryChartData(data).values,
+              data: chart.values,
               backgroundColor: "#f0b429",
               borderColor: "#f0b429",
               borderWidth: 1,
@@ -48,6 +53,6 @@ export function CategoryBarChart({ data }: CategoryBarChartProps) {
           },
         }}
       />
-    </div>
+    </ChartFrame>
   );
 }

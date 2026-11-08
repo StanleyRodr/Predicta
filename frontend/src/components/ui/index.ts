@@ -8,3 +8,4 @@ export { Modal } from "./Modal";
 export { Spinner } from "./Spinner";
 export { Segmented } from "./Segmented";
 export { InfoHint } from "./InfoHint";
+export { ChartFrame, chartTableRows, NO_SALES, type ChartTable } from "./ChartFrame";

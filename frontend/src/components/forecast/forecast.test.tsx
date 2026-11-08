@@ -2,6 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import type { MonthlyForecastResponse, ProjectedMonth, SavedBatch, ValidationMetrics } from "../../types/forecast";
+import { forecastChartTable } from "./ForecastChart";
 import { forecastChartData } from "./forecastChartData";
 import { ForecastMetricCard } from "./ForecastMetricCard";
 import { ForecastQuality } from "./ForecastQuality";
@@ -79,6 +80,24 @@ describe("forecastChartData", () => {
     const data = forecastChartData(forecast(), "monto", 2);
 
     expect(data.periodos).toEqual(["2025-02", "2025-04", "2025-05", "2025-06"]);
+  });
+});
+
+describe("forecastChartTable", () => {
+  it("lists history, projection, range, and extrapolation as text", () => {
+    const table = forecastChartTable(forecast(), "monto");
+
+    expect(table.columns).toEqual(["Historial", "Proyección", "Intervalo del 95 %", "Nota"]);
+    expect(table.rows.map((row) => row.label)).toEqual(["Ene 2025", "Feb 2025", "Abr 2025", "May 2025", "Jun 2025"]);
+    expect(table.rows[0].values).toEqual(["$100.00", "—", "—", "—"]);
+    expect(table.rows[3].values).toEqual(["—", "$150.00", "$140.00 a $160.00", "—"]);
+    expect(table.rows[4].values).toEqual(["—", "$160.00", "$150.00 a $170.00", "Extrapolación sin validar"]);
+  });
+
+  it("shows the incomplete month as partial history and uses units for quantity", () => {
+    const table = forecastChartTable(forecast({ mes_parcial: { periodo: "2025-05", monto: 70, cantidad: 7 } }), "cantidad");
+
+    expect(table.rows[3].values).toEqual(["7 unidades", "15 unidades", "14 unidades a 16 unidades", "Mes en curso (parcial)"]);
   });
 });
 

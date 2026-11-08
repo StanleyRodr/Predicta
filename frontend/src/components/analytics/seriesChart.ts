@@ -70,12 +70,24 @@ export function barChartOptions(measure: Measure, { legend = true }: { legend?: 
   return { ...sharedOptions(measure, legend), interaction: { mode: "nearest", intersect: true } };
 }
 
+/** Marker shapes, so series that share a chart differ by shape as well as color. */
+export const SERIES_POINT_STYLES = ["circle", "rect", "triangle", "rectRot", "star", "crossRot", "rectRounded", "cross"] as const;
+
+export type SeriesPointStyle = (typeof SERIES_POINT_STYLES)[number];
+
 /** Line style shared by every series: 2px line, ringed markers, gaps for missing periods. */
-export function lineDataset(label: string, values: (number | null)[], color: string, hidden = false) {
+export function lineDataset(
+  label: string,
+  values: (number | null)[],
+  color: string,
+  hidden = false,
+  pointStyle: SeriesPointStyle = "circle",
+) {
   return {
     label,
     data: values,
     hidden,
+    pointStyle,
     borderColor: color,
     backgroundColor: color,
     borderWidth: 2,
@@ -86,4 +98,10 @@ export function lineDataset(label: string, values: (number | null)[], color: str
     spanGaps: false,
     tension: 0.2,
   };
+}
+
+/** Shape of the series at `index` in a stable order, cycling like the colors. */
+export function seriesPointStyle(index: number): SeriesPointStyle {
+  const size = SERIES_POINT_STYLES.length;
+  return SERIES_POINT_STYLES[((index % size) + size) % size];
 }
