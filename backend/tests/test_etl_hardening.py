@@ -7,8 +7,8 @@ import zipfile
 import pandas as pd
 import pytest
 
-from app.api import etl_routes
 from app.models import models
+from app.services import etl_service
 
 HEADER = b"producto,monto,categoria,fecha\n"
 
@@ -40,21 +40,21 @@ def _sales(test_db):
     ],
 )
 def test_parse_amount_accepts_documented_formats(value, expected):
-    assert etl_routes._parse_amount(value) == expected
+    assert etl_service._parse_amount(value) == expected
 
 
 @pytest.mark.parametrize("value", ["1.234,56", "1234,567", "12,34,567", "0,123", "abc"])
 def test_parse_amount_rejects_ambiguous_formats(value):
-    with pytest.raises(etl_routes.RowValidationError):
-        etl_routes._parse_amount(value)
+    with pytest.raises(etl_service.RowValidationError):
+        etl_service._parse_amount(value)
 
 
 def test_parse_amount_keeps_numeric_spreadsheet_cells():
-    assert etl_routes._parse_amount(1234.5) == 1234.5
+    assert etl_service._parse_amount(1234.5) == 1234.5
 
 
 def test_parse_quantity_uses_the_same_number_rules():
-    assert etl_routes._parse_quantity("1,234") == 1234.0
+    assert etl_service._parse_quantity("1,234") == 1234.0
 
 
 @pytest.mark.parametrize("amount", ["-5", "0", "1e9", "100000000"])
@@ -82,8 +82,8 @@ def test_too_long_text_rejects_only_its_row(client, auth_headers):
 
 
 def test_oversized_file_is_rejected(client, auth_headers, monkeypatch):
-    monkeypatch.setattr(etl_routes, "MAX_UPLOAD_BYTES", 10)
-    monkeypatch.setattr(etl_routes, "READ_CHUNK_BYTES", 4)
+    monkeypatch.setattr(etl_service, "MAX_UPLOAD_BYTES", 10)
+    monkeypatch.setattr(etl_service, "READ_CHUNK_BYTES", 4)
 
     response = _upload(client, auth_headers, HEADER)
 
@@ -91,7 +91,7 @@ def test_oversized_file_is_rejected(client, auth_headers, monkeypatch):
 
 
 def test_too_many_csv_rows_are_rejected(client, auth_headers, monkeypatch):
-    monkeypatch.setattr(etl_routes, "MAX_ROWS", 1)
+    monkeypatch.setattr(etl_service, "MAX_ROWS", 1)
     contents = HEADER + b"A,1,X,2026-01-01\nB,2,X,2026-01-02\n"
 
     response = _upload(client, auth_headers, contents)
@@ -100,7 +100,7 @@ def test_too_many_csv_rows_are_rejected(client, auth_headers, monkeypatch):
 
 
 def test_too_many_xlsx_rows_are_rejected(client, auth_headers, monkeypatch):
-    monkeypatch.setattr(etl_routes, "MAX_ROWS", 1)
+    monkeypatch.setattr(etl_service, "MAX_ROWS", 1)
     output = io.BytesIO()
     pd.DataFrame(
         [
@@ -115,7 +115,7 @@ def test_too_many_xlsx_rows_are_rejected(client, auth_headers, monkeypatch):
 
 
 def test_xlsx_with_excessive_declared_size_is_rejected(client, auth_headers, monkeypatch):
-    monkeypatch.setattr(etl_routes, "MAX_XLSX_UNCOMPRESSED_BYTES", 100)
+    monkeypatch.setattr(etl_service, "MAX_XLSX_UNCOMPRESSED_BYTES", 100)
     output = io.BytesIO()
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr("xl/worksheets/sheet1.xml", b"0" * 1000)
@@ -142,7 +142,7 @@ def test_upload_does_not_block_other_requests(client, auth_headers, monkeypatch)
         released_in_time.append(release.wait(timeout=5))
         return []
 
-    monkeypatch.setattr(etl_routes, "_parse_csv", slow_parse)
+    monkeypatch.setattr(etl_service, "_parse_csv", slow_parse)
     upload = threading.Thread(target=_upload, args=(client, auth_headers, HEADER))
     upload.start()
     assert parsing.wait(timeout=5)

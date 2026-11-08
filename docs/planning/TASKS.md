@@ -28,7 +28,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | HECHO |
 | 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | HECHO |
 | 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | HECHO |
-| 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | TODO |
+| 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | HECHO |
 | 021 | Corregir modelo y proyectar 12 meses | `docs/planning/plans/021-modelo-horizonte.md` | P1 | L | 020 | TODO |
 | 022 | Evaluación y modelos de referencia | `docs/planning/plans/022-evaluacion-baselines.md` | P1 | L | 021 | TODO |
 | 023 | Contrato de predicción y esquemas | `docs/planning/plans/023-contrato-prediccion.md` | P1 | L | 016, 022 | TODO |

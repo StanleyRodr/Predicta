@@ -5,8 +5,8 @@ from decimal import Decimal
 import pytest
 from matplotlib.figure import Figure
 
-from app.api.analytics_routes import _use_money_axis
 from app.services.formatting import format_axis_money, format_money
+from app.services.report_service import use_money_axis
 
 
 @pytest.mark.parametrize(
@@ -32,6 +32,6 @@ def test_format_axis_money_omits_decimals():
 def test_report_chart_axis_uses_money_format():
     ax = Figure().subplots()
 
-    _use_money_axis(ax)
+    use_money_axis(ax)
 
     assert ax.yaxis.get_major_formatter()(12000, 0) == "$12,000"

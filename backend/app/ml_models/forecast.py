@@ -3,14 +3,27 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, timedelta
+from decimal import Decimal
+from typing import Protocol
 
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
-from app.models import models
-
 METRIC_NAMES = ("r2", "mape", "rmse")
+
+
+class SaleRecord(Protocol):
+    """A sale, or a day of summed sales, as the aggregations read it."""
+
+    @property
+    def fecha_venta(self) -> date: ...
+
+    @property
+    def monto(self) -> Decimal | float: ...
+
+    @property
+    def cantidad(self) -> Decimal | float | None: ...
 
 
 @dataclass(frozen=True)
@@ -93,7 +106,7 @@ def build_weekly_features(
     return features
 
 
-def monthly_aggregates(ventas: Sequence[models.Venta]) -> pd.DataFrame:
+def monthly_aggregates(ventas: Sequence[SaleRecord]) -> pd.DataFrame:
     """Aggregate sales by observed month without fabricating empty months."""
     if not ventas:
         return pd.DataFrame(columns=["fecha", "monto", "cantidad"])
@@ -118,7 +131,7 @@ def monthly_aggregates(ventas: Sequence[models.Venta]) -> pd.DataFrame:
     return monthly[["fecha", "monto", "cantidad"]]
 
 
-def daily_aggregates(ventas: Sequence[models.Venta]) -> pd.DataFrame:
+def daily_aggregates(ventas: Sequence[SaleRecord]) -> pd.DataFrame:
     """Aggregate sales by observed day without fabricating missing dates."""
     if not ventas:
         return pd.DataFrame(columns=["fecha", "monto", "cantidad"])
@@ -154,7 +167,7 @@ def _forecast_target(
 
 
 def monthly_predictions(
-    ventas: Sequence[models.Venta], horizon: int = 1
+    ventas: Sequence[SaleRecord], horizon: int = 1
 ) -> tuple[pd.DataFrame, list[pd.Timestamp], dict[str, ForecastResult]]:
     """Forecast monthly revenue and units with identical seasonal predictors."""
     monthly = monthly_aggregates(ventas)
@@ -182,7 +195,7 @@ def monthly_predictions(
 
 
 def monthly_forecast(
-    ventas: Sequence[models.Venta], horizon: int = 12
+    ventas: Sequence[SaleRecord], horizon: int = 12
 ) -> tuple[pd.DataFrame, list[pd.Timestamp], np.ndarray]:
     """Return observed monthly data, future dates, and non-negative forecasts."""
     monthly, future_dates, forecasts = monthly_predictions(ventas, horizon)
