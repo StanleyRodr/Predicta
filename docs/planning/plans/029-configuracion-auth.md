@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P2
 - **Esfuerzo:** M
 - **Riesgo:** HIGH

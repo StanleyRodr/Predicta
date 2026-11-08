@@ -1,5 +1,9 @@
 """Tests for analytics and prediction endpoints."""
 
+import io
+
+from openpyxl import load_workbook
+
 from app.models import models
 
 
@@ -162,8 +166,8 @@ def test_predict_with_insufficient_data_returns_error(client, auth_headers):
 
     response = client.get("/analytics/predict", headers=auth_headers)
 
-    assert response.status_code == 200
-    assert "error" in response.json()
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Se necesitan al menos 2 días con ventas para proyectar."
 
 
 def test_predict_with_two_days_returns_forecast(client, auth_headers):
@@ -184,7 +188,7 @@ def test_predict_with_two_days_returns_forecast(client, auth_headers):
     assert response.json()["cantidad_predicha"] >= 0
 
 
-def test_predict_persists_amount_and_quantity(client, auth_headers, test_db):
+def test_predict_never_stores_a_forecast(client, auth_headers, test_db):
     assert _upload_sales(
         client,
         auth_headers,
@@ -194,15 +198,14 @@ def test_predict_persists_amount_and_quantity(client, auth_headers, test_db):
         ],
     ).status_code == 200
 
-    response = client.get("/analytics/predict", headers=auth_headers)
+    first = client.get("/analytics/predict", headers=auth_headers)
+    second = client.get("/analytics/predict", headers=auth_headers)
 
-    assert response.status_code == 200
+    assert first.status_code == second.status_code == 200
+    assert first.json()["monto_predicho"] == second.json()["monto_predicho"]
     session = test_db()
     try:
-        prediction = session.query(models.Prediccion).one()
-        assert prediction.producto_referencia == "GLOBAL"
-        assert prediction.monto_proyectado is not None
-        assert prediction.cantidad_proyectada is not None
+        assert session.query(models.Prediccion).count() == 0
     finally:
         session.close()
 
@@ -219,6 +222,18 @@ def test_export_excel_returns_xlsx(client, auth_headers):
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
     assert response.content[:2] == b"PK"
+
+
+def test_export_excel_keeps_amounts_numeric_with_thousands_format(client, auth_headers):
+    assert _upload_sales(
+        client, auth_headers, [("Arroz", 1234.5, "Abarrotes", "2026-01-01")]
+    ).status_code == 200
+
+    response = client.get("/analytics/export/excel", headers=auth_headers)
+
+    worksheet = load_workbook(io.BytesIO(response.content)).active
+    assert worksheet["C2"].value == 1234.5
+    assert worksheet["C2"].number_format == "#,##0.00"
 
 
 def test_export_pdf_returns_pdf(client, auth_headers):
@@ -243,4 +258,4 @@ def test_annual_report_requires_multiple_months(client, auth_headers):
     )
 
     assert response.status_code == 400
-    assert "Muestreo insuficiente" in response.json()["detail"]
+    assert "6 meses completos" in response.json()["detail"]

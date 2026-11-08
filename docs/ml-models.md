@@ -1,44 +1,180 @@
 # Modelos de Machine Learning
 
-Predicta usa Regresion Lineal Multiple (`LinearRegression`) para producir
-proyecciones interpretables de monto y cantidad. Los dos objetivos se entrenan
-por separado con la misma matriz de predictores; sus unidades y errores no se
-mezclan.
+Predicta usa regresión lineal por mínimos cuadrados ordinarios
+(`statsmodels.OLS`, con intercepto) para producir proyecciones interpretables de
+monto y cantidad. Los dos objetivos se ajustan por separado con la misma matriz
+de predictores; sus unidades y errores no se mezclan. El código está en
+`backend/app/ml_models/forecast.py`, y la evaluación en
+`backend/app/ml_models/evaluation.py` y `backend/scripts/evaluate_models.py`.
 
-## Features
+## Proyección mensual
 
-Las columnas se generan siempre en este orden:
+`monthly_forecast_series(monthly, last_sale, max_horizon=12)` es el único camino
+de ajuste. La usan los reportes general, mensual y por categoría.
 
-- Modelo mensual: `mes_indice`, `mes_1` ... `mes_12`.
-- Modelo diario: `dia_indice`, `dia_1` ... `dia_7`, donde `dia_1` es lunes y
-  `dia_7` es domingo.
+### Mes incompleto
 
-`*_indice` es una tendencia secuencial desde cero. Las variables restantes son
-dummies de calendario. Solo se usan fechas y ventas disponibles; no se
-fabrican meses o dias sin observaciones.
+Si la última venta es anterior al último día de su mes, ese mes está incompleto:
+se excluye del ajuste, se devuelve aparte como `mes_parcial` y es el primer mes
+proyectado. Los gráficos lo muestran como un punto hueco, separado de la línea.
 
-## Metricas e incertidumbre
+### Modelo y horizonte
 
-Antes de entrenar el modelo final se reserva cronologicamente el ultimo 20 %
-de observaciones (al menos una y nunca todo el dataset). `R2`, `MAPE` y `RMSE`
-se calculan exclusivamente sobre ese holdout temporal. Con una sola
-observacion de validacion, `R2` es `null` porque no esta definido.
+El modelo se elige para cada serie, general o por categoría, según sus meses
+completos observados:
 
-El intervalo se calcula como `prediccion +/- 1.96 * desviacion` de los
-residuales del modelo final. Los limites se recortan a cero porque monto y
-cantidad no pueden ser negativos. El intervalo es una aproximacion operativa,
-no un intervalo estadistico calibrado.
+| Meses completos | Modelo | Horizonte |
+|---|---|---|
+| Menos de 6 | Sin proyección (`InsufficientHistoryError`) | — |
+| 6 a 23 | Tendencia | La mitad de los meses: de 3 a 11 |
+| 24 a 35 | Tendencia | 12 |
+| 36 o más, con los 12 meses del calendario | Tendencia y estacionalidad | 12 |
+| 36 o más, con algún mes del calendario sin ventas | Tendencia | 12 |
 
-La respuesta de `/analytics/predict` incluye `monto_predicho`,
-`cantidad_predicha`, `intervalos_prediccion` y `metricas`. La columna
-`predicciones.precision_estimada` conserva el `R2` temporal del monto cuando
-esta definido.
+La estacionalidad empieza en 36 meses, con 3 observaciones por mes del
+calendario. Al principio empezaba en 24, pero en la evaluación (más abajo) la
+especificación estacional perdía contra "el mismo mes del año anterior" en 4 de
+6 horizontes, y su intervalo del 95 % cubría solo entre 50 % y 67 % de los meses
+reales. Con 2 observaciones por mes no se puede separar una temporada de un
+cambio real del negocio. Si algún mes del calendario nunca tuvo ventas, no hay
+base para estimar su nivel, y también se usa solo la tendencia. En todos estos
+casos `advertencia` lo explica al usuario.
 
-## Datos minimos y limitaciones
+### Variables
 
-Se necesitan al menos dos observaciones temporales para ejecutar una
-proyeccion. Con historiales muy cortos las dummies estacionales pueden quedar
-subidentificadas y las metricas ser inestables. La tendencia es lineal y no se
-modelan feriados, promociones, precios, clima ni otras variables externas.
-Por ello, los resultados sirven como apoyo operativo y no como garantia de
-demanda futura.
+- `mes_indice`: meses transcurridos desde el primer mes,
+  `(año − año₀)·12 + (mes − mes₀)`. Cuenta meses del calendario, no filas: de
+  enero a marzo hay 2 aunque falte febrero.
+- `mes_2` … `mes_12` (solo con estacionalidad): dummies de febrero a diciembre.
+  Enero es la referencia y queda absorbido por el intercepto, para evitar la
+  colinealidad perfecta de 12 dummies más intercepto.
+
+Los meses sin ventas no se rellenan con cero: simplemente no están en los datos.
+
+### Intervalo de predicción
+
+Los límites salen de `get_prediction().summary_frame(alpha=0.05)`, con el
+intervalo de observación al 95 % (`obs_ci_lower`, `obs_ci_upper`). Incluye la
+varianza residual y la incertidumbre de los coeficientes, por lo que se ensancha
+al alejarse de los datos, en lugar de usar un margen fijo. El punto y los límites
+se recortan a cero, porque monto y cantidad no pueden ser negativos.
+
+### Resultado
+
+Por cada objetivo (`monto`, `cantidad`) se devuelven las métricas y, por mes,
+`fecha`, `prediccion`, `inferior`, `superior` y `extrapolacion`. `extrapolacion`
+es verdadero desde el mes 7 del horizonte: esos meses son extrapolación sin
+validar. También se devuelven `modelo`, `horizonte`, `meses_observados`,
+`advertencia`, `historial` (los meses ajustados) y `mes_parcial`.
+
+## Proyección diaria
+
+`daily_predictions` proyecta el día siguiente a la última venta para
+`/analytics/predict`. Los predictores crecen con el historial, para que el
+intervalo siempre tenga grados de libertad:
+
+| Días observados | Modelo |
+|---|---|
+| 2 | Promedio de los días (solo intercepto) |
+| 3 o más | Tendencia `dia_indice` (días transcurridos) |
+| 14 o más, con los 7 días de la semana | Tendencia y `dia_2` … `dia_7` (martes a domingo; lunes es la referencia) |
+
+El intervalo es el mismo intervalo de observación al 95 % del modelo mensual.
+Sus métricas (`R²`, `MAPE`, `RMSE`) salen de un holdout cronológico del último
+20 % de los días.
+
+## Métricas de la proyección mensual
+
+En cada serie, el mismo modelo se reajusta en cada uno de los últimos 6 meses
+(origen móvil) y predice el mes siguiente sin verlo. Nunca se usan observaciones
+futuras. Sobre esos errores se calculan:
+
+- `wape`: error absoluto total sobre las ventas reales totales, en %.
+- `mase`: error absoluto medio dividido por el error del "último valor" dentro
+  del entrenamiento. Menor que 1 es mejor que ese modelo ingenuo.
+- `mape`, `rmse` y `r2`. Con un solo mes evaluado, `r2` es `null`.
+- `referencia`: el mejor de los modelos simples sobre los mismos meses, por WAPE:
+  `ultimo_valor`, `mismo_mes_anio_anterior` o `promedio_movil_3`.
+- `mejora_vs_referencia`: reducción porcentual del WAPE frente a esa referencia.
+  Es negativa cuando la regresión pierde.
+- `origenes`: cuántos meses se evaluaron.
+
+Si el historial no deja ningún mes para evaluar (6 meses), todas las métricas
+son `null` y `origenes` es 0. Una métrica que no se puede calcular nunca se
+muestra como cero.
+
+## Contrato de la API
+
+Consultar nunca escribe en la base; guardar es una acción explícita.
+
+| Ruta | Qué hace |
+|---|---|
+| `GET /analytics/predict` | Proyección del día siguiente: punto, intervalo del 95 % y métricas del holdout. Con menos de 2 días con ventas, 422. |
+| `GET /analytics/forecast?categoria=` | Serie mensual: `historial`, `mes_parcial`, `proyeccion` (por mes: `prediccion`, `inferior`, `superior` de monto y cantidad, y `extrapolacion`), `metricas`, `modelo`, `horizonte_aplicado` y `advertencia`. Sin `categoria`, cubre todas. |
+| `POST /analytics/predicciones` | Recibe solo `categoria`, recalcula la proyección en el servidor y guarda una fila por mes proyectado, todas con el mismo `lote`. Responde 201 con el lote guardado. |
+| `GET /analytics/predicciones?skip=&limit=` | Lotes guardados del usuario, del más reciente al más antiguo. |
+
+La categoría se compara sin distinguir mayúsculas, espacios ni tildes, también
+en las categorías que creó el usuario. Cuando no hay ventas, la categoría no
+tiene ventas o faltan meses completos, `/forecast` y `POST /predicciones`
+responden 422 con un `detail` en español, por ejemplo: "Se necesitan al menos 6
+meses completos de ventas para proyectar; hay 5 y faltan 1."
+
+Cada fila guardada (`predicciones`) conserva los límites de monto y cantidad,
+`modelo`, `horizonte`, `extrapolacion`, `r2_validacion` y `wape_validacion` del
+monto. `r2_validacion` es un número de punto flotante, porque un R² fuera de la
+muestra puede ser muy negativo. Las filas anteriores a este contrato eran
+proyecciones del día siguiente que `/predict` guardaba en cada consulta: se
+conservan con `tipo = 'diaria'`, cada una en su propio lote `legado-<id>`.
+
+## Evaluación para la tesis
+
+`backend/scripts/evaluate_models.py` genera
+[`docs/evaluacion/resultados.md`](evaluacion/resultados.md), con sus tablas CSV
+y gráficos, a partir de `DatosDePrueba/ventas_fabricadas/ventas_tienda_2_anios.xlsx`
+(24 meses, de 2024-11 a 2026-10). Dos ejecuciones dan archivos idénticos.
+
+- **Backtest con origen móvil:** 18 meses iniciales y horizontes de 1 a 6. Con
+  24 meses no se pueden validar los meses 7 a 12.
+- **Modelos:** la regresión con la regla aplicada, la regresión estacional
+  forzada, ETS con tendencia amortiguada (solo en el script) y los tres modelos
+  simples. ETS estacional no se usa: necesita 2 ciclos completos para
+  inicializarse y el entrenamiento tiene 18 meses.
+- **Métricas:** WAPE, MASE, MAPE, RMSE, R² y cobertura real del intervalo del
+  95 %, más Ljung–Box y Breusch–Pagan sobre los residuos del modelo final.
+
+Resultados principales:
+
+- La regresión con la regla aplicada (tendencia) gana al "mismo mes del año
+  anterior" en 5 de 6 horizontes. Le gana al mejor modelo simple en los
+  horizontes 1 y 2 (alrededor de 10 %), y **pierde del 3 al 6**.
+- La especificación estacional pierde contra el mismo mes del año anterior en
+  4 de 6 horizontes. Por eso la estacionalidad empieza ahora en 36 meses.
+- **ETS amortiguado es el mejor modelo en casi todos los horizontes.** Se
+  mantiene la regresión en runtime por interpretabilidad, y esta diferencia se
+  declara.
+- La cobertura del intervalo de la tendencia es del 100 %: el intervalo es más
+  ancho de lo necesario, es decir, conservador.
+- Los residuos del modelo final no muestran autocorrelación ni varianza no
+  constante (todos los valores p son mayores que 0.05).
+- **Cortando el historial a 6 y 12 meses,** la regla pierde contra el "último
+  valor" (WAPE de 29 % frente a 12 %, y de 28 % frente a 22 %). Con 18 meses
+  queda cerca (8.0 % frente a 6.9 %).
+- **Por categoría,** la regla mejora al mejor modelo simple en Abarrotes, Bebidas,
+  Cuidado Personal y Lácteos, y **pierde en Limpieza**, donde el promedio móvil es
+  mucho mejor.
+
+## Limitaciones
+
+- Los datos de prueba son fabricados: los resultados muestran que el método
+  funciona, no su desempeño en una tienda real.
+- La evaluación por horizonte tiene pocos puntos: el horizonte 1 se mide con 6
+  meses y el 6, con uno solo. Las diferencias pequeñas no son concluyentes.
+- Los meses 7 a 12 del horizonte no están validados.
+- Bajo 36 meses la proyección es una recta: no anticipa picos de temporada.
+- Las proyecciones de las categorías suman la general cuando todas usan el mismo
+  modelo y ningún punto se recorta a cero. Los intervalos no son aditivos: el
+  intervalo general se calcula sobre su propia serie.
+- La tendencia es lineal y no se modelan feriados, promociones, precios, clima ni
+  otras variables externas. Los resultados sirven como apoyo operativo, no como
+  garantía de demanda futura.

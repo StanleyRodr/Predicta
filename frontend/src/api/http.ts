@@ -1,8 +1,12 @@
 import axios from "axios";
+import { apiBaseUrl } from "../lib/apiUrl";
 import { useAuthStore } from "../stores/authStore";
 
+// Uploads and generated reports can outlast the default timeout.
+export const LONG_REQUEST_TIMEOUT_MS = 120_000;
+
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8000",
+  baseURL: apiBaseUrl(),
   timeout: 15_000,
   headers: { Accept: "application/json" },
 });

@@ -1,0 +1,13 @@
+horizonte,modelo,wape_modelo,mejor_referencia,wape_referencia,mejora_pct,gana_a_estacional_ingenuo
+1,regla,9.3198,promedio_movil_3,10.4051,10.4306,True
+1,estacional_forzada,10.8031,promedio_movil_3,10.4051,-3.8254,True
+2,regla,6.5443,promedio_movil_3,7.2341,9.5358,True
+2,estacional_forzada,13.9371,promedio_movil_3,7.2341,-92.6587,False
+3,regla,7.3673,ultimo_valor,6.3385,-16.2299,True
+3,estacional_forzada,17.1644,ultimo_valor,6.3385,-170.7952,False
+4,regla,11.581,mismo_mes_anio_anterior,9.5999,-20.6369,False
+4,estacional_forzada,19.3602,mismo_mes_anio_anterior,9.5999,-101.6708,False
+5,regla,12.9473,promedio_movil_3,3.7647,-243.9133,True
+5,estacional_forzada,18.2408,promedio_movil_3,3.7647,-384.5226,False
+6,regla,3.405,ultimo_valor,0.4594,-641.2282,True
+6,estacional_forzada,4.4935,ultimo_valor,0.4594,-878.1878,True

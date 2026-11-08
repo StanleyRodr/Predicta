@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCategoryStats, getGlobalStats, getTemporalStats } from "./analytics";
+import { getCategoryStats, getGlobalStats, getSalesSeries, getTemporalStats } from "./analytics";
 import { http } from "./http";
 
 afterEach(() => vi.restoreAllMocks());
@@ -26,6 +26,28 @@ describe("analytics API", () => {
 
     expect(get).toHaveBeenCalledWith("/analytics/stats", {
       params: { fecha_desde: undefined, fecha_hasta: undefined },
+    });
+  });
+});
+
+describe("sales series API", () => {
+  it("sends the series filters and drops empty ones", async () => {
+    const get = vi.spyOn(http, "get").mockResolvedValue({ data: {} } as never);
+
+    await getSalesSeries({ granularidad: "dia", categoria: "Lácteos", fecha_desde: "2026-01-01", fecha_hasta: "" });
+    await getSalesSeries({ granularidad: "mes", categoria: "", por_categoria: false });
+
+    expect(get).toHaveBeenNthCalledWith(1, "/analytics/stats/series", {
+      params: {
+        granularidad: "dia",
+        categoria: "Lácteos",
+        fecha_desde: "2026-01-01",
+        fecha_hasta: undefined,
+        por_categoria: undefined,
+      },
+    });
+    expect(get).toHaveBeenNthCalledWith(2, "/analytics/stats/series", {
+      params: { granularidad: "mes", categoria: undefined, por_categoria: undefined, fecha_desde: undefined, fecha_hasta: undefined },
     });
   });
 });

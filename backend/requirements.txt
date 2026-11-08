@@ -14,22 +14,23 @@ email-validator==2.3.0
 
 # Authentication
 PyJWT==2.10.1
-passlib[bcrypt]==1.7.4
-# passlib 1.7.4 expects bcrypt's legacy version metadata.
-bcrypt==4.0.1
+# Used directly; hashes made earlier through passlib keep validating.
+bcrypt==5.0.0
 python-multipart==0.0.32
 
 # Data science & ML
 pandas==3.0.6
 numpy==2.5.4
 scikit-learn==1.9.1
+statsmodels==0.15.0
 matplotlib==3.11.2
 
 # Reports
 fpdf2==2.8.9
 openpyxl==3.1.5
 
-# Environment & config
+# Environment & config (pydantic-settings reads backend/.env through python-dotenv)
+pydantic-settings==2.16.2
 python-dotenv==1.2.4
 
 # Rate limiting

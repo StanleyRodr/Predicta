@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** MED
@@ -15,6 +15,21 @@
 
 Generar reportes sin estado global compartido entre hilos, con memoria acotada,
 y dejar las rutas como una capa HTTP delgada.
+
+## Decisiones tomadas
+
+- El PDF de historial muestra métricas globales, ventas por categoría (las 15
+  de mayor ingreso y una fila "Otras"), los últimos 12 meses con ventas y las
+  20 ventas de mayor monto.
+- Su gráfico pasa de una línea diaria a una línea mensual de todo el historial.
+- Las barras del reporte mensual dicen `2024`, `2025` y `2026 (estimado)`.
+- Los PDF usan `helvetica` y textos con tilde. Los mensajes de error de la API
+  y los encabezados del Excel no cambian: el ETL lee esos encabezados al volver
+  a cargar un Excel exportado.
+- `pypdf` se agrega solo a `requirements-dev.txt`, para leer los PDF en tests.
+- SQL agrupa por día con la misma consulta en PostgreSQL y SQLite; los meses se
+  suman en Python. El Excel sigue listando todas las ventas, pero lee solo las
+  columnas que exporta.
 
 ## Fuera de alcance
 

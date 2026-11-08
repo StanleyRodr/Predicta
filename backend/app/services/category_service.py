@@ -11,14 +11,14 @@ CANONICAL_CATEGORIES = (
 )
 
 
-def _category_key(value: str) -> str:
+def category_key(value: str) -> str:
     """Build a comparison key without accents or case differences."""
     normalized = unicodedata.normalize("NFKD", value)
     without_accents = "".join(char for char in normalized if not unicodedata.combining(char))
     return " ".join(without_accents.casefold().split())
 
 
-CATEGORY_LOOKUP = {_category_key(category): category for category in CANONICAL_CATEGORIES}
+CATEGORY_LOOKUP = {category_key(category): category for category in CANONICAL_CATEGORIES}
 
 
 def normalize_category(value: object) -> str:
@@ -30,7 +30,7 @@ def normalize_category(value: object) -> str:
     if not cleaned:
         return "General"
 
-    known_category = CATEGORY_LOOKUP.get(_category_key(cleaned))
+    known_category = CATEGORY_LOOKUP.get(category_key(cleaned))
     if known_category is not None:
         return known_category
 

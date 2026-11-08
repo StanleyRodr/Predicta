@@ -23,23 +23,23 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 012 | Implementar carga ETL e historial | `docs/planning/plans/012-frontend-carga-historial.md` | P1 | M | 011 | HECHO |
 | 013 | Implementar dashboard y analytics | `docs/planning/plans/013-frontend-dashboard.md` | P1 | M | 011, 012 | HECHO |
 | 014 | Implementar predicciones y reportes | `docs/planning/plans/014-frontend-predicciones-reportes.md` | P1 | M | 013 | HECHO |
-| 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | TODO |
-| 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | TODO |
-| 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | TODO |
-| 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | TODO |
-| 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | TODO |
-| 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | TODO |
-| 021 | Corregir modelo y proyectar 12 meses | `docs/planning/plans/021-modelo-horizonte.md` | P1 | L | 020 | TODO |
-| 022 | Evaluación y modelos de referencia | `docs/planning/plans/022-evaluacion-baselines.md` | P1 | L | 021 | TODO |
-| 023 | Contrato de predicción y esquemas | `docs/planning/plans/023-contrato-prediccion.md` | P1 | L | 016, 022 | TODO |
-| 024 | Series de analítica por dimensión | `docs/planning/plans/024-analitica-dimensiones.md` | P1 | M | 020 | TODO |
-| 025 | Dashboard general, categoría y mes | `docs/planning/plans/025-dashboard-explorador.md` | P1 | L | 018, 019, 024 | TODO |
-| 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | TODO |
-| 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | TODO |
-| 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | TODO |
-| 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | TODO |
-| 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | TODO |
-| 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | TODO |
+| 015 | CI y calidad automática | `docs/planning/plans/015-ci-calidad.md` | P1 | M | — | HECHO |
+| 016 | Alinear modelos y migraciones | `docs/planning/plans/016-alinear-migraciones.md` | P1 | M | 015 | HECHO |
+| 017 | Endurecer la ETL | `docs/planning/plans/017-etl-endurecida.md` | P1 | L | 016 | HECHO |
+| 018 | Convención numérica 0,000.00 | `docs/planning/plans/018-convencion-numerica.md` | P1 | S-M | — | HECHO |
+| 019 | Sesión, errores y descargas en frontend | `docs/planning/plans/019-frontend-sesion-descargas.md` | P1 | M | — | HECHO |
+| 020 | Reportes seguros y capa de servicios | `docs/planning/plans/020-reportes-servicios.md` | P1 | L | 017, 018 | HECHO |
+| 021 | Corregir modelo y proyectar 12 meses | `docs/planning/plans/021-modelo-horizonte.md` | P1 | L | 020 | HECHO |
+| 022 | Evaluación y modelos de referencia | `docs/planning/plans/022-evaluacion-baselines.md` | P1 | L | 021 | HECHO |
+| 023 | Contrato de predicción y esquemas | `docs/planning/plans/023-contrato-prediccion.md` | P1 | L | 016, 022 | HECHO |
+| 024 | Series de analítica por dimensión | `docs/planning/plans/024-analitica-dimensiones.md` | P1 | M | 020 | HECHO |
+| 025 | Dashboard general, categoría y mes | `docs/planning/plans/025-dashboard-explorador.md` | P1 | L | 018, 019, 024 | HECHO |
+| 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | HECHO |
+| 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | HECHO |
+| 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | HECHO |
+| 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | HECHO |
+| 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | HECHO |
+| 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
 
 ## Reglas de ejecución
 
@@ -235,50 +235,50 @@ Plan: `docs/planning/plans/014-frontend-predicciones-reportes.md` | Depende de: 
 
 Plan: `docs/planning/plans/015-ci-calidad.md` | Depende de: ninguna | Esfuerzo: M
 
-- [ ] 015.1 Configurar ruff y mypy en `backend/pyproject.toml`. Verificar: `ruff check app/` y `mypy app/` sin errores nuevos.
-- [ ] 015.2 Configurar ESLint y el script `lint`. Verificar: `npm run lint` termina con código 0.
-- [ ] 015.3 Crear `.pre-commit-config.yaml`. Verificar: `pre-commit run --all-files` termina con código 0.
-- [ ] 015.4 Crear workflow con jobs de backend y frontend. Verificar: ambos pasan en una rama de prueba.
+- [x] 015.1 Configurar ruff y mypy en `backend/pyproject.toml`. Verificar: `ruff check app/` y `mypy app/` sin errores nuevos.
+- [x] 015.2 Configurar ESLint y el script `lint`. Verificar: `npm run lint` termina con código 0.
+- [x] 015.3 Crear `.pre-commit-config.yaml`. Verificar: `pre-commit run --all-files` termina con código 0.
+- [x] 015.4 Crear workflow con jobs de backend y frontend. Verificar: ambos pasan en una rama de prueba.
 
 ### Tarea 016 — Alinear modelos y migraciones
 
 Plan: `docs/planning/plans/016-alinear-migraciones.md` | Depende de: 015 | Esfuerzo: M
 
-- [ ] 016.1 Registrar las diferencias con `alembic check`. Verificar: coinciden con F-06 o se documenta lo adicional.
-- [ ] 016.2 Corregir tipos `Mapped[date]` e índices redundantes. Verificar: `mypy app/` y `pytest` pasan.
-- [ ] 016.3 Crear la migración `0003`. Verificar: `upgrade`, `check` y `downgrade -1` pasan en PostgreSQL.
-- [ ] 016.4 Activar `alembic check` en CI. Verificar: el job pasa.
+- [x] 016.1 Registrar las diferencias con `alembic check`. Verificar: coinciden con F-06 o se documenta lo adicional.
+- [x] 016.2 Corregir tipos `Mapped[date]` e índices redundantes. Verificar: `mypy app/` y `pytest` pasan.
+- [x] 016.3 Crear la migración `0003`. Verificar: `upgrade`, `check` y `downgrade -1` pasan en PostgreSQL.
+- [x] 016.4 Activar `alembic check` en CI. Verificar: el job pasa.
 
 ### Tarea 017 — Endurecer la ETL
 
 Plan: `docs/planning/plans/017-etl-endurecida.md` | Depende de: 016 | Esfuerzo: L
 
-- [ ] 017.1 Mover la carga al threadpool. Verificar: `/health` responde durante una carga.
-- [ ] 017.2 Limitar bytes, filas y tamaño descomprimido de XLSX. Verificar: tests de 413 y carga de las 28,667 filas de prueba.
-- [ ] 017.3 Aplicar la regla de coma por dígitos. Verificar: test parametrizado con la tabla del plan.
-- [ ] 017.4 Validar rangos por fila. Verificar: una fila inválida no impide cargar el resto.
-- [ ] 017.5 Usar mensajes controlados y numeración correcta. Verificar: ningún texto de excepción llega a la respuesta.
-- [ ] 017.6 Reescribir el parser SQL. Verificar: respeta comillas y rechaza filas sin fecha.
-- [ ] 017.7 Rechazar duplicados por SHA-256 y usuario. Verificar: 409 en el segundo intento y carga posible tras purgar.
+- [x] 017.1 Mover la carga al threadpool. Verificar: `/health` responde durante una carga.
+- [x] 017.2 Limitar bytes, filas y tamaño descomprimido de XLSX. Verificar: tests de 413 y carga de las 28,667 filas de prueba.
+- [x] 017.3 Aplicar la regla de coma por dígitos. Verificar: test parametrizado con la tabla del plan.
+- [x] 017.4 Validar rangos por fila. Verificar: una fila inválida no impide cargar el resto.
+- [x] 017.5 Usar mensajes controlados y numeración correcta. Verificar: ningún texto de excepción llega a la respuesta.
+- [x] 017.6 Reescribir el parser SQL. Verificar: respeta comillas y rechaza filas sin fecha.
+- [x] 017.7 Rechazar duplicados por SHA-256 y usuario. Verificar: 409 en el segundo intento y carga posible tras purgar.
 
 ### Tarea 018 — Convención numérica 0,000.00
 
 Plan: `docs/planning/plans/018-convencion-numerica.md` | Depende de: ninguna | Esfuerzo: S-M
 
-- [ ] 018.1 Centralizar formatos en `formatters.ts`. Verificar: `1234.5` se muestra como `$1,234.50`.
-- [ ] 018.2 Reemplazar formatos directos en componentes. Verificar: `toLocaleString` y `toFixed` solo aparecen en `formatters.ts`.
-- [ ] 018.3 Aplicar formatos a ejes y tooltips. Verificar: tests de callbacks.
-- [ ] 018.4 Aplicar la convención a PDF y Excel. Verificar: tests de `format_money` y `number_format`.
+- [x] 018.1 Centralizar formatos en `formatters.ts`. Verificar: `1234.5` se muestra como `$1,234.50`.
+- [x] 018.2 Reemplazar formatos directos en componentes. Verificar: `toLocaleString` y `toFixed` solo aparecen en `formatters.ts`.
+- [x] 018.3 Aplicar formatos a ejes y tooltips. Verificar: tests de callbacks.
+- [x] 018.4 Aplicar la convención a PDF y Excel. Verificar: tests de `format_money` y `number_format`.
 
 ### Tarea 019 — Sesión, errores y descargas en frontend
 
 Plan: `docs/planning/plans/019-frontend-sesion-descargas.md` | Depende de: ninguna | Esfuerzo: M
 
-- [ ] 019.1 Vaciar la caché al cerrar sesión y ante 401. Verificar: test RTL entre usuarios A y B.
-- [ ] 019.2 Incluir `userId` en todas las claves privadas. Verificar: búsqueda de `queryKey`.
-- [ ] 019.3 Leer errores desde Blob. Verificar: se muestra el mensaje del backend.
-- [ ] 019.4 Corregir revocación de URL y timeouts. Verificar: tests de ambos.
-- [ ] 019.5 Invalidar consultas tras carga o purga. Verificar: test de invalidación.
+- [x] 019.1 Vaciar la caché al cerrar sesión y ante 401. Verificar: test RTL entre usuarios A y B.
+- [x] 019.2 Incluir `userId` en todas las claves privadas. Verificar: búsqueda de `queryKey`.
+- [x] 019.3 Leer errores desde Blob. Verificar: se muestra el mensaje del backend.
+- [x] 019.4 Corregir revocación de URL y timeouts. Verificar: tests de ambos.
+- [x] 019.5 Invalidar consultas tras carga o purga. Verificar: test de invalidación.
 
 ### Tarea 020 — Reportes seguros y capa de servicios
 
@@ -356,45 +356,45 @@ Plan: `docs/planning/plans/026-proyecciones-graficas.md` | Depende de: 018, 019,
 
 Plan: `docs/planning/plans/027-metricas-comprensibles.md` | Depende de: 026 | Esfuerzo: S-M
 
-- [ ] 027.1 Centralizar textos en `metricExplanations.ts`. Verificar: tests con valores normales, cero, negativos y `null`.
-- [ ] 027.2 Crear `InfoHint` accesible. Verificar: funciona con teclado.
-- [ ] 027.3 Reescribir `ForecastQuality` con títulos, unidades y etiqueta. Verificar: RTL de unidades y rangos.
-- [ ] 027.4 Explicar la banda y plegar el detalle técnico. Verificar: RTL de texto y plegado.
+- [x] 027.1 Centralizar textos en `metricExplanations.ts`. Verificar: tests con valores normales, cero, negativos y `null`.
+- [x] 027.2 Crear `InfoHint` accesible. Verificar: funciona con teclado.
+- [x] 027.3 Reescribir `ForecastQuality` con títulos, unidades y etiqueta. Verificar: RTL de unidades y rangos.
+- [x] 027.4 Explicar la banda y plegar el detalle técnico. Verificar: RTL de texto y plegado.
 
 ### Tarea 028 — Accesibilidad
 
 Plan: `docs/planning/plans/028-accesibilidad.md` | Depende de: 025, 026 | Esfuerzo: M
 
-- [ ] 028.1 Corregir foco, Escape e ids de `Modal`. Verificar: RTL de cada comportamiento.
-- [ ] 028.2 Dar equivalente en texto a todos los gráficos. Verificar: RTL encuentra la tabla.
-- [ ] 028.3 Corregir el menú móvil. Verificar: botón con nombre accesible.
+- [x] 028.1 Corregir foco, Escape e ids de `Modal`. Verificar: RTL de cada comportamiento.
+- [x] 028.2 Dar equivalente en texto a todos los gráficos. Verificar: RTL encuentra la tabla.
+- [x] 028.3 Corregir el menú móvil. Verificar: botón con nombre accesible.
 
 ### Tarea 029 — Configuración y autenticación
 
 Plan: `docs/planning/plans/029-configuracion-auth.md` | Depende de: 015 | Esfuerzo: M
 
-- [ ] 029.1 Centralizar configuración y cerrar CORS. Verificar: `os.getenv` solo en `config.py` y `*` rechazado en producción.
-- [ ] 029.2 Reemplazar `passlib`. Verificar: los hashes existentes siguen validando.
-- [ ] 029.3 Limitar contraseña a 72 bytes y buscar el rol por nombre. Verificar: tests de ambos.
-- [ ] 029.4 Capturar `IntegrityError` y corregir `Content-Disposition`. Verificar: tests de ambos.
+- [x] 029.1 Centralizar configuración y cerrar CORS. Verificar: `os.getenv` solo en `config.py` y `*` rechazado en producción.
+- [x] 029.2 Reemplazar `passlib`. Verificar: los hashes existentes siguen validando.
+- [x] 029.3 Limitar contraseña a 72 bytes y buscar el rol por nombre. Verificar: tests de ambos.
+- [x] 029.4 Capturar `IntegrityError` y corregir `Content-Disposition`. Verificar: tests de ambos.
 
 ### Tarea 030 — Cerrar huecos de pruebas
 
 Plan: `docs/planning/plans/030-cobertura-tests.md` | Depende de: 017, 023, 024 | Esfuerzo: M
 
-- [ ] 030.1 Crear `second_user` y corregir el test de purga. Verificar: falla si se quita el filtro.
-- [ ] 030.2 Crear tests de aislamiento por endpoint. Verificar: la lista cubre todas las rutas privadas.
-- [ ] 030.3 Completar rutas sin prueba. Verificar: informe de cobertura.
-- [ ] 030.4 Correr la suite en PostgreSQL y quitar el parche de fechas. Verificar: ambos motores pasan.
+- [x] 030.1 Crear `second_user` y corregir el test de purga. Verificar: falla si se quita el filtro.
+- [x] 030.2 Crear tests de aislamiento por endpoint. Verificar: la lista cubre todas las rutas privadas.
+- [x] 030.3 Completar rutas sin prueba. Verificar: informe de cobertura.
+- [x] 030.4 Correr la suite en PostgreSQL y quitar el parche de fechas. Verificar: ambos motores pasan.
 
 ### Tarea 031 — Limpieza y documentación
 
 Plan: `docs/planning/plans/031-limpieza-documentacion.md` | Depende de: 015-030 | Esfuerzo: S-M
 
-- [ ] 031.1 Eliminar código muerto. Verificar: búsquedas vacías y suites en verde.
-- [ ] 031.2 Corregir `VITE_API_URL` y el select de categoría. Verificar: tests de ambos.
-- [ ] 031.3 Actualizar `AGENTS.md`, `README.md`, `Makefile` y `CHANGELOG.md`. Verificar: coinciden con el sistema final.
-- [ ] 031.4 Ejecutar la verificación global. Verificar: todos los comandos terminan con código 0.
+- [x] 031.1 Eliminar código muerto. Verificar: búsquedas vacías y suites en verde.
+- [x] 031.2 Corregir `VITE_API_URL` y el select de categoría. Verificar: tests de ambos.
+- [x] 031.3 Actualizar `AGENTS.md`, `README.md`, `Makefile` y `CHANGELOG.md`. Verificar: coinciden con el sistema final.
+- [x] 031.4 Ejecutar la verificación global. Verificar: todos los comandos terminan con código 0.
 
 ## Verificación global
 

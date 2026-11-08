@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** HIGH
@@ -31,6 +31,21 @@ gráfico hace visibles sus errores.
 
 Bajo 24 meses no se usa estacionalidad: el historial no alcanza para separar una
 temporada de un cambio real del negocio.
+- El mes incompleto se excluye del ajuste y es el primer mes proyectado. En los
+  gráficos se muestra aparte, como punto hueco.
+- La estacionalidad exige además que los 12 meses del calendario tengan ventas.
+  Si falta alguno, se usa solo la tendencia y `advertencia` lo explica.
+- La proyección diaria también usa `statsmodels.OLS` con intervalo de
+  observación: promedio con 2 días, tendencia desde 3 y tendencia más día de la
+  semana desde 14 días con los 7 días observados. Lunes y enero son las
+  referencias.
+- Los reportes PDF responden 400 con el mensaje nuevo cuando faltan meses; el
+  422 de la tarea 023 aplica al endpoint `/forecast`.
+- Con el archivo de prueba (24 meses), la banda del 95 % mide de 38 % a 65 % de
+  la predicción general y conserva la forma de la temporada, así que no se
+  activó la condición STOP. El `R²` del holdout es negativo (de −1.9 a −15.8,
+  con `MAPE` de 13 % a 29 %), igual que con el modelo anterior: es un efecto del
+  holdout de 5 meses, que evalúa el plan 022.
 
 ## Estado actual
 

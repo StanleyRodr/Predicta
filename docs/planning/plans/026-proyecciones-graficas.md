@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** MED
@@ -26,6 +26,14 @@ por categoría, además de los valores numéricos.
 - Selector Monto / Cantidad, con Monto por defecto.
 - La proyección sigue calculándose solo por acción explícita del usuario.
 - Guardar es una acción aparte, con el botón "Guardar proyección".
+- Un solo botón "Calcular proyección" pide la serie mensual del alcance elegido y
+  el día siguiente, que es siempre del total.
+- El gráfico muestra los últimos 24 meses de historial antes de la proyección.
+- Cada lote guardado muestra fecha, alcance, modelo, meses y total, y al abrirlo
+  su tabla mensual. Las filas viejas se muestran como "Proyección diaria
+  (anterior)", con su fecha.
+- Con una categoría elegida también se pide el total, solo para comparar modelo y
+  horizonte; la regla de modelos no se calcula en el navegador.
 
 ## Alcance
 

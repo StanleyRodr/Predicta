@@ -1,47 +1,51 @@
 # Predicta - Frontend
 
-> **Status:** Foundation implemented - business pages pending.
+> **Status:** Implemented. Every page below consumes the FastAPI backend.
 
-## Planned Stack
+## Stack
 
 | Technology | Purpose |
 |---|---|
 | **React 19** | UI library |
 | **TypeScript** | Static type checking |
 | **Vite** | Build tool and dev server |
-| **TailwindCSS** | Utility-first CSS framework |
-| **Chart.js** | Data visualization (line, bar, mixed) |
-| **TanStack Query** | Data fetching and caching |
-| **React Hook Form** | Form state management |
-| **Zod** | Schema validation |
-| **Axios** | HTTP client with JWT interceptors |
-| **Zustand** | Lightweight state management |
+| **Tailwind CSS v4** | Styling, with hand-written primitives in `src/components/ui/` |
+| **Chart.js** (react-chartjs-2) | Line and bar charts, each wrapped in the accessible `ChartFrame` |
+| **TanStack Query** | Server state and caching |
+| **React Hook Form** + **Zod** | Forms and validation |
+| **Axios** | HTTP client with the Bearer token and the 401 handler |
+| **Zustand** | Session store, persisted to localStorage |
 | **React Router** | Client-side routing |
 
-## Planned Pages
+## Pages
 
-- `Login` / `Register` - Authentication flows
-- `Dashboard` - Global KPIs and main charts
-- `Upload` - Drag-and-drop CSV/Excel upload
-- `Analytics` - Filterable sales analytics
-- `Predictions` - Forecast visualizations with confidence intervals
-- `Reports` - PDF/Excel report download
-- `Profile` - User account management
+- `/` - Home
+- `/login`, `/register` - Authentication
+- `/dashboard` - KPIs and series in general, by category, by month, and for the whole history
+- `/upload` - CSV/XLSX/SQL upload, load summary, paged history, and purge
+- `/predictions` - Monthly projection with its band, saved projections, next-day forecast, and plain-language metrics
+- `/reports` - Excel and PDF downloads
+- `/profile` - User account
 
-## Planned Structure
+Everything except `/`, `/login`, and `/register` sits behind `ProtectedRoute` and the `AppShell` layout.
+
+## Structure
 
 ```
 src/
-├── api/           # Backend client (axios + endpoints)
-├── components/    # Reusable UI components
-│   ├── ui/        # Buttons, inputs, modals
-│   ├── charts/    # Chart.js wrappers
-│   └── layout/    # Sidebar, Navbar, ProtectedRoute
+├── api/           # One typed client per backend area, on the shared Axios instance
+├── components/
+│   ├── ui/        # Buttons, inputs, modal, ChartFrame, InfoHint
+│   ├── analytics/ # Dashboard charts and filters
+│   ├── forecast/  # Projection chart, tables, quality
+│   ├── etl/       # Upload dropzone, summary, and history table
+│   ├── auth/      # Auth page layout
+│   └── layout/    # AppShell, ProtectedRoute, session cache guard
 ├── pages/         # Route-level pages
-├── hooks/         # Custom React hooks
-├── stores/        # Zustand stores
-├── types/         # Shared TypeScript types
-├── lib/           # Utilities (formatters, helpers)
+├── stores/        # Zustand auth store
+├── types/         # Types mirroring the backend schemas
+├── lib/           # Formatters, transforms, validation, metric texts
+├── test/          # Vitest setup
 ├── App.tsx
 └── main.tsx
 ```
@@ -54,8 +58,8 @@ npm install
 npm run dev
 ```
 
-The dev server will run on `http://localhost:5173` (Vite default).
+The dev server runs on `http://localhost:5173`, the backend's default CORS origin.
 
 Set `VITE_API_URL` in `.env` when the backend does not run at
-`http://localhost:8000`. Run `npm run typecheck`, `npm test -- --run`, and
-`npm run build` before submitting frontend changes.
+`http://localhost:8000`. Run `npm run lint`, `npm run typecheck`,
+`npm test -- --run`, and `npm run build` before submitting frontend changes.

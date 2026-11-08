@@ -161,24 +161,26 @@ def test_upload_without_token_returns_unauthorized(client):
     assert response.status_code == 401
 
 
-def test_clear_history_deletes_only_current_user_sales(client, auth_headers):
-    upload = client.post(
-        "/etl/upload-ventas",
-        headers=auth_headers,
-        files={
-            "file": (
-                "ventas.csv",
-                b"producto,monto,categoria,fecha\nArroz,10,Abarrotes,2026-01-01",
-                "text/csv",
-            )
-        },
-    )
-    assert upload.status_code == 200
+def test_clear_history_deletes_only_current_user_sales(client, auth_headers, second_user, test_db):
+    for headers, contents in (
+        (auth_headers, b"producto,monto,categoria,fecha\nArroz,10,Abarrotes,2026-01-01"),
+        (second_user, b"producto,monto,categoria,fecha\nLeche,5,Lacteos,2026-01-02\nPan,3,Abarrotes,2026-01-03"),
+    ):
+        upload = client.post(
+            "/etl/upload-ventas",
+            headers=headers,
+            files={"file": ("ventas.csv", contents, "text/csv")},
+        )
+        assert upload.status_code == 200
 
     response = client.delete("/etl/clear-history", headers=auth_headers)
 
     assert response.status_code == 200
     assert "1 registros" in response.json()["message"]
+    with test_db() as session:
+        remaining = sorted(sale.producto for sale in session.query(models.Venta))
+    assert remaining == ["Leche", "Pan"]
+    assert client.get("/analytics/ventas", headers=second_user).json()["total_registros"] == 2
 
 
 def test_clear_history_empty_returns_success_message(client, auth_headers):

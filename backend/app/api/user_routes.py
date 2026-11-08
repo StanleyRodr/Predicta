@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -13,6 +14,10 @@ from app.schemas import schemas
 from app.services import user_service
 
 router = APIRouter(prefix="/users", tags=["Users"])
+
+# Two requests can pass the duplicate checks at once; the unique constraints
+# catch the second one, which gets the same 400 as a sequential duplicate.
+DUPLICATE_ACCOUNT = "El correo electronico o el nombre de usuario ya se encuentra registrado."
 
 
 @router.post(
@@ -32,7 +37,10 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)) -> mo
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El nombre de usuario ya se encuentra registrado.",
         )
-    return user_service.create_user(db=db, user=user)
+    try:
+        return user_service.create_user(db=db, user=user)
+    except IntegrityError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=DUPLICATE_ACCOUNT) from exc
 
 
 @router.post("/login")
@@ -89,6 +97,10 @@ def update_my_profile(
             )
         current_user.nombre_usuario = user_data.nombre_usuario
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=DUPLICATE_ACCOUNT) from exc
     db.refresh(current_user)
     return current_user

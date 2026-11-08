@@ -1,5 +1,5 @@
 import { Card, Spinner } from "../ui";
-import { formatCurrency } from "../../lib/formatters";
+import { formatCurrency, formatNumber } from "../../lib/formatters";
 
 interface MetricCardProps {
   label: string;
@@ -16,7 +16,7 @@ export function MetricCard({ label, value, currency = false, loading = false }: 
         <Spinner label="Cargando" />
       ) : (
         <strong className="font-mono text-2xl tabular-nums text-terminal-text">
-          {value === undefined ? "--" : currency ? formatCurrency(value) : value.toLocaleString("es-CO")}
+          {value === undefined ? "--" : currency ? formatCurrency(value) : formatNumber(value)}
         </strong>
       )}
     </Card>
