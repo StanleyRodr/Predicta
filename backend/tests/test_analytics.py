@@ -259,4 +259,4 @@ def test_annual_report_requires_multiple_months(client, auth_headers):
     )
 
     assert response.status_code == 400
-    assert "Muestreo insuficiente" in response.json()["detail"]
+    assert "6 meses completos" in response.json()["detail"]

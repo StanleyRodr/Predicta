@@ -21,7 +21,12 @@ from matplotlib.figure import Figure
 from matplotlib.ticker import FuncFormatter
 from sqlalchemy.orm import Session
 
-from app.ml_models.forecast import monthly_aggregates, monthly_forecast
+from app.ml_models.forecast import (
+    InsufficientHistoryError,
+    MonthlyForecast,
+    forecast_from_sales,
+    monthly_aggregates,
+)
 from app.services import analytics_service
 from app.services.category_service import normalize_category
 from app.services.formatting import EXCEL_MONEY_FORMAT, format_axis_money, format_money
@@ -116,22 +121,57 @@ def _pdf_bytes(pdf: FPDF) -> bytes:
     return bytes(pdf.output())
 
 
-def _monthly_history(
-    db: Session,
-    user_id: int,
-    *,
-    categoria: str | None = None,
-    no_data: str,
-    too_short: str,
-) -> tuple[list[analytics_service.DailySales], pd.DataFrame]:
-    """Return daily totals and their monthly roll-up, or explain why there are none."""
+def _projection(
+    db: Session, user_id: int, *, no_data: str, categoria: str | None = None
+) -> MonthlyForecast:
+    """Project the user's monthly sales, or explain why that is not possible."""
     daily = analytics_service.daily_sales(db, user_id, categoria)
     if not daily:
         raise ReportError(400, no_data)
-    monthly = monthly_aggregates(daily)
-    if len(monthly) < 2:
-        raise ReportError(400, too_short)
-    return daily, monthly
+    try:
+        return forecast_from_sales(daily)
+    except InsufficientHistoryError as exc:
+        raise ReportError(400, str(exc)) from exc
+
+
+def _plot_projection(
+    ax: Axes, forecast: MonthlyForecast, *, history_color: str, projection_color: str, label: str
+) -> None:
+    """History, its incomplete month apart, and the projection with its 95 % band."""
+    history = forecast.historial
+    points = forecast.objetivos["monto"].puntos
+    ax.plot(
+        history["fecha"], history["monto"],
+        marker="o", linestyle="-", color=history_color, linewidth=2,
+        label=f"Historial: {label}",
+    )
+    if forecast.mes_parcial is not None:
+        ax.plot(
+            [forecast.mes_parcial["fecha"]], [forecast.mes_parcial["monto"]],
+            marker="o", linestyle="none", markerfacecolor="white", markeredgecolor=history_color,
+            label="Mes en curso (parcial, fuera del ajuste)",
+        )
+    # Anchor the projection to the last complete month so the line is continuous.
+    dates = [history["fecha"].iloc[-1]] + [point.fecha for point in points]
+    values = [float(history["monto"].iloc[-1])] + [point.prediccion for point in points]
+    ax.plot(
+        dates, values,
+        marker="s", linestyle="--", color=projection_color, linewidth=2,
+        label=f"Proyección ({forecast.horizonte} meses)",
+    )
+    ax.fill_between(
+        [point.fecha for point in points],
+        [point.inferior for point in points],
+        [point.superior for point in points],
+        color=projection_color, alpha=0.18, linewidth=0,
+        label="Intervalo de predicción del 95 %",
+    )
+
+
+def _write_warning(pdf: FPDF, forecast: MonthlyForecast) -> None:
+    if forecast.advertencia:
+        pdf.set_font("helvetica", "I", 10)
+        pdf.multi_cell(0, 6, text=f"Nota: {forecast.advertencia}", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
 
 # =====================================================================
@@ -337,33 +377,13 @@ def history_pdf(db: Session, user_id: int, username: str) -> Report:
 
 
 def annual_forecast_pdf(db: Session, user_id: int, username: str) -> Report:
-    """Return a PDF with the next-12-month forecast combined with history."""
-    daily, monthly = _monthly_history(
-        db,
-        user_id,
-        no_data="No hay datos historicos para procesar.",
-        too_short="Muestreo insuficiente para analisis lineal.",
-    )
-    _, future_dates, predictions = monthly_forecast(daily)
-
-    last_date = monthly["fecha"].max()
-    last_amount = float(monthly.iloc[-1]["monto"])
-
-    # Anchor the projection to the last real point so the line is continuous.
-    chart_dates = [last_date] + future_dates
-    chart_values = [last_amount] + list(predictions)
+    """Return a PDF with the monthly projection over the applied horizon and history."""
+    forecast = _projection(db, user_id, no_data="No hay datos historicos para procesar.")
+    points = forecast.objetivos["monto"].puntos
+    total = sum(point.prediccion for point in points)
 
     fig, ax = _new_fig(figsize=(12, 6))
-    ax.plot(
-        monthly["fecha"], monthly["monto"],
-        marker="o", linestyle="-", color="#004aad", linewidth=2,
-        label="Historial Operativo (Datos Reales)",
-    )
-    ax.plot(
-        chart_dates, chart_values,
-        marker="X", linestyle="--", color="#ff7f0e", linewidth=2,
-        label="Proyección Estimada (Próximos 12 meses)",
-    )
+    _plot_projection(ax, forecast, history_color="#004aad", projection_color="#ff7f0e", label="ventas reales")
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=6))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     ax.set_title(
@@ -392,11 +412,12 @@ def annual_forecast_pdf(db: Session, user_id: int, username: str) -> Report:
     pdf.set_font("helvetica", size=12)
     pdf.cell(
         0, 10,
-        text=f"Ingreso Acumulado Estimado (Próximos 12 meses): {format_money(sum(predictions))}",
+        text=f"Ingreso Acumulado Estimado (Próximos {forecast.horizonte} meses): {format_money(total)}",
         new_x=XPos.LMARGIN, new_y=YPos.NEXT,
     )
-    pdf.ln(5)
-    pdf.image(chart, x=10, y=45, w=190)
+    _write_warning(pdf, forecast)
+    pdf.ln(3)
+    pdf.image(chart, x=10, y=pdf.get_y(), w=190)
 
     return Report(
         content=_pdf_bytes(pdf), filename=f"Predicta_Reporte_Anual_{username}.pdf"
@@ -425,26 +446,22 @@ def monthly_report_pdf(db: Session, user_id: int, mes: str) -> Report:
         raise ReportError(400, f"El modulo analitico no reconoce el mes '{mes}'.")
     target_month = MONTH_ALIASES[month_key]
 
-    daily, monthly = _monthly_history(
-        db,
-        user_id,
-        no_data="Ecosistema sin registros para entrenamiento.",
-        too_short="Varianza insuficiente para ejecutar regresion.",
-    )
-
-    _, future_dates, predictions = monthly_forecast(daily, horizon=12)
-    projection_index = next(
-        (index for index, current_date in enumerate(future_dates) if current_date.month == target_month),
+    forecast = _projection(db, user_id, no_data="Ecosistema sin registros para entrenamiento.")
+    projected = next(
+        (point for point in forecast.objetivos["monto"].puntos if point.fecha.month == target_month),
         None,
     )
-    if projection_index is None:
+    if projected is None:
         raise ReportError(
-            400, "El mes solicitado cae fuera del rango de prevision de 12 meses."
+            400,
+            f"El mes solicitado cae fuera del horizonte de proyección de {forecast.horizonte} meses.",
         )
 
-    projection_date = future_dates[projection_index]
-    monto_predicho = float(predictions[projection_index])
+    projection_date = projected.fecha
+    monto_predicho = projected.prediccion
 
+    # Only complete months: an unfinished month would compare a partial total.
+    monthly = forecast.historial
     historical = monthly[monthly["fecha"].dt.month == target_month]
     labels = comparison_labels(list(historical["fecha"]), projection_date)
     values = list(historical["monto"])
@@ -491,36 +508,20 @@ def monthly_report_pdf(db: Session, user_id: int, mes: str) -> Report:
 
 
 def category_forecast_pdf(db: Session, user_id: int, categoria: str) -> Report:
-    """Return a PDF with the 12-month forecast filtered to a single category."""
+    """Return a PDF with the monthly projection of a single category."""
     canonical = normalize_category(categoria)
     cat_key = canonical.lower().replace(" ", "-")
 
-    daily, monthly = _monthly_history(
+    forecast = _projection(
         db,
         user_id,
         categoria=canonical,
         no_data=f"No hay registros historicos para la categoria '{canonical}'.",
-        too_short="Historial insuficiente para proyeccion lineal en esta categoria.",
     )
-    _, future_dates, predictions = monthly_forecast(daily)
-
-    last_date = monthly["fecha"].max()
-    last_amount = float(monthly.iloc[-1]["monto"])
-    future_labels = [f"{MONTH_NAMES[d.month - 1]} {d.year}" for d in future_dates]
-    chart_dates = [last_date] + future_dates
-    chart_values = [last_amount] + list(predictions)
+    points = forecast.objetivos["monto"].puntos
 
     fig, ax = _new_fig(figsize=(10, 5.5))
-    ax.plot(
-        monthly["fecha"], monthly["monto"],
-        marker="o", linestyle="-", color="#2c7a2c", linewidth=2,
-        label=f"Historial: {canonical}",
-    )
-    ax.plot(
-        chart_dates, chart_values,
-        marker="s", linestyle="--", color="#8bc34a", linewidth=2,
-        label=f"Proyección: {canonical}",
-    )
+    _plot_projection(ax, forecast, history_color="#2c7a2c", projection_color="#8bc34a", label=canonical)
     ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
     ax.set_title(
@@ -549,6 +550,7 @@ def category_forecast_pdf(db: Session, user_id: int, categoria: str) -> Report:
     pdf.image(chart, x=10, y=25, w=190)
 
     pdf.set_y(140)
+    _write_warning(pdf, forecast)
     pdf.set_font("helvetica", "B", 14)
     pdf.cell(
         0, 10, text="Desglose Mensual Operativo (Proyección)",
@@ -560,13 +562,16 @@ def category_forecast_pdf(db: Session, user_id: int, categoria: str) -> Report:
     pdf.cell(90, 10, "Periodo Evaluado", 1, align="C", fill=True)
     pdf.cell(90, 10, "Proyección de Ingresos", 1, align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
     pdf.set_font("helvetica", "", 11)
-    for label, amount in zip(future_labels, predictions, strict=False):
-        pdf.cell(90, 10, label, 1, align="C")
-        pdf.cell(90, 10, format_money(amount), 1, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    for point in points:
+        pdf.cell(90, 10, _month_label(point.fecha), 1, align="C")
+        pdf.cell(90, 10, format_money(point.prediccion), 1, align="C", new_x=XPos.LMARGIN, new_y=YPos.NEXT)
 
     pdf.set_font("helvetica", "B", 11)
     pdf.set_fill_color(220, 230, 240)
-    pdf.cell(90, 10, "TOTAL ESTIMADO (12 MESES)", 1, align="C", fill=True)
-    pdf.cell(90, 10, format_money(sum(predictions)), 1, align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT)
+    pdf.cell(90, 10, f"TOTAL ESTIMADO ({forecast.horizonte} MESES)", 1, align="C", fill=True)
+    pdf.cell(
+        90, 10, format_money(sum(point.prediccion for point in points)), 1,
+        align="C", fill=True, new_x=XPos.LMARGIN, new_y=YPos.NEXT,
+    )
 
     return Report(content=_pdf_bytes(pdf), filename=f"Predicta_{cat_key}_Proyeccion.pdf")

@@ -1,11 +1,13 @@
 """Characterization tests for the Excel and PDF report endpoints."""
 
+import calendar
 import io
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date
 
 import pandas as pd
+import pytest
 from openpyxl import load_workbook
 from pypdf import PdfReader
 from sqlalchemy import create_engine
@@ -27,13 +29,17 @@ def _upload(client, headers, rows):
     assert response.status_code == 200, response.text
 
 
-def _monthly_rows(months, start=(2024, 1)):
+def _monthly_rows(months, start=(2024, 1), complete=False):
+    """Two sales per month; ``complete`` adds one on the last day so no month is partial."""
     rows = []
     for index in range(months):
         year = start[0] + (start[1] - 1 + index) // 12
         month = (start[1] - 1 + index) % 12 + 1
         rows.append(("Arroz", 1000 + 10 * index, "Abarrotes", date(year, month, 10)))
         rows.append(("Jabon", 300 + 5 * index, "Limpieza", date(year, month, 20)))
+        if complete:
+            last_day = calendar.monthrange(year, month)[1]
+            rows.append(("Sal", 50, "Abarrotes", date(year, month, last_day)))
     return rows
 
 
@@ -123,8 +129,9 @@ def test_history_pdf_without_sales_returns_404(client, auth_headers):
     assert response.status_code == 404
 
 
-def test_annual_pdf_reports_twelve_month_total(client, auth_headers):
-    _upload(client, auth_headers, _monthly_rows(14))
+@pytest.mark.parametrize(("months", "horizon"), [(24, 12), (12, 6)])
+def test_annual_pdf_reports_the_applied_horizon(client, auth_headers, months, horizon):
+    _upload(client, auth_headers, _monthly_rows(months, complete=True))
 
     response = client.get("/analytics/reporte-predictivo-anual-pdf", headers=auth_headers)
 
@@ -133,7 +140,15 @@ def test_annual_pdf_reports_twelve_month_total(client, auth_headers):
     assert 'filename="Predicta_Reporte_Anual_test_user.pdf"' in response.headers[
         "content-disposition"
     ]
-    assert "Ingreso Acumulado Estimado (Próximos 12 meses): $" in text
+    assert f"Ingreso Acumulado Estimado (Próximos {horizon} meses): $" in text
+
+
+def test_annual_pdf_warns_when_seasons_are_not_modeled(client, auth_headers):
+    _upload(client, auth_headers, _monthly_rows(12, complete=True))
+
+    _, text = _pdf_text(client.get("/analytics/reporte-predictivo-anual-pdf", headers=auth_headers))
+
+    assert "Nota: Con 12 meses completos la proyección es una tendencia" in text
 
 
 def test_monthly_pdf_for_known_month(client, auth_headers):
@@ -157,7 +172,7 @@ def test_monthly_pdf_rejects_unknown_month(client, auth_headers):
 
 
 def test_category_pdf_lists_twelve_projected_months(client, auth_headers):
-    _upload(client, auth_headers, _monthly_rows(14))
+    _upload(client, auth_headers, _monthly_rows(24, complete=True))
 
     response = client.get("/analytics/prediccion-categorias/abarrotes", headers=auth_headers)
 
@@ -166,8 +181,29 @@ def test_category_pdf_lists_twelve_projected_months(client, auth_headers):
         "content-disposition"
     ]
     assert "TOTAL ESTIMADO (12 MESES)" in text
-    for label in ("Marzo 2025", "Febrero 2026"):
+    for label in ("Enero 2026", "Diciembre 2026"):
         assert label in text
+
+
+def test_category_pdf_with_short_history_lists_only_the_applied_horizon(client, auth_headers):
+    _upload(client, auth_headers, _monthly_rows(8, complete=True))
+
+    _, text = _pdf_text(client.get("/analytics/prediccion-categorias/abarrotes", headers=auth_headers))
+
+    assert "TOTAL ESTIMADO (4 MESES)" in text
+    assert "Diciembre 2024" in text
+    assert "Enero 2025" not in text
+
+
+def test_projection_reports_need_six_complete_months(client, auth_headers):
+    _upload(client, auth_headers, _monthly_rows(6))
+
+    response = client.get("/analytics/reporte-predictivo-anual-pdf", headers=auth_headers)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == (
+        "Se necesitan al menos 6 meses completos de ventas para proyectar; hay 5 y faltan 1."
+    )
 
 
 def test_category_pdf_without_sales_in_category_returns_400(client, auth_headers):

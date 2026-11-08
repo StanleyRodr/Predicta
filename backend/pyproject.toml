@@ -12,5 +12,5 @@ files = ["app"]
 
 # Third-party packages without type information.
 [[tool.mypy.overrides]]
-module = ["pandas.*", "passlib.*", "sklearn.*"]
+module = ["pandas.*", "passlib.*", "sklearn.*", "statsmodels.*"]
 ignore_missing_imports = true
