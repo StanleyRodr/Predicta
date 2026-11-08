@@ -1,6 +1,7 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import type { MonthlyForecastResponse, ProjectedMonth, SavedBatch } from "../../types/forecast";
+import type { MonthlyForecastResponse, ProjectedMonth, SavedBatch, ValidationMetrics } from "../../types/forecast";
 import { forecastChartData } from "./forecastChartData";
 import { ForecastMetricCard } from "./ForecastMetricCard";
 import { ForecastQuality } from "./ForecastQuality";
@@ -183,15 +184,83 @@ describe("forecast cards", () => {
     expect(screen.getByText(/120/)).toBeInTheDocument();
   });
 
-  it("does not represent null metrics as zero", () => {
-    render(
-      <ForecastQuality
-        amount={{ r2: null, mape: null, rmse: null }}
-        quantity={{ r2: 0.8, mape: 2, rmse: 1 }}
-      />,
-    );
+});
 
-    expect(screen.getAllByText("No disponible")).toHaveLength(3);
-    expect(screen.getByText("0.80")).toBeInTheDocument();
+describe("ForecastQuality", () => {
+  const good: ValidationMetrics = {
+    r2: 0.8,
+    mape: 12.5,
+    rmse: 1250,
+    wape: 11,
+    mase: 0.6,
+    mejora_vs_referencia: 18,
+    referencia: "mismo_mes_anio_anterior",
+    origenes: 6,
+  };
+  const empty: ValidationMetrics = {
+    r2: null,
+    mape: null,
+    rmse: null,
+    wape: null,
+    mase: null,
+    mejora_vs_referencia: null,
+    referencia: null,
+    origenes: 0,
+  };
+
+  it("uses plain titles and the right unit for each measure", () => {
+    render(<ForecastQuality amount={good} quantity={{ ...good, mape: 55, rmse: 3.5 }} />);
+
+    const amount = screen.getByRole("region", { name: "Calidad de monto" });
+    const quantity = screen.getByRole("region", { name: "Calidad de cantidad" });
+    expect(within(amount).getByText("Error promedio")).toBeInTheDocument();
+    expect(within(amount).getByText("MAPE")).toBeInTheDocument();
+    expect(within(amount).getByText("Se desvía en promedio un 12.50% del valor real.")).toBeInTheDocument();
+    expect(within(amount).getByText("Suele fallar por unos $1,250.00.")).toBeInTheDocument();
+    expect(within(quantity).getByText("Suele fallar por unos 3.5 unidades.")).toBeInTheDocument();
+    expect(within(amount).getByText("Buena")).toBeInTheDocument();
+    expect(within(quantity).getByText("Baja")).toBeInTheDocument();
+    expect(within(amount).getByText(/^Calidad buena: en los últimos 6 meses evaluados/)).toBeInTheDocument();
+    expect(screen.getByText(/Las etiquetas son orientativas/)).toBeInTheDocument();
+  });
+
+  it("explains each metric on demand", async () => {
+    const user = userEvent.setup();
+    render(<ForecastQuality amount={good} quantity={good} />);
+
+    const [hint] = screen.getAllByRole("button", { name: "Qué significa margen típico" });
+    await user.click(hint);
+
+    expect(screen.getByRole("note")).toHaveTextContent(/Penaliza más los errores grandes/);
+  });
+
+  it("folds the technical detail and opens and closes it", async () => {
+    const user = userEvent.setup();
+    render(<ForecastQuality amount={good} quantity={empty} />);
+    const toggle = screen.getByRole("button", { name: "Detalle técnico" });
+
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+
+    await user.click(toggle);
+    const table = screen.getByRole("table", { name: "Métricas técnicas de la validación" });
+    for (const acronym of ["R²", "MAPE", "RMSE", "WAPE", "MASE"]) {
+      expect(within(table).getByRole("rowheader", { name: acronym })).toBeInTheDocument();
+    }
+    expect(within(within(table).getByRole("rowheader", { name: "WAPE" }).closest("tr") as HTMLElement).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
+      "11.00%",
+      "No disponible",
+    ]);
+
+    await user.click(toggle);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("does not represent null metrics as zero and says why they are missing", () => {
+    render(<ForecastQuality amount={empty} quantity={empty} />);
+
+    expect(screen.getAllByText(/^No disponible\. Tu historial todavía no deja meses/)).toHaveLength(8);
+    expect(screen.getAllByText(/^Aún no se puede calificar/)).toHaveLength(2);
+    expect(screen.queryByText(/\$0\.00|\b0\.00%/)).not.toBeInTheDocument();
   });
 });

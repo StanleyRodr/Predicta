@@ -35,7 +35,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 024 | Series de analítica por dimensión | `docs/planning/plans/024-analitica-dimensiones.md` | P1 | M | 020 | HECHO |
 | 025 | Dashboard general, categoría y mes | `docs/planning/plans/025-dashboard-explorador.md` | P1 | L | 018, 019, 024 | HECHO |
 | 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | HECHO |
-| 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | TODO |
+| 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | HECHO |
 | 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | TODO |
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | TODO |
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | TODO |
@@ -356,10 +356,10 @@ Plan: `docs/planning/plans/026-proyecciones-graficas.md` | Depende de: 018, 019,
 
 Plan: `docs/planning/plans/027-metricas-comprensibles.md` | Depende de: 026 | Esfuerzo: S-M
 
-- [ ] 027.1 Centralizar textos en `metricExplanations.ts`. Verificar: tests con valores normales, cero, negativos y `null`.
-- [ ] 027.2 Crear `InfoHint` accesible. Verificar: funciona con teclado.
-- [ ] 027.3 Reescribir `ForecastQuality` con títulos, unidades y etiqueta. Verificar: RTL de unidades y rangos.
-- [ ] 027.4 Explicar la banda y plegar el detalle técnico. Verificar: RTL de texto y plegado.
+- [x] 027.1 Centralizar textos en `metricExplanations.ts`. Verificar: tests con valores normales, cero, negativos y `null`.
+- [x] 027.2 Crear `InfoHint` accesible. Verificar: funciona con teclado.
+- [x] 027.3 Reescribir `ForecastQuality` con títulos, unidades y etiqueta. Verificar: RTL de unidades y rangos.
+- [x] 027.4 Explicar la banda y plegar el detalle técnico. Verificar: RTL de texto y plegado.
 
 ### Tarea 028 — Accesibilidad
 

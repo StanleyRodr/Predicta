@@ -172,7 +172,10 @@ export function PredictionsPage() {
                 </h2>
                 <p className="text-sm text-terminal-muted">
                   {forecast.horizonte_aplicado} meses con {MODEL_NAMES[forecast.modelo]}, a partir de {forecast.meses_observados} meses
-                  completos. La banda es el intervalo del 95 %.
+                  completos.
+                </p>
+                <p className="text-sm text-terminal-muted">
+                  La zona sombreada es el intervalo del 95 %: el valor real probablemente caerá dentro de esta zona.
                 </p>
               </div>
               <Segmented label="Medida" onChange={setMeasure} options={FORECAST_MEASURES} value={measure} />

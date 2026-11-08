@@ -165,6 +165,7 @@ describe("PredictionsPage", () => {
     expect(screen.getByText(/7 meses con solo tendencia, a partir de 24 meses/)).toBeInTheDocument();
     const labels = lastChart().map((dataset) => dataset.label);
     expect(labels).toEqual(["Intervalo del 95 %", "", "Historial", "Proyección"]);
+    expect(screen.getByText(/el valor real probablemente caerá dentro de esta zona/)).toBeInTheDocument();
     expect(lastChart()[3].data).toEqual([null, 9500, 10000, 12000, 8000, 8100, 9000, 9500, 9900]);
     expect(await screen.findByText("Mañana, todas las categorías")).toBeInTheDocument();
     expect(screen.getByText("$321.50")).toBeInTheDocument();
