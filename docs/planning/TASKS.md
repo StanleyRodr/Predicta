@@ -39,7 +39,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | HECHO |
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | HECHO |
 | 030 | Cerrar huecos de pruebas | `docs/planning/plans/030-cobertura-tests.md` | P2 | M | 017, 023, 024 | HECHO |
-| 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | TODO |
+| 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
 
 ## Reglas de ejecución
 
@@ -391,10 +391,10 @@ Plan: `docs/planning/plans/030-cobertura-tests.md` | Depende de: 017, 023, 024 |
 
 Plan: `docs/planning/plans/031-limpieza-documentacion.md` | Depende de: 015-030 | Esfuerzo: S-M
 
-- [ ] 031.1 Eliminar código muerto. Verificar: búsquedas vacías y suites en verde.
-- [ ] 031.2 Corregir `VITE_API_URL` y el select de categoría. Verificar: tests de ambos.
-- [ ] 031.3 Actualizar `AGENTS.md`, `README.md`, `Makefile` y `CHANGELOG.md`. Verificar: coinciden con el sistema final.
-- [ ] 031.4 Ejecutar la verificación global. Verificar: todos los comandos terminan con código 0.
+- [x] 031.1 Eliminar código muerto. Verificar: búsquedas vacías y suites en verde.
+- [x] 031.2 Corregir `VITE_API_URL` y el select de categoría. Verificar: tests de ambos.
+- [x] 031.3 Actualizar `AGENTS.md`, `README.md`, `Makefile` y `CHANGELOG.md`. Verificar: coinciden con el sistema final.
+- [x] 031.4 Ejecutar la verificación global. Verificar: todos los comandos terminan con código 0.
 
 ## Verificación global
 

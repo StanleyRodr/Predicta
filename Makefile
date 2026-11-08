@@ -2,7 +2,7 @@
 # Predicta - Common Development Tasks
 # ============================================
 
-.PHONY: help install install-dev run test lint format migrate migration seed clean docker-up docker-down
+.PHONY: help install install-dev run test lint format typecheck migrate migration migration-empty seed clean
 
 help: ## Show this help message
 	@echo "Predicta - Available commands:"
@@ -52,18 +52,6 @@ format: ## Auto-format code (ruff + black-compatible)
 
 typecheck: ## Run static type checker
 	cd backend && mypy app/
-
-# ============================================
-# Docker
-# ============================================
-docker-up: ## Start all services with docker-compose
-	docker-compose up -d
-
-docker-down: ## Stop all services
-	docker-compose down
-
-docker-logs: ## Tail logs from all services
-	docker-compose logs -f
 
 # ============================================
 # Cleanup
