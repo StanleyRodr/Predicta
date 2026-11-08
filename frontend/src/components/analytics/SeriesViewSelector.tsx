@@ -1,6 +1,6 @@
-import { cn } from "../../lib/cn";
 import { MONTH_NAMES } from "../../lib/seriesTransforms";
 import type { Measure } from "../../types/analytics";
+import { Segmented } from "../ui";
 import { MEASURE_LABELS } from "./seriesChart";
 
 export type DashboardView = "general" | "categoria" | "mes" | "historial";
@@ -30,38 +30,6 @@ interface SeriesViewSelectorProps {
 }
 
 const selectClass = "rounded-md border border-terminal-border bg-terminal-bg px-2 py-1.5 text-terminal-text";
-
-function Segmented<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: Record<T, string>;
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div aria-label={label} className="flex flex-wrap gap-1 rounded-lg border border-terminal-border p-1" role="radiogroup">
-      {(Object.keys(options) as T[]).map((key) => (
-        <button
-          aria-checked={value === key}
-          className={cn(
-            "rounded-md px-3 py-1.5 text-sm transition-colors",
-            value === key ? "bg-terminal-amber font-medium text-terminal-bg" : "text-terminal-muted hover:text-terminal-text",
-          )}
-          key={key}
-          onClick={() => onChange(key)}
-          role="radio"
-          type="button"
-        >
-          {options[key]}
-        </button>
-      ))}
-    </div>
-  );
-}
 
 /** One row of controls above the charts: view, measure, category, and month. */
 export function SeriesViewSelector({ value, onChange, categories, years }: SeriesViewSelectorProps) {

@@ -6,3 +6,4 @@ export { EmptyState } from "./EmptyState";
 export { Input } from "./Input";
 export { Modal } from "./Modal";
 export { Spinner } from "./Spinner";
+export { Segmented } from "./Segmented";

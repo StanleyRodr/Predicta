@@ -34,7 +34,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 023 | Contrato de predicción y esquemas | `docs/planning/plans/023-contrato-prediccion.md` | P1 | L | 016, 022 | HECHO |
 | 024 | Series de analítica por dimensión | `docs/planning/plans/024-analitica-dimensiones.md` | P1 | M | 020 | HECHO |
 | 025 | Dashboard general, categoría y mes | `docs/planning/plans/025-dashboard-explorador.md` | P1 | L | 018, 019, 024 | HECHO |
-| 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | TODO |
+| 026 | Proyecciones en gráficos | `docs/planning/plans/026-proyecciones-graficas.md` | P1 | L | 018, 019, 023 | HECHO |
 | 027 | Métricas comprensibles | `docs/planning/plans/027-metricas-comprensibles.md` | P1 | S-M | 026 | TODO |
 | 028 | Accesibilidad | `docs/planning/plans/028-accesibilidad.md` | P2 | M | 025, 026 | TODO |
 | 029 | Configuración y autenticación | `docs/planning/plans/029-configuracion-auth.md` | P2 | M | 015 | TODO |

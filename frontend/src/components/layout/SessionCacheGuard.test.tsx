@@ -2,14 +2,21 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getForecast } from "../../api/forecast";
+import { getCategoryStats } from "../../api/analytics";
+import { getForecast, getMonthlyForecast, listSavedPredictions } from "../../api/forecast";
 import { PredictionsPage } from "../../pages/PredictionsPage";
 import { useAuthStore } from "../../stores/authStore";
 import type { User } from "../../types/api";
 import type { ForecastResponse } from "../../types/forecast";
 import { SessionCacheGuard } from "./SessionCacheGuard";
 
-vi.mock("../../api/forecast", () => ({ getForecast: vi.fn() }));
+vi.mock("../../api/forecast", () => ({
+  getForecast: vi.fn(),
+  getMonthlyForecast: vi.fn(),
+  listSavedPredictions: vi.fn(),
+  savePrediction: vi.fn(),
+}));
+vi.mock("../../api/analytics", () => ({ getCategoryStats: vi.fn() }));
 
 const metrics = { r2: 0.5, mape: 10, rmse: 5 };
 const forecast: ForecastResponse = {
@@ -38,15 +45,18 @@ afterEach(() => {
 describe("SessionCacheGuard", () => {
   it("does not show a forecast from the previous user", async () => {
     vi.mocked(getForecast).mockResolvedValue(forecast);
+    vi.mocked(getMonthlyForecast).mockRejectedValue(new Error("sin serie mensual en este test"));
+    vi.mocked(listSavedPredictions).mockResolvedValue({ usuario: "a", total_lotes: 0, pagina_actual: 1, total_paginas: 0, lotes: [] });
+    vi.mocked(getCategoryStats).mockResolvedValue({ usuario: "a", analisis_por_categoria: [] });
     act(() => useAuthStore.getState().setSession("token-a", user(1)));
     render(
-      <QueryClientProvider client={new QueryClient()}>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <SessionCacheGuard />
         <PredictionsPage />
       </QueryClientProvider>,
     );
 
-    await userEvent.click(screen.getByRole("button", { name: "Calcular prediccion" }));
+    await userEvent.click(screen.getByRole("button", { name: "Calcular proyección" }));
     expect(await screen.findByText("$4,321.50")).toBeInTheDocument();
 
     act(() => useAuthStore.getState().clearSession());
