@@ -26,3 +26,21 @@ export interface SalesHistoryResponse {
   total_paginas: number;
   registros: SaleRecord[];
 }
+
+export type ColumnRole = "producto" | "categoria" | "monto" | "precio_unitario" | "cantidad" | "fecha";
+
+/** Role -> file header. "Sin asignar" omits the key. */
+export type ColumnMapping = Partial<Record<ColumnRole, string>>;
+
+export interface ColumnProposal {
+  columna: string | null;
+  origen: "exacto" | "sinonimo" | null;
+  candidatos: string[];
+}
+
+export interface ColumnAnalysis {
+  columnas: string[];
+  muestra: Record<string, string | null>[];
+  propuesta: Record<ColumnRole, ColumnProposal>;
+  faltantes: ColumnRole[];
+}

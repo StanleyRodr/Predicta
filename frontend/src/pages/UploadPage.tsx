@@ -1,14 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { getCategoryStats } from "../api/analytics";
-import { clearSalesHistory, uploadSales } from "../api/etl";
+import { analyzeColumns, clearSalesHistory, uploadSales } from "../api/etl";
 import { getSalesHistory } from "../api/sales";
 import { CategoryProductFilter, type CategoryProduct } from "../components/analytics";
-import { SalesHistoryTable, UploadDropzone, UploadSummary } from "../components/etl";
+import {
+  ColumnMappingPanel,
+  mappingFromAnalysis,
+  mappingProblem,
+  SalesHistoryTable,
+  UploadDropzone,
+  UploadSummary,
+} from "../components/etl";
 import { Alert, Button, Card, Modal, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { refreshSalesData } from "../lib/salesCache";
 import { useAuthStore } from "../stores/authStore";
+import type { ColumnMapping } from "../types/etl";
 
 const PAGE_SIZE = 10;
 
@@ -16,6 +24,8 @@ export function UploadPage() {
   const queryClient = useQueryClient();
   const userId = useAuthStore((state) => state.user?.id_usuario ?? null);
   const [file, setFile] = useState<File | null>(null);
+  const currentFile = useRef<File | null>(null);
+  const [mapping, setMapping] = useState<ColumnMapping | null>(null);
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<CategoryProduct>({ categoria: "", producto: "" });
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -39,11 +49,21 @@ export function UploadPage() {
     setFilter(next);
     setPage(1);
   }
+  const analysis = useMutation({
+    mutationFn: async (selectedFile: File) => ({ file: selectedFile, result: await analyzeColumns(selectedFile) }),
+    onSuccess: ({ file: analyzed, result }) => {
+      // A slow answer for a file the user already replaced must not overwrite the new one.
+      if (analyzed === currentFile.current) setMapping(mappingFromAnalysis(result));
+    },
+  });
   const upload = useMutation({
-    mutationFn: (selectedFile: File) => uploadSales(selectedFile),
+    mutationFn: ({ selectedFile, mapeo }: { selectedFile: File; mapeo: ColumnMapping }) => uploadSales(selectedFile, mapeo),
     onSuccess: async () => {
       await refreshSalesData(queryClient);
+      currentFile.current = null;
       setFile(null);
+      setMapping(null);
+      analysis.reset();
       setClientError(null);
     },
   });
@@ -57,20 +77,29 @@ export function UploadPage() {
   });
 
   function selectFile(selectedFile: File) {
+    currentFile.current = selectedFile;
     setFile(selectedFile);
+    setMapping(null);
     setClientError(null);
     upload.reset();
+    analysis.reset();
+    analysis.mutate(selectedFile);
   }
 
+  const analyzed = analysis.data && analysis.data.file === file ? analysis.data.result : null;
+  const problem = mapping ? mappingProblem(mapping) : null;
+
   function submitUpload() {
-    if (!file) {
+    if (!file || !mapping) {
       setClientError("Selecciona un archivo antes de cargarlo.");
       return;
     }
-    upload.mutate(file);
+    upload.mutate({ selectedFile: file, mapeo: mapping });
   }
 
-  const error = clientError ?? (upload.error ? getApiErrorMessage(upload.error, "No se pudo procesar el archivo.") : null);
+  const analysisError = analysis.error && analysis.variables === file ? getApiErrorMessage(analysis.error, "No se pudo analizar el archivo.") : null;
+  const error =
+    clientError ?? analysisError ?? (upload.error ? getApiErrorMessage(upload.error, "No se pudo procesar el archivo.") : null);
   const clearError = clear.error ? getApiErrorMessage(clear.error, "No se pudo limpiar el historial.") : null;
 
   return (
@@ -87,10 +116,20 @@ export function UploadPage() {
         {file && (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-terminal-border bg-terminal-bg p-3">
             <span className="truncate font-mono text-sm text-terminal-text">{file.name}</span>
-            <Button disabled={upload.isPending} onClick={submitUpload}>
-              {upload.isPending ? <Spinner label="Procesando" /> : "Cargar archivo"}
-            </Button>
+            {analysis.isPending ? (
+              <Spinner label="Analizando columnas" />
+            ) : (
+              <Button disabled={upload.isPending || !analyzed || !mapping || problem !== null} onClick={submitUpload}>
+                {upload.isPending ? <Spinner label="Procesando" /> : "Cargar ventas"}
+              </Button>
+            )}
           </div>
+        )}
+        {analyzed && mapping && (
+          <>
+            <ColumnMappingPanel analysis={analyzed} onChange={setMapping} value={mapping} />
+            {problem && <p className="text-sm text-terminal-amber">{problem}</p>}
+          </>
         )}
         {error && <Alert tone="error">{error}</Alert>}
         {upload.data && <UploadSummary result={upload.data} />}

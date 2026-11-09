@@ -11,9 +11,10 @@ import io
 import math
 import re
 import zipfile
-from datetime import date
+from datetime import date, datetime
 from typing import Any, BinaryIO
 
+import numpy as np
 import pandas as pd
 from loguru import logger
 from sqlalchemy.exc import IntegrityError
@@ -21,7 +22,9 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models import models
+from app.services import column_mapping
 from app.services.category_service import normalize_category, normalize_product
+from app.services.errors import UserFacingError
 
 ALLOWED_EXTENSIONS = {"csv", "xlsx", "sql"}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
@@ -42,14 +45,8 @@ DECIMAL_COMMA_NUMBER = re.compile(r"[+-]?\d+,\d{1,2}")
 SQL_INSERT = re.compile(
     r"INSERT\s+INTO\s+[^\s(]+\s*(?:\(([^)]*)\))?\s*VALUES\s*", re.IGNORECASE
 )
-
-
-class UserFacingError(ValueError):
-    """An error whose ``detail`` was written for the user and is safe to show."""
-
-    @property
-    def detail(self) -> str:
-        return str(self.args[0]) if self.args else ""
+DIGITS_ONLY = re.compile(r"\d+")
+SAMPLE_ROWS = 5
 
 
 class RowValidationError(UserFacingError):
@@ -86,11 +83,12 @@ def _is_blank(value: object) -> bool:
     return _is_missing(value) or (isinstance(value, str) and not value.strip())
 
 
-def _parse_number(value: object, label: str) -> float:
+def _parse_number(value: object, label: str, round_to: int | None = 2) -> float:
     """Read a number using comma thousands and point decimals.
 
     A comma followed by one or two digits stays accepted as a legacy decimal.
     Spreadsheet cells that are already numeric skip this text handling.
+    ``round_to=None`` keeps full precision for values that are multiplied later.
     """
     text = str(value).strip()
     if "," in text:
@@ -106,7 +104,7 @@ def _parse_number(value: object, label: str) -> float:
         raise RowValidationError(f"{label} no es numerico") from exc
     if not math.isfinite(number):
         raise RowValidationError(f"{label} debe ser finito")
-    return round(number, 2)
+    return number if round_to is None else round(number, round_to)
 
 
 def _parse_amount(value: object) -> float:
@@ -137,6 +135,13 @@ def _parse_date(value: object) -> date:
     """Parse a date or raise a validation error."""
     if _is_missing(value):
         raise RowValidationError("la fecha es obligatoria")
+    # pandas reads a bare number as nanoseconds since 1970 and "15" as a day
+    # of the current month, so plain numbers are never dates.
+    is_number = isinstance(value, (int, float, np.integer, np.floating)) and not isinstance(
+        value, (date, datetime)
+    )
+    if is_number or (isinstance(value, str) and DIGITS_ONLY.fullmatch(value.strip())):
+        raise RowValidationError("la fecha no es valida")
 
     parsed = pd.to_datetime(value, errors="coerce")
     if pd.isna(parsed):
@@ -154,11 +159,14 @@ def _decode_text(contents: bytes) -> str:
     raise FileValidationError("el archivo no usa una codificacion compatible")
 
 
+def _normalize_header(header: object) -> str:
+    """Strip, lowercase, and join words with ``_``; this is the header the API exposes."""
+    return str(header).strip().lower().replace(" ", "_")
+
+
 def _normalize_row(row: dict[Any, Any]) -> dict[str, Any]:
     """Normalize headers so files with surrounding spaces remain usable."""
-    return {
-        str(key).strip().lower().replace(" ", "_"): value for key, value in row.items()
-    }
+    return {_normalize_header(key): value for key, value in row.items()}
 
 
 def _require_columns(headers: set[str]) -> None:
@@ -169,21 +177,19 @@ def _require_columns(headers: set[str]) -> None:
         )
 
 
-def _parse_csv(contents: bytes) -> list[dict[str, Any]]:
-    """Parse comma, semicolon, or tab-delimited CSV content."""
+Table = tuple[list[str], list[dict[str, Any]]]
+
+
+def _parse_csv(contents: bytes) -> Table:
+    """Parse comma, semicolon, or tab-delimited CSV content into headers and rows."""
     text = _decode_text(contents)
     try:
         dialect = csv.Sniffer().sniff(text[:8192], delimiters=",;\t")
     except csv.Error:
         dialect = csv.excel
     reader = csv.DictReader(io.StringIO(text), dialect=dialect)
-    _require_columns(
-        {
-            str(header).strip().lower().replace(" ", "_")
-            for header in reader.fieldnames or []
-        }
-    )
-    return [_normalize_row(row) for row in reader]
+    headers = [_normalize_header(header) for header in reader.fieldnames or []]
+    return headers, [_normalize_row(row) for row in reader]
 
 
 def _check_xlsx_size(contents: bytes) -> None:
@@ -194,13 +200,12 @@ def _check_xlsx_size(contents: bytes) -> None:
         raise FileTooLargeError("El contenido del archivo XLSX es demasiado grande.")
 
 
-def _parse_xlsx(contents: bytes) -> list[dict[str, Any]]:
-    """Parse an XLSX file, reading at most one row past the allowed limit."""
+def _parse_xlsx(contents: bytes) -> Table:
+    """Parse the first sheet of an XLSX file, reading at most one row past the limit."""
     _check_xlsx_size(contents)
     frame = pd.read_excel(io.BytesIO(contents), nrows=MAX_ROWS + 1)
-    rows = [_normalize_row(row) for row in frame.to_dict(orient="records")]
-    _require_columns(set(rows[0]) if rows else set())
-    return rows
+    headers = [_normalize_header(header) for header in frame.columns]
+    return headers, [_normalize_row(row) for row in frame.to_dict(orient="records")]
 
 
 def _read_sql_tuples(text: str, start: int) -> list[list[str | None]]:
@@ -244,9 +249,14 @@ def _read_sql_tuples(text: str, start: int) -> list[list[str | None]]:
     return groups
 
 
-def _parse_sql(contents: bytes) -> list[dict[str, Any]]:
-    """Parse ``INSERT ... VALUES`` statements without executing any SQL."""
+def _parse_sql(contents: bytes) -> Table:
+    """Parse ``INSERT ... VALUES`` statements without executing any SQL.
+
+    Headers are the declared column lists, merged in order of first appearance
+    (or ``SQL_DEFAULT_COLUMNS``), never the keys of short value tuples.
+    """
     sql_text = _decode_text(contents)
+    headers: list[str] = []
     rows: list[dict[str, Any]] = []
     for statement in SQL_INSERT.finditer(sql_text):
         declared = statement.group(1)
@@ -255,9 +265,12 @@ def _parse_sql(contents: bytes) -> list[dict[str, Any]]:
             if declared
             else list(SQL_DEFAULT_COLUMNS)
         )
+        for header in (_normalize_header(column) for column in columns):
+            if header not in headers:
+                headers.append(header)
         for values in _read_sql_tuples(sql_text, statement.end()):
             rows.append(_normalize_row(dict(zip(columns, values, strict=False))))
-    return rows
+    return headers, rows
 
 
 def build_venta(row: dict[str, Any], user_id: int) -> models.Venta:
@@ -269,18 +282,39 @@ def build_venta(row: dict[str, Any], user_id: int) -> models.Venta:
     if len(product_name) > MAX_PRODUCT_LENGTH:
         raise RowValidationError("el producto supera el largo maximo")
 
-    category = normalize_category(row.get("categoria"))
+    # An empty spreadsheet cell arrives as NaN, which must not become "Nan".
+    raw_category = row.get("categoria")
+    category = normalize_category(None if _is_missing(raw_category) else raw_category)
     if category is not None and len(category) > MAX_CATEGORY_LENGTH:
         raise RowValidationError("la categoria supera el largo maximo")
+
+    if "monto" not in row and "precio_unitario" in row:
+        quantity = _parse_quantity(row.get("cantidad"))
+        amount = _derive_amount(row["precio_unitario"], quantity)
+    else:
+        amount = _parse_amount(row.get("monto"))
+        quantity = _parse_quantity(row.get("cantidad"))
 
     return models.Venta(
         id_usuario=user_id,
         producto=product_name,
-        monto=_parse_amount(row.get("monto")),
-        cantidad=_parse_quantity(row.get("cantidad")),
+        monto=amount,
+        cantidad=quantity,
         categoria=category,
         fecha_venta=_parse_date(row.get("fecha")),
     )
+
+
+def _derive_amount(unit_price: object, quantity: float) -> float:
+    """Return ``round(unit_price * quantity, 2)``; only the product is rounded."""
+    if _is_blank(unit_price):
+        raise RowValidationError("el precio unitario es obligatorio")
+    amount = round(_parse_number(unit_price, "el precio unitario", round_to=None) * quantity, 2)
+    if amount <= 0:
+        raise RowValidationError("el precio unitario por la cantidad debe ser mayor que cero")
+    if amount > MAX_DECIMAL_VALUE:
+        raise RowValidationError("el monto supera el maximo permitido")
+    return amount
 
 
 def read_limited(stream: BinaryIO) -> tuple[bytes, str]:
@@ -299,15 +333,15 @@ def read_limited(stream: BinaryIO) -> tuple[bytes, str]:
     return b"".join(chunks), digest.hexdigest()
 
 
-def read_rows(extension: str, contents: bytes) -> list[dict[str, Any]]:
-    """Parse a file; only controlled messages leave this function."""
+def read_table(extension: str, contents: bytes) -> Table:
+    """Parse a file into headers and rows; only controlled messages leave this function."""
     try:
         if extension == "xlsx":
-            rows = _parse_xlsx(contents)
+            headers, rows = _parse_xlsx(contents)
         elif extension == "csv":
-            rows = _parse_csv(contents)
+            headers, rows = _parse_csv(contents)
         else:
-            rows = _parse_sql(contents)
+            headers, rows = _parse_sql(contents)
     except (FileValidationError, FileTooLargeError):
         raise
     except Exception as exc:
@@ -316,11 +350,67 @@ def read_rows(extension: str, contents: bytes) -> list[dict[str, Any]]:
 
     if len(rows) > MAX_ROWS:
         raise FileTooLargeError(f"El archivo supera el maximo de {MAX_ROWS:,} filas.")
-    return rows
+    return headers, rows
+
+
+def read_rows(extension: str, contents: bytes) -> list[dict[str, Any]]:
+    """Parse a file and return only its rows."""
+    return read_table(extension, contents)[1]
+
+
+def _sample_text(value: object) -> str | None:
+    """Render a raw cell for the preview: blanks become ``None``, dates ``YYYY-MM-DD``."""
+    if _is_blank(value):
+        return None
+    if isinstance(value, datetime):
+        return value.date().isoformat() if value.time() == datetime.min.time() else value.isoformat(sep=" ")
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, (float, np.floating)) and float(value).is_integer():
+        return str(int(value))
+    return str(value).strip()
+
+
+def analyze_columns(extension: str, contents: bytes) -> dict[str, Any]:
+    """Return the file's headers, a short sample, and the proposed mapping."""
+    headers, rows = read_table(extension, contents)
+    proposal = column_mapping.propose_mapping(headers)
+    assigned = {role: entry["columna"] for role, entry in proposal.items()}
+    return {
+        "columnas": headers,
+        "muestra": [
+            {header: _sample_text(row.get(header)) for header in headers}
+            for row in rows[:SAMPLE_ROWS]
+        ],
+        "propuesta": proposal,
+        "faltantes": column_mapping.missing_roles(assigned),
+    }
+
+
+def _mapped_rows(
+    extension: str, contents: bytes, mapping: dict[str, Any] | None
+) -> list[dict[str, Any]]:
+    """Read the file and rename its columns to roles.
+
+    Without a mapping, CSV and XLSX must use the exact names; SQL reports a
+    missing column as a row error instead.
+    """
+    headers, rows = read_table(extension, contents)
+    if mapping is None:
+        if extension != "sql":
+            _require_columns(set(headers))
+        return rows
+    validated = column_mapping.validate_mapping(mapping, headers)
+    return column_mapping.apply_mapping(rows, validated)
 
 
 def load_sales(
-    db: Session, user_id: int, extension: str, contents: bytes, file_hash: str
+    db: Session,
+    user_id: int,
+    extension: str,
+    contents: bytes,
+    file_hash: str,
+    mapeo: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate every row, store the valid ones in one transaction, and report the rest."""
     already_loaded = (
@@ -334,7 +424,7 @@ def load_sales(
     if already_loaded:
         raise DuplicateUploadError
 
-    rows = read_rows(extension, contents)
+    rows = _mapped_rows(extension, contents, mapeo)
 
     errores: list[dict[str, Any]] = []
     ventas_creadas = 0

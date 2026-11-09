@@ -84,6 +84,7 @@ PRIVATE_CASES = [
     ("GET", "/analytics/reporte-predictivo-anual-pdf", {}),
     ("GET", "/analytics/reporte-mensual/{mes}", {"mes": "Mayo"}),
     ("GET", "/analytics/prediccion-categorias/{categoria}", {"categoria": "Abarrotes"}),
+    ("POST", "/etl/analizar-columnas", {}),
     ("POST", "/etl/upload-ventas", {}),
     ("DELETE", "/etl/clear-history", {}),
 ]
@@ -121,7 +122,7 @@ def _call(client, headers, method, path, params):
     url = path.format(**path_params)
     if method == "PUT":
         return client.put(url, headers=headers, json={"nombre_usuario": "second_renamed"})
-    if method == "POST" and path == "/etl/upload-ventas":
+    if method == "POST" and path in ("/etl/upload-ventas", "/etl/analizar-columnas"):
         rows = "producto,monto,categoria,fecha\nSal,12,Abarrotes,2025-02-02"
         return client.post(url, headers=headers, files={"file": ("nuevo.csv", rows.encode(), "text/csv")})
     if method == "POST" and path == "/analytics/predicciones":
