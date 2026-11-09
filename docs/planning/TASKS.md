@@ -43,6 +43,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | HECHO |
 | 033 | Panel del "i" sin barras de desplazamiento | `docs/planning/plans/033-panel-info-flotante.md` | P2 | S | 032 | HECHO |
 | 034 | Predicción e historial por producto | `docs/planning/plans/034-prediccion-producto.md` | P1 | M | 033 | HECHO |
+| 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034 | TODO |
 
 ## Reglas de ejecución
 
@@ -449,6 +450,28 @@ Plan: `docs/planning/plans/034-prediccion-producto.md` | Depende de: 033 | Esfue
 - [x] 034.3 Agregar `producto` a `/forecast`, `POST /predicciones` y `/ventas`. Verificar: tests de proyección, guardado, 422 y paginación.
 - [x] 034.4 Agregar el selector dependiente en predicciones. Verificar: RTL de selector, petición tras el clic, aviso y título del lote.
 - [x] 034.5 Agregar los selectores al historial de ventas. Verificar: RTL de página 1 y parámetros.
+
+## Fase 5: mapeo de columnas
+
+**Base:** commit `3e92380`. **Origen:** pedido del usuario, entrevista de diseño y revisión Goldfish del 2026-11-09 (`docs/planning/plans/035.5-correciones.md`).
+
+**Decisiones tomadas:**
+
+- Sin LLM y sin coincidencia aproximada: solo nombres exactos y un diccionario de sinónimos. No se agrega asistente de dudas.
+- La UI muestra la propuesta y el usuario la confirma antes de cargar. El servidor no guarda el archivo entre pasos.
+- Sin `mapeo`, la carga exige los nombres exactos en CSV y XLSX, igual que hoy. Hay tres excepciones intencionales: se rechazan las fechas numéricas, una categoría `NaN` pasa a "General" y un XLSX sin filas responde 200.
+- Sin columna de monto, `build_venta` calcula `monto = round(precio_unitario * cantidad, 2)`.
+- La descarga del XLSX estandarizado pasa a la tarea 036.
+
+### Tarea 035 — Mapeo de columnas en la carga de ventas
+
+Plan: `docs/planning/plans/035-mapeo-columnas.md` | Depende de: 034 | Esfuerzo: M
+
+- [ ] 035.1 Crear `column_mapping.py`. Verificar: `pytest tests/test_column_mapping.py` con sinónimos, empates, orden de roles, validación y dataset generado.
+- [ ] 035.2 Agregar `read_table`, la regla SQL, `mapeo` en `load_sales`, el monto derivado y las tres excepciones. Verificar: los tests ETL actuales pasan sin cambios y los nuevos pasan.
+- [ ] 035.3 Crear `POST /etl/analizar-columnas` y `mapeo` en la carga. Verificar: tests CSV/XLSX/SQL, sin escrituras, 400, 409 y 401, y `test_isolation.py`.
+- [ ] 035.4 Agregar `ColumnMappingPanel` en la carga. Verificar: RTL de propuesta, badges, habilitación, `mapeo` enviado, error del análisis y cambio de archivo.
+- [ ] 035.5 Actualizar `CLAUDE.md`. Verificar: la verificación global termina con código 0.
 
 ## Verificación global
 
