@@ -27,6 +27,12 @@ export interface CategoryStatsResponse {
   analisis_por_categoria: CategoryMetric[];
 }
 
+export interface ProductListResponse {
+  usuario: string;
+  categoria: string;
+  productos: string[];
+}
+
 export interface TemporalMetric {
   fecha: string;
   ingresos: number;

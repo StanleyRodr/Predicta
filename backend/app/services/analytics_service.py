@@ -22,7 +22,11 @@ from app.ml_models.forecast import (
     forecast_from_sales,
 )
 from app.models import models
-from app.services.category_service import category_key, normalize_category
+from app.services.category_service import (
+    category_key,
+    normalize_category,
+    normalize_product,
+)
 
 Granularity = Literal["mes", "dia"]
 
@@ -167,13 +171,17 @@ def daily_revenue(
 
 
 def daily_sales(
-    db: Session, user_id: int, categorias: Sequence[str] | None = None
+    db: Session,
+    user_id: int,
+    categorias: Sequence[str] | None = None,
+    producto: str | None = None,
 ) -> list[DailySales]:
     """Return amount and units per observed day, oldest first.
 
     ``categorias`` holds stored spellings of one category, as ``resolve_category``
-    returns them; ``None`` covers every category. Days without sales are absent,
-    never zero-filled.
+    returns them; ``None`` covers every category. ``producto`` is a normalized
+    product name within them; ``None`` covers every product. Days without sales
+    are absent, never zero-filled.
     """
     query = _user_sales(
         db,
@@ -184,6 +192,8 @@ def daily_sales(
     )
     if categorias is not None:
         query = query.filter(models.Venta.categoria.in_(list(categorias)))
+    if producto is not None:
+        query = query.filter(models.Venta.producto == producto)
     rows = query.group_by(models.Venta.fecha_venta).order_by(models.Venta.fecha_venta).all()
     return [
         DailySales(fecha_venta=day, monto=Decimal(amount), cantidad=Decimal(units))
@@ -209,6 +219,18 @@ def resolve_category(db: Session, user_id: int, value: str) -> tuple[str, list[s
         # Show the user's own spelling, preferring a capitalized one over legacy lowercase.
         display = max(stored, key=lambda name: (name != name.lower(), name))
     return display, stored
+
+
+def category_products(db: Session, user_id: int, categoria: str) -> tuple[str, list[str]]:
+    """Return a category's display name and its products, sorted by name."""
+    display, stored = resolve_category(db, user_id, categoria)
+    names = (
+        _user_sales(db, user_id, models.Venta.producto)
+        .filter(models.Venta.categoria.in_(stored))
+        .distinct()
+        .order_by(models.Venta.producto)
+    )
+    return display, [name for (name,) in names]
 
 
 def _point(
@@ -305,8 +327,12 @@ def sales_page(
     categoria: str | None = None,
     fecha_desde: date | None = None,
     fecha_hasta: date | None = None,
+    producto: str | None = None,
 ) -> tuple[int, list[models.Venta]]:
-    """Return the total count and one page of sales, newest first."""
+    """Return the total count and one page of sales, newest first.
+
+    ``producto`` narrows ``categoria`` to one product; callers require both.
+    """
     base = _apply_date_range(
         db.query(models.Venta).filter(models.Venta.id_usuario == user_id),
         fecha_desde,
@@ -315,6 +341,8 @@ def sales_page(
     if categoria is not None:
         _, stored = resolve_category(db, user_id, categoria)
         base = base.filter(models.Venta.categoria.in_(stored))
+    if producto is not None:
+        base = base.filter(models.Venta.producto == normalize_product(producto))
     total = base.count()
     ventas = (
         base.order_by(models.Venta.fecha_venta.desc(), models.Venta.id_venta.desc())
@@ -369,24 +397,33 @@ def predict_next_day(db: Session, user_id: int) -> dict[str, Any]:
 
 
 def monthly_projection(
-    db: Session, user_id: int, categoria: str | None = None
-) -> tuple[str | None, MonthlyForecast]:
-    """Project the user's monthly sales, overall or for one category, without storing.
+    db: Session, user_id: int, categoria: str | None = None, producto: str | None = None
+) -> tuple[str | None, str | None, MonthlyForecast]:
+    """Project the user's monthly sales overall, for a category, or for one of its products.
 
-    Returns the category's display name (``None`` for every category) and the
-    forecast. Raises ``ForecastUnavailableError`` when no projection is possible.
+    ``producto`` narrows ``categoria``; callers require both. Returns the
+    category's and product's display names (``None`` when not requested) and the
+    forecast, without storing. Raises ``ForecastUnavailableError`` when no
+    projection is possible.
     """
     display: str | None = None
     stored: list[str] | None = None
+    product: str | None = None
     if categoria is not None:
         display, stored = resolve_category(db, user_id, categoria)
         if not stored:
             raise ForecastUnavailableError(f"No hay ventas de la categoría '{display}' para proyectar.")
-    daily = daily_sales(db, user_id, stored)
+    if producto is not None:
+        product = normalize_product(producto)
+    daily = daily_sales(db, user_id, stored, product)
     if not daily:
+        if product is not None:
+            raise ForecastUnavailableError(
+                f"No hay ventas del producto '{product}' en la categoría '{display}' para proyectar."
+            )
         raise ForecastUnavailableError("No hay ventas para proyectar.")
     try:
-        return display, forecast_from_sales(daily)
+        return display, product, forecast_from_sales(daily)
     except InsufficientHistoryError as exc:
         raise ForecastUnavailableError(exc.detail) from exc
 

@@ -167,7 +167,7 @@ def test_sql_respects_quotes_columns_and_quantity(client, auth_headers, test_db)
     assert response.status_code == 200
     assert response.json()["registros_cargados"] == 2
     first, second = _sales(test_db)
-    assert first.producto == "Galletas, surtidas"
+    assert first.producto == "Galletas, Surtidas"
     assert float(first.cantidad) == 3.0
     assert second.producto == "Te 'verde'"
 

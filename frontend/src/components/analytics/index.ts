@@ -1,5 +1,6 @@
 export { CategoryBarChart } from "./CategoryBarChart";
 export { CategoryComparisonChart } from "./CategoryComparisonChart";
+export { CategoryProductFilter, type CategoryProduct } from "./CategoryProductFilter";
 export { DateRangeFilter } from "./DateRangeFilter";
 export { HistoryLineChart } from "./HistoryLineChart";
 export { MetricCard } from "./MetricCard";

@@ -3,8 +3,10 @@
 from fastapi import HTTPException
 
 from app.api.etl_routes import clear_history
+from app.core.config import settings
 from app.main import db_healthcheck, engine
 from app.models import models
+from app.services import analytics_service
 
 
 class _BrokenQuery:
@@ -47,3 +49,17 @@ def test_db_healthcheck_hides_connection_error(monkeypatch):
     assert response.status_code == 503
     assert "internal connection secret" not in response.body.decode()
     assert "La base de datos no esta disponible." in response.body.decode()
+
+
+def test_unhandled_error_keeps_cors_headers_and_hides_details(client, auth_headers, monkeypatch):
+    def broken(*_args, **_kwargs):
+        raise RuntimeError("internal query secret")
+
+    monkeypatch.setattr(analytics_service, "global_metrics", broken)
+    origin = settings.cors_origins[0]
+
+    response = client.get("/analytics/stats", headers={**auth_headers, "Origin": origin})
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Error interno del servidor."}
+    assert response.headers["access-control-allow-origin"] == origin

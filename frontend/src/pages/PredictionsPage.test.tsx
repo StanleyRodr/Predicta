@@ -3,7 +3,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { AxiosError, AxiosHeaders } from "axios";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { getCategoryStats } from "../api/analytics";
+import { getCategoryStats, getProducts } from "../api/analytics";
 import { getForecast, getMonthlyForecast, listSavedPredictions, savePrediction } from "../api/forecast";
 import { useAuthStore } from "../stores/authStore";
 import type { User } from "../types/api";
@@ -16,7 +16,7 @@ vi.mock("../api/forecast", () => ({
   listSavedPredictions: vi.fn(),
   savePrediction: vi.fn(),
 }));
-vi.mock("../api/analytics", () => ({ getCategoryStats: vi.fn() }));
+vi.mock("../api/analytics", () => ({ getCategoryStats: vi.fn(), getProducts: vi.fn() }));
 
 interface CapturedDataset {
   label: string;
@@ -48,6 +48,7 @@ function monthly(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyForec
   return {
     usuario: "ana",
     categoria: null,
+    producto: null,
     modelo: "tendencia",
     horizonte_aplicado: 7,
     meses_observados: 24,
@@ -87,6 +88,7 @@ const batch: SavedBatch = {
   lote: "abc",
   tipo: "mensual",
   categoria: "Lácteos",
+  producto: null,
   modelo: "tendencia",
   horizonte: 7,
   r2_validacion: 0.4,
@@ -133,7 +135,14 @@ beforeEach(() => {
       { categoria: "Bebidas", ingresos_totales: 900, cantidad_ventas: 3, ticket_promedio: 300 },
     ],
   });
-  vi.mocked(getMonthlyForecast).mockImplementation(async (categoria) => monthly({ categoria: categoria ?? null }));
+  vi.mocked(getMonthlyForecast).mockImplementation(async (categoria, producto) =>
+    monthly({ categoria: categoria ?? null, producto: producto ?? null }),
+  );
+  vi.mocked(getProducts).mockImplementation(async (categoria) => ({
+    usuario: "ana",
+    categoria,
+    productos: categoria === "Bebidas" ? ["Coca Cola", "Sprite"] : ["Leche"],
+  }));
   vi.mocked(getForecast).mockResolvedValue(daily);
   vi.mocked(listSavedPredictions).mockResolvedValue({ usuario: "ana", total_lotes: 0, pagina_actual: 1, total_paginas: 0, lotes: [] });
 });
@@ -163,7 +172,7 @@ describe("PredictionsPage", () => {
     await calculate(user);
 
     expect(await screen.findByRole("heading", { name: "Proyección de todas las categorías" })).toBeInTheDocument();
-    expect(getMonthlyForecast).toHaveBeenCalledWith(undefined);
+    expect(getMonthlyForecast).toHaveBeenCalledWith(undefined, undefined);
     expect(screen.getByText(/7 meses con solo tendencia.*a partir de 24 meses/)).toBeInTheDocument();
     const labels = lastChart().map((dataset) => dataset.label);
     expect(labels).toEqual(["Intervalo del 95 %", "", "Historial", "Proyección"]);
@@ -305,7 +314,7 @@ describe("PredictionsPage", () => {
     await calculate(user);
 
     expect(await screen.findByRole("heading", { name: "Proyección de Lácteos" })).toBeInTheDocument();
-    expect(getMonthlyForecast).toHaveBeenCalledWith("Lácteos");
+    expect(getMonthlyForecast).toHaveBeenCalledWith("Lácteos", undefined);
     expect(await screen.findByText(/no suman\s+exactamente el total/)).toBeInTheDocument();
   });
 
@@ -319,7 +328,7 @@ describe("PredictionsPage", () => {
     await screen.findByRole("heading", { name: "Proyección de Lácteos" });
 
     // The total is fetched to compare models; both share one here.
-    await waitFor(() => expect(getMonthlyForecast).toHaveBeenCalledWith());
+    await waitFor(() => expect(getMonthlyForecast).toHaveBeenCalledWith(undefined));
     expect(screen.queryByText(/no suman/)).not.toBeInTheDocument();
   });
 
@@ -361,9 +370,67 @@ describe("PredictionsPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Guardar proyección" }));
 
-    expect(savePrediction).toHaveBeenCalledWith("Lácteos");
+    expect(savePrediction).toHaveBeenCalledWith("Lácteos", undefined);
     expect(await screen.findByText(/Proyección guardada: 7 meses/)).toBeInTheDocument();
     expect(await screen.findByText("Categoría: Lácteos")).toBeInTheDocument();
+  });
+
+  it("enables the product select only after a category and lists that category's products", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByRole("option", { name: "Bebidas" });
+    const product = screen.getByRole("combobox", { name: "Producto" });
+    expect(product).toBeDisabled();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Alcance" }), "Bebidas");
+    await within(product).findByRole("option", { name: "Coca Cola" });
+    await user.selectOptions(product, "Coca Cola");
+
+    expect(product).toBeEnabled();
+    expect(getProducts).toHaveBeenCalledWith("Bebidas");
+    expect(getMonthlyForecast).not.toHaveBeenCalled();
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Alcance" }), "Lácteos");
+    expect(product).toHaveValue("");
+  });
+
+  it("projects a product and warns when its model differs from its category", async () => {
+    const user = userEvent.setup();
+    vi.mocked(getMonthlyForecast).mockImplementation(async (categoria, producto) =>
+      producto
+        ? monthly({ categoria: categoria ?? null, producto, horizonte_aplicado: 6, meses_observados: 12 })
+        : monthly({ categoria: categoria ?? null, modelo: "tendencia_estacional", horizonte_aplicado: 12, meses_observados: 36 }),
+    );
+    vi.mocked(savePrediction).mockResolvedValue({ ...batch, categoria: "Bebidas", producto: "Coca Cola" });
+    renderPage();
+    await screen.findByRole("option", { name: "Bebidas" });
+    await user.selectOptions(screen.getByRole("combobox", { name: "Alcance" }), "Bebidas");
+    const product = screen.getByRole("combobox", { name: "Producto" });
+    await within(product).findByRole("option", { name: "Coca Cola" });
+    await user.selectOptions(product, "Coca Cola");
+
+    await calculate(user);
+
+    expect(await screen.findByRole("heading", { name: "Proyección de Coca Cola (Bebidas)" })).toBeInTheDocument();
+    expect(getMonthlyForecast).toHaveBeenCalledWith("Bebidas", "Coca Cola");
+    await waitFor(() => expect(getMonthlyForecast).toHaveBeenCalledWith("Bebidas"));
+    expect(await screen.findByText(/no suman\s+exactamente la categoría/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Guardar proyección" }));
+    expect(savePrediction).toHaveBeenCalledWith("Bebidas", "Coca Cola");
+  });
+
+  it("titles a saved product batch with its category and product", async () => {
+    vi.mocked(listSavedPredictions).mockResolvedValue({
+      usuario: "ana",
+      total_lotes: 1,
+      pagina_actual: 1,
+      total_paginas: 1,
+      lotes: [{ ...batch, categoria: "Bebidas", producto: "Coca Cola" }],
+    });
+    renderPage();
+
+    expect(await screen.findByText("Bebidas · Coca Cola")).toBeInTheDocument();
   });
 
   it("explains a failed save", async () => {

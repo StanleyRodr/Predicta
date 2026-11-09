@@ -3,6 +3,7 @@ import { isAxiosError } from "axios";
 import { useState } from "react";
 import { getCategoryStats } from "../api/analytics";
 import { getForecast, getMonthlyForecast, listSavedPredictions, savePrediction } from "../api/forecast";
+import { CategoryProductFilter, type CategoryProduct } from "../components/analytics";
 import {
   ConceptHint,
   FORECAST_MEASURES,
@@ -61,12 +62,13 @@ function ForecastProblem({ error, fallback }: { error: unknown; fallback: string
 export function PredictionsPage() {
   const userId = useAuthStore((state) => state.user?.id_usuario ?? null);
   const queryClient = useQueryClient();
-  const [scope, setScope] = useState("");
-  // The scope of the last "Calcular proyección"; changing the selector alone fetches nothing.
-  const [requested, setRequested] = useState<string | null>(null);
+  const [scope, setScope] = useState<CategoryProduct>({ categoria: "", producto: "" });
+  // The scope of the last "Calcular proyección"; changing the selectors alone fetches nothing.
+  const [requested, setRequested] = useState<CategoryProduct | null>(null);
   const [measure, setMeasure] = useState<ForecastMeasure>("monto");
   const [selected, setSelected] = useState<string | null>(null);
-  const categoria = requested || undefined;
+  const categoria = requested?.categoria || undefined;
+  const producto = (categoria && requested?.producto) || undefined;
 
   const categories = useQuery({
     queryKey: ["analytics", userId, "categories", null, null],
@@ -74,15 +76,16 @@ export function PredictionsPage() {
     enabled: userId !== null,
   });
   const monthly = useQuery({
-    queryKey: ["forecast", userId, "mensual", categoria ?? null],
-    queryFn: () => getMonthlyForecast(categoria),
+    queryKey: ["forecast", userId, "mensual", categoria ?? null, producto ?? null],
+    queryFn: () => getMonthlyForecast(categoria, producto),
     enabled: requested !== null,
     ...forecastQuery,
   });
-  // A category is compared with the total, to warn when their models differ.
+  // A product is compared with its category and a category with the total, to warn when their models differ.
+  const referenceCategory = producto ? categoria : undefined;
   const total = useQuery({
-    queryKey: ["forecast", userId, "mensual", null],
-    queryFn: () => getMonthlyForecast(),
+    queryKey: ["forecast", userId, "mensual", referenceCategory ?? null, null],
+    queryFn: () => getMonthlyForecast(referenceCategory),
     enabled: categoria !== undefined,
     ...forecastQuery,
   });
@@ -98,16 +101,16 @@ export function PredictionsPage() {
     enabled: userId !== null,
   });
   const save = useMutation({
-    mutationFn: () => savePrediction(categoria),
+    mutationFn: () => savePrediction(categoria, producto),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["saved-predictions", userId] }),
   });
 
   function calculate() {
     save.reset();
-    if (requested === scope) {
+    if (requested?.categoria === scope.categoria && requested.producto === scope.producto) {
       void monthly.refetch();
       void daily.refetch();
-      if (scope) void total.refetch();
+      if (scope.categoria) void total.refetch();
     }
     setRequested(scope);
   }
@@ -130,25 +133,19 @@ export function PredictionsPage() {
       <header className="grid gap-2">
         <p className="font-mono text-sm text-terminal-amber">ml // proyección</p>
         <h1 className="text-3xl font-semibold">Siguiente movimiento</h1>
-        <p className="text-terminal-muted">Estima los próximos meses con su margen de incertidumbre, en general o por categoría.</p>
+        <p className="text-terminal-muted">
+          Estima los próximos meses con su margen de incertidumbre, en general, por categoría o por producto.
+        </p>
       </header>
 
       <Card className="flex flex-wrap items-end gap-3">
-        <label className="flex items-center gap-2 text-sm text-terminal-muted">
-          Alcance
-          <select
-            className="rounded-md border border-terminal-border bg-terminal-bg px-2 py-1.5 text-terminal-text"
-            onChange={(event) => setScope(event.target.value)}
-            value={scope}
-          >
-            <option value="">General: todas las categorías</option>
-            {names.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <CategoryProductFilter
+          allCategoriesLabel="General: todas las categorías"
+          categories={names}
+          categoryLabel="Alcance"
+          onChange={setScope}
+          value={scope}
+        />
         <Button disabled={calculating} onClick={calculate}>
           {calculating ? <Spinner label="Calculando" /> : "Calcular proyección"}
         </Button>
@@ -167,7 +164,11 @@ export function PredictionsPage() {
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="grid gap-1">
                 <h2 className="text-lg font-semibold">
-                  {forecast.categoria ? `Proyección de ${forecast.categoria}` : "Proyección de todas las categorías"}
+                  {forecast.producto
+                    ? `Proyección de ${forecast.producto} (${forecast.categoria})`
+                    : forecast.categoria
+                      ? `Proyección de ${forecast.categoria}`
+                      : "Proyección de todas las categorías"}
                 </h2>
                 <p className="flex flex-wrap items-center gap-x-1.5 text-sm text-terminal-muted">
                   {forecast.horizonte_aplicado} meses con {MODEL_NAMES[forecast.modelo]} <ConceptHint concept="modelo" />, a partir de{" "}
@@ -192,7 +193,14 @@ export function PredictionsPage() {
                 </ul>
               </Alert>
             )}
-            {modelsDiffer && reference && (
+            {modelsDiffer && reference && forecast.producto && (
+              <Alert tone="info">
+                Este producto usa {MODEL_NAMES[forecast.modelo]} con {forecast.horizonte_aplicado} meses, y su categoría usa{" "}
+                {MODEL_NAMES[reference.modelo]} con {reference.horizonte_aplicado} meses: las proyecciones por producto no suman
+                exactamente la categoría.
+              </Alert>
+            )}
+            {modelsDiffer && reference && !forecast.producto && (
               <Alert tone="info">
                 Esta categoría usa {MODEL_NAMES[forecast.modelo]} con {forecast.horizonte_aplicado} meses, y el total usa{" "}
                 {MODEL_NAMES[reference.modelo]} con {reference.horizonte_aplicado} meses: las proyecciones por categoría no suman

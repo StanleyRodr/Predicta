@@ -28,6 +28,17 @@ DATE_TO = Query(None, description="Fecha final inclusiva en formato YYYY-MM-DD."
 CATEGORY = Query(
     None, description="Categoría; no distingue mayúsculas, espacios ni tildes."
 )
+PRODUCT = Query(
+    None,
+    max_length=150,
+    description="Producto de la categoría; requiere categoria. No distingue mayúsculas ni espacios.",
+)
+
+
+def _require_category(categoria: str | None, producto: str | None) -> None:
+    """A product is always chosen within its category."""
+    if producto is not None and categoria is None:
+        raise HTTPException(status_code=422, detail=schemas.PRODUCT_NEEDS_CATEGORY)
 
 
 def _in_date_range[T](build: Callable[[], T]) -> T:
@@ -161,20 +172,33 @@ def sales_series(
     }
 
 
+@router.get("/productos", response_model=schemas.ProductListResponse)
+def category_products(
+    categoria: str = Query(..., description="Categoría; no distingue mayúsculas, espacios ni tildes."),
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user),
+) -> dict:
+    """Return the products the user sold within one category, sorted by name."""
+    display, products = analytics_service.category_products(db, current_user.id_usuario, categoria)
+    return {"usuario": current_user.nombre_usuario, "categoria": display, "productos": products}
+
+
 @router.get("/ventas", response_model=schemas.SalesPageResponse)
 def sales_history(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=200),
     categoria: str | None = CATEGORY,
+    producto: str | None = PRODUCT,
     fecha_desde: date | None = DATE_FROM,
     fecha_hasta: date | None = DATE_TO,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
     """Return a paginated slice of the user's sales, newest first."""
+    _require_category(categoria, producto)
     total, ventas = _in_date_range(
         lambda: analytics_service.sales_page(
-            db, current_user.id_usuario, skip, limit, categoria, fecha_desde, fecha_hasta
+            db, current_user.id_usuario, skip, limit, categoria, fecha_desde, fecha_hasta, producto
         )
     )
     return {
@@ -213,14 +237,19 @@ def predict_next_day(
 @router.get("/forecast", response_model=schemas.MonthlyForecastResponse)
 def monthly_forecast(
     categoria: str | None = CATEGORY,
+    producto: str | None = PRODUCT,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
     """Return history, monthly projection, intervals, and validation metrics; nothing is stored."""
-    resolved, forecast = _forecast(
-        lambda: analytics_service.monthly_projection(db, current_user.id_usuario, categoria)
+    _require_category(categoria, producto)
+    category, product, forecast = _forecast(
+        lambda: analytics_service.monthly_projection(
+            db, current_user.id_usuario, categoria, producto
+        )
     )
-    return {"usuario": current_user.nombre_usuario, **prediction_service.forecast_payload(resolved, forecast)}
+    payload = prediction_service.forecast_payload(category, product, forecast)
+    return {"usuario": current_user.nombre_usuario, **payload}
 
 
 @router.post("/predicciones", response_model=schemas.SavedBatch, status_code=201)
@@ -231,7 +260,9 @@ def save_prediction(
 ) -> dict:
     """Recompute the monthly projection on the server and save every month as one batch."""
     return _forecast(
-        lambda: prediction_service.save_projection(db, current_user.id_usuario, payload.categoria)
+        lambda: prediction_service.save_projection(
+            db, current_user.id_usuario, payload.categoria, payload.producto
+        )
     )
 
 
