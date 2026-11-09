@@ -18,7 +18,7 @@ vi.mock("../../api/forecast", () => ({
 }));
 vi.mock("../../api/analytics", () => ({ getCategoryStats: vi.fn() }));
 
-const metrics = { r2: 0.5, mape: 10, rmse: 5 };
+const metrics = { r2: 0.5, mape: 10, mae: 4, rmse: 5 };
 const forecast: ForecastResponse = {
   usuario: "usuario-a",
   proxima_fecha: "2026-01-15",

@@ -415,8 +415,11 @@ La regla aplicada pierde contra el mismo mes del año anterior en
 
 ### Detalle por modelo y horizonte
 
-{markdown(by_horizon, {"modelo": "Modelo", "horizonte": "Horizonte", "n": "n", "wape": "WAPE", "mase": "MASE", "mape": "MAPE", "rmse": "RMSE", "r2": "R²", "cobertura_95": "Cobertura 95 %"})}
+{markdown(by_horizon, {"modelo": "Modelo", "horizonte": "Horizonte", "n": "n", "wape": "WAPE", "mase": "MASE", "mape": "MAPE", "mae": "MAE", "rmse": "RMSE", "r2": "R²", "cobertura_95": "Cobertura 95 %"})}
 
+MAE y RMSE se calculan con `sklearn.metrics` y están en pesos: el MAE es el error
+absoluto medio, `(1/n)Σ|yᵢ − ŷᵢ|`, y el RMSE castiga más los errores grandes. El MAE de
+los tres modelos simples es el MAE de referencia (baseline) para cada horizonte.
 MASE se escala con el error del último valor dentro de los {INITIAL} meses iniciales:
 menor que 1 es mejor que ese modelo ingenuo. R² con 1 a 6 puntos es inestable y se
 muestra solo para completar. La cobertura es el porcentaje de meses reales dentro del
@@ -451,6 +454,9 @@ WAPE promedio de los horizontes 1 a 6 en el backtest de cada categoría.
 {markdown(categories, {"categoria": "Categoría", "wape_regla": "Regla aplicada", "wape_estacional_forzada": "Estacional forzada", "wape_ets": "ETS amortiguado", "mejor_referencia": "Mejor referencia", "wape_referencia": "WAPE referencia", "mejora_regla_pct": "Mejora regla (%)"})}
 """
     (OUTPUT / "resultados.md").write_text(report, encoding="utf-8")
+    # Windows consoles default to cp1252, which has no Σ; print the report as UTF-8.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     print(report)
 
 

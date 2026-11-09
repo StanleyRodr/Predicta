@@ -224,7 +224,7 @@ def test_metrics_come_from_one_month_ahead_predictions_of_the_last_months():
 
     metrics = monthly_forecast_series(monthly, _last_day(monthly)).objetivos["monto"].metricas
 
-    assert set(metrics) == {"r2", "mape", "rmse", "wape", "mase", "mejora_vs_referencia", "referencia", "origenes"}
+    assert set(metrics) == {"r2", "mape", "mae", "rmse", "wape", "mase", "mejora_vs_referencia", "referencia", "origenes"}
     assert metrics["origenes"] == 6
     assert metrics["rmse"] >= 0 and metrics["wape"] >= 0 and metrics["mase"] >= 0
     assert metrics["referencia"] in {"ultimo_valor", "mismo_mes_anio_anterior", "promedio_movil_3"}
@@ -237,7 +237,7 @@ def test_metrics_stay_null_when_no_month_can_be_predicted_unseen():
     metrics = monthly_forecast_series(monthly, _last_day(monthly)).objetivos["monto"].metricas
 
     assert metrics["origenes"] == 0
-    for name in ("r2", "mape", "rmse", "wape", "mase", "mejora_vs_referencia", "referencia"):
+    for name in ("r2", "mape", "mae", "rmse", "wape", "mase", "mejora_vs_referencia", "referencia"):
         assert metrics[name] is None
 
 
@@ -279,7 +279,7 @@ def test_daily_prediction_returns_metrics_and_non_negative_interval():
     assert next_date.isoformat() == "2026-01-09"
     for forecast in forecasts.values():
         assert 0 <= forecast.lower <= forecast.prediction <= forecast.upper
-        assert set(forecast.metrics) == {"r2", "mape", "rmse"}
+        assert set(forecast.metrics) == {"r2", "mape", "mae", "rmse"}
     assert forecasts["monto"].prediction == pytest.approx(18.0)
 
 

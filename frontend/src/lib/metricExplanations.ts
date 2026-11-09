@@ -211,6 +211,7 @@ export function technicalRows(metrics: ValidationMetrics, measure: MetricMeasure
   return [
     { acronym: "R²", value: show(metrics.r2, formatDecimal) },
     { acronym: "MAPE", value: show(metrics.mape, formatPercent) },
+    { acronym: "MAE", value: show(metrics.mae, (value) => formatMeasureValue(measure, value)) },
     { acronym: "RMSE", value: show(metrics.rmse, (value) => formatMeasureValue(measure, value)) },
     { acronym: "WAPE", value: show(metrics.wape, formatPercent) },
     { acronym: "MASE", value: show(metrics.mase, formatDecimal) },
