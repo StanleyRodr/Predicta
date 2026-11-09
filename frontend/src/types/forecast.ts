@@ -72,6 +72,7 @@ export interface MonthlyForecastResponse {
   usuario: string;
   /** null: every category. */
   categoria: string | null;
+  producto: string | null;
   modelo: MonthlyModel;
   horizonte_aplicado: number;
   meses_observados: number;
@@ -105,6 +106,7 @@ export interface SavedBatch {
   lote: string;
   tipo: "mensual" | "diaria";
   categoria: string | null;
+  producto: string | null;
   modelo: string | null;
   horizonte: number | null;
   r2_validacion: number | null;

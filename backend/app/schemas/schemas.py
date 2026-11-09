@@ -8,7 +8,7 @@ import re
 from datetime import date, datetime
 from typing import Literal
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 # Password policy: at least 8 chars, one uppercase, one lowercase, one digit.
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
@@ -16,6 +16,7 @@ PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."
 # bcrypt ignores everything past 72 bytes, so longer passwords are refused.
 MAX_PASSWORD_BYTES = 72
 PASSWORD_TOO_LONG = "La contraseña no puede superar 72 bytes (las letras con tilde ocupan 2)."
+PRODUCT_NEEDS_CATEGORY = "Para filtrar por producto, elige también su categoría."
 
 
 class UserBase(BaseModel):
@@ -133,6 +134,14 @@ class CategoryStatsResponse(BaseModel):
     analisis_por_categoria: list[CategoryMetric]
 
 
+class ProductListResponse(BaseModel):
+    """Response of ``GET /analytics/productos``: one category's products by name."""
+
+    usuario: str
+    categoria: str
+    productos: list[str]
+
+
 class TemporalMetric(BaseModel):
     fecha: str = Field(..., description="YYYY-MM-DD.")
     ingresos: float
@@ -227,6 +236,7 @@ class MonthlyForecastResponse(BaseModel):
 
     usuario: str
     categoria: str | None = Field(None, description="Nulo: todas las categorías.")
+    producto: str | None = Field(None, description="Nulo: todos los productos de la categoría.")
     modelo: Literal["tendencia", "tendencia_estacional"]
     horizonte_aplicado: int
     meses_observados: int
@@ -246,6 +256,15 @@ class SavePredictionRequest(BaseModel):
     """Body of ``POST /analytics/predicciones``; the server recomputes the values."""
 
     categoria: str | None = Field(None, max_length=100, description="Nulo: todas las categorías.")
+    producto: str | None = Field(
+        None, max_length=150, description="Requiere categoria. Nulo: todos sus productos."
+    )
+
+    @model_validator(mode="after")
+    def product_needs_category(self) -> "SavePredictionRequest":
+        if self.producto is not None and self.categoria is None:
+            raise ValueError(PRODUCT_NEEDS_CATEGORY)
+        return self
 
 
 class SavedPoint(BaseModel):
@@ -265,6 +284,7 @@ class SavedBatch(BaseModel):
     lote: str
     tipo: Literal["mensual", "diaria"]
     categoria: str | None
+    producto: str | None
     modelo: str | None
     horizonte: int | None
     r2_validacion: float | None

@@ -3,6 +3,7 @@ import type {
   CategoryStatsResponse,
   DateRange,
   GlobalStatsResponse,
+  ProductListResponse,
   SeriesParams,
   SeriesResponse,
   TemporalStatsResponse,
@@ -22,6 +23,12 @@ export async function getGlobalStats(range: DateRange): Promise<GlobalStatsRespo
 
 export async function getCategoryStats(range: DateRange): Promise<CategoryStatsResponse> {
   const response = await http.get<CategoryStatsResponse>("/analytics/stats/categories", { params: params(range) });
+  return response.data;
+}
+
+/** Products the user sold within one category, sorted by name. */
+export async function getProducts(categoria: string): Promise<ProductListResponse> {
+  const response = await http.get<ProductListResponse>("/analytics/productos", { params: { categoria } });
   return response.data;
 }
 

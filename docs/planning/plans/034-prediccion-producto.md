@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (migración que reescribe datos)
@@ -21,7 +21,7 @@ categoría aparece un segundo selector con sus productos. Por ejemplo,
 ## Decisiones
 
 - **Alcance:** solo predicciones e historial. El dashboard, los reportes PDF/Excel y la predicción de "Mañana" no cambian.
-- **Normalización del producto:** se unifican los espacios y se aplica Title Case. Los acentos se mantienen: "Café" y "Cafe" son dos productos. Ejemplos: `coca  cola` pasa a `Coca Cola`, y `7up` pasa a `7Up`.
+- **Normalización del producto:** se unifican los espacios y cada palabra empieza con mayúscula (`string.capwords`). Los acentos se mantienen: "Café" y "Cafe" son dos productos. Ejemplos: `coca  cola` pasa a `Coca Cola`, y `7up` y `Hershey's` no cambian. Se descartó `str.title()` porque convierte `Hershey's` en `Hershey'S`.
 - **Datos ya cargados:** la migración `0006` reescribe `ventas.producto` con la misma regla. El downgrade no recupera la escritura original.
 - **Guardado:** se agrega la columna `predicciones.producto`, que acepta nulos. `categoria` sigue guardando la categoría y `producto_referencia` guarda el producto cuando lo hay.
 - **Filtro dependiente:** si `producto` llega sin `categoria`, la API responde 422. El filtro usa la pareja (categoría, producto).

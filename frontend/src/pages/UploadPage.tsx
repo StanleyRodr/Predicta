@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { getCategoryStats } from "../api/analytics";
 import { clearSalesHistory, uploadSales } from "../api/etl";
 import { getSalesHistory } from "../api/sales";
+import { CategoryProductFilter, type CategoryProduct } from "../components/analytics";
 import { SalesHistoryTable, UploadDropzone, UploadSummary } from "../components/etl";
 import { Alert, Button, Card, Modal, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
@@ -15,14 +17,28 @@ export function UploadPage() {
   const userId = useAuthStore((state) => state.user?.id_usuario ?? null);
   const [file, setFile] = useState<File | null>(null);
   const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<CategoryProduct>({ categoria: "", producto: "" });
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
 
-  const history = useQuery({
-    queryKey: ["sales-history", userId, page],
-    queryFn: () => getSalesHistory((page - 1) * PAGE_SIZE, PAGE_SIZE),
+  const categories = useQuery({
+    queryKey: ["analytics", userId, "categories", null, null],
+    queryFn: () => getCategoryStats({}),
     enabled: userId !== null,
   });
+  const history = useQuery({
+    queryKey: ["sales-history", userId, page, filter.categoria, filter.producto],
+    queryFn: () => getSalesHistory((page - 1) * PAGE_SIZE, PAGE_SIZE, filter.categoria, filter.producto),
+    enabled: userId !== null,
+  });
+  const categoryNames = (categories.data?.analisis_por_categoria ?? [])
+    .map((row) => row.categoria)
+    .sort((a, b) => a.localeCompare(b, "es"));
+
+  function changeFilter(next: CategoryProduct) {
+    setFilter(next);
+    setPage(1);
+  }
   const upload = useMutation({
     mutationFn: (selectedFile: File) => uploadSales(selectedFile),
     onSuccess: async () => {
@@ -89,6 +105,9 @@ export function UploadPage() {
           <Button disabled={!history.data?.total_registros || clear.isPending} onClick={() => setIsClearModalOpen(true)} variant="danger">
             Purgar historial
           </Button>
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <CategoryProductFilter categories={categoryNames} onChange={changeFilter} value={filter} />
         </div>
         {clearError && <Alert tone="error">{clearError}</Alert>}
         {history.error && <Alert tone="error">{getApiErrorMessage(history.error, "No se pudo cargar el historial.")}</Alert>}

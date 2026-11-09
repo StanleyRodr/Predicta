@@ -32,13 +32,16 @@ def _clean(value: Any) -> Any:
     return value
 
 
-def forecast_payload(categoria: str | None, forecast: MonthlyForecast) -> dict[str, Any]:
+def forecast_payload(
+    categoria: str | None, producto: str | None, forecast: MonthlyForecast
+) -> dict[str, Any]:
     """Shape a monthly forecast as ``GET /analytics/forecast`` returns it."""
     amount = forecast.objetivos["monto"]
     units = forecast.objetivos["cantidad"]
     partial = forecast.mes_parcial
     return {
         "categoria": categoria,
+        "producto": producto,
         "modelo": forecast.modelo,
         "horizonte_aplicado": forecast.horizonte,
         "meses_observados": forecast.meses_observados,
@@ -83,9 +86,13 @@ def _money(value: float) -> Decimal:
     return Decimal(str(round(value, 2)))
 
 
-def save_projection(db: Session, user_id: int, categoria: str | None) -> dict[str, Any]:
+def save_projection(
+    db: Session, user_id: int, categoria: str | None, producto: str | None = None
+) -> dict[str, Any]:
     """Recompute the monthly projection and store one row per projected month."""
-    display, forecast = analytics_service.monthly_projection(db, user_id, categoria)
+    display, product, forecast = analytics_service.monthly_projection(
+        db, user_id, categoria, producto
+    )
     amount = forecast.objetivos["monto"]
     units = forecast.objetivos["cantidad"]
     batch = uuid.uuid4().hex
@@ -95,7 +102,8 @@ def save_projection(db: Session, user_id: int, categoria: str | None) -> dict[st
             lote=batch,
             tipo="mensual",
             categoria=display,
-            producto_referencia=display or GLOBAL_REFERENCE,
+            producto=product,
+            producto_referencia=product or display or GLOBAL_REFERENCE,
             fecha_proyeccion=money.fecha.date(),
             monto_proyectado=_money(money.prediccion),
             monto_inferior=_money(money.inferior),
@@ -126,6 +134,7 @@ def _batch(rows: list[models.Prediccion]) -> dict[str, Any]:
         "lote": first.lote,
         "tipo": first.tipo,
         "categoria": first.categoria,
+        "producto": first.producto,
         "modelo": first.modelo,
         "horizonte": first.horizonte,
         "r2_validacion": first.r2_validacion,

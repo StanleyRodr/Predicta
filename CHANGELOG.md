@@ -8,6 +8,16 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ## [Unreleased]
 
+### Phase 4 - product forecasts (task 034)
+
+#### Added
+- Monthly projections of amount and quantity for one product within its category: `producto` on `GET /analytics/forecast` and `POST /analytics/predicciones`, saved in the new `predicciones.producto` column (034).
+- `GET /analytics/productos?categoria=` lists a category's products; `GET /analytics/ventas` filters by `producto` (034).
+- A product select on /predictions and on the sales history that is enabled only after choosing a category; a product is compared with its category when their models differ, and saved batches read "Bebidas · Coca Cola" (034).
+
+#### Changed
+- Product names are stored with single spaces and each word capitalized; migration `0006` rewrites existing sales and cannot restore the original spelling on downgrade (034).
+
 ### Phase 3 - user review (tasks 032-033)
 
 #### Fixed

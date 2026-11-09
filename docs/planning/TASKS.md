@@ -42,7 +42,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
 | 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | HECHO |
 | 033 | Panel del "i" sin barras de desplazamiento | `docs/planning/plans/033-panel-info-flotante.md` | P2 | S | 032 | HECHO |
-| 034 | Predicción e historial por producto | `docs/planning/plans/034-prediccion-producto.md` | P1 | M | 033 | TODO |
+| 034 | Predicción e historial por producto | `docs/planning/plans/034-prediccion-producto.md` | P1 | M | 033 | HECHO |
 
 ## Reglas de ejecución
 
@@ -435,7 +435,7 @@ Plan: `docs/planning/plans/033-panel-info-flotante.md` | Depende de: 032 | Esfue
 **Decisiones tomadas:**
 
 - Solo predicciones e historial. El dashboard, los reportes y "Mañana" no cambian.
-- El producto se normaliza con espacios unificados y Title Case; los acentos se mantienen. La migración `0006` normaliza los datos ya cargados.
+- El producto se normaliza con espacios unificados y mayúscula inicial en cada palabra; los acentos se mantienen. La migración `0006` normaliza los datos ya cargados.
 - El producto depende de la categoría: sin `categoria`, la API responde 422.
 - La proyección de un producto se compara con la de su categoría.
 - `predicciones.producto` es una columna nueva que acepta nulos.
@@ -444,11 +444,11 @@ Plan: `docs/planning/plans/033-panel-info-flotante.md` | Depende de: 032 | Esfue
 
 Plan: `docs/planning/plans/034-prediccion-producto.md` | Depende de: 033 | Esfuerzo: M
 
-- [ ] 034.1 Normalizar el producto al cargar y en la migración `0006`. Verificar: tests de normalización; `upgrade`, `check` y `downgrade -1` pasan.
-- [ ] 034.2 Crear `GET /analytics/productos?categoria=`. Verificar: tests de orden, 422 y aislamiento.
-- [ ] 034.3 Agregar `producto` a `/forecast`, `POST /predicciones` y `/ventas`. Verificar: tests de proyección, guardado, 422 y paginación.
-- [ ] 034.4 Agregar el selector dependiente en predicciones. Verificar: RTL de selector, petición tras el clic, aviso y título del lote.
-- [ ] 034.5 Agregar los selectores al historial de ventas. Verificar: RTL de página 1 y parámetros.
+- [x] 034.1 Normalizar el producto al cargar y en la migración `0006`. Verificar: tests de normalización; `upgrade`, `check` y `downgrade -1` pasan.
+- [x] 034.2 Crear `GET /analytics/productos?categoria=`. Verificar: tests de orden, 422 y aislamiento.
+- [x] 034.3 Agregar `producto` a `/forecast`, `POST /predicciones` y `/ventas`. Verificar: tests de proyección, guardado, 422 y paginación.
+- [x] 034.4 Agregar el selector dependiente en predicciones. Verificar: RTL de selector, petición tras el clic, aviso y título del lote.
+- [x] 034.5 Agregar los selectores al historial de ventas. Verificar: RTL de página 1 y parámetros.
 
 ## Verificación global
 

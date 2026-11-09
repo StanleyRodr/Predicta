@@ -110,8 +110,9 @@ Consultar nunca escribe en la base; guardar es una acción explícita.
 | Ruta | Qué hace |
 |---|---|
 | `GET /analytics/predict` | Proyección del día siguiente: punto, intervalo del 95 % y métricas del holdout. Con menos de 2 días con ventas, 422. |
-| `GET /analytics/forecast?categoria=` | Serie mensual: `historial`, `mes_parcial`, `proyeccion` (por mes: `prediccion`, `inferior`, `superior` de monto y cantidad, y `extrapolacion`), `metricas`, `modelo`, `horizonte_aplicado` y `advertencia`. Sin `categoria`, cubre todas. |
-| `POST /analytics/predicciones` | Recibe solo `categoria`, recalcula la proyección en el servidor y guarda una fila por mes proyectado, todas con el mismo `lote`. Responde 201 con el lote guardado. |
+| `GET /analytics/forecast?categoria=&producto=` | Serie mensual: `historial`, `mes_parcial`, `proyeccion` (por mes: `prediccion`, `inferior`, `superior` de monto y cantidad, y `extrapolacion`), `metricas`, `modelo`, `horizonte_aplicado` y `advertencia`. Sin `categoria`, cubre todas; con `producto`, solo ese producto de la categoría. |
+| `GET /analytics/productos?categoria=` | Productos de una categoría, ordenados por nombre. La categoría es obligatoria. |
+| `POST /analytics/predicciones` | Recibe solo `categoria` y `producto`, recalcula la proyección en el servidor y guarda una fila por mes proyectado, todas con el mismo `lote`. Responde 201 con el lote guardado. |
 | `GET /analytics/predicciones?skip=&limit=` | Lotes guardados del usuario, del más reciente al más antiguo. |
 
 La categoría se compara sin distinguir mayúsculas, espacios ni tildes, también
@@ -119,6 +120,12 @@ en las categorías que creó el usuario. Cuando no hay ventas, la categoría no
 tiene ventas o faltan meses completos, `/forecast` y `POST /predicciones`
 responden 422 con un `detail` en español, por ejemplo: "Se necesitan al menos 6
 meses completos de ventas para proyectar; hay 5 y faltan 1."
+
+Un producto se elige siempre dentro de su categoría: `producto` sin `categoria`
+responde 422. El nombre del producto se guarda normalizado (espacios unificados
+y cada palabra con mayúscula inicial; los acentos se mantienen) y se compara por
+igualdad. Cada producto usa el mismo modelo escalonado con sus propios meses, así
+que muchos no llegan a los 6 meses completos y responden 422.
 
 Cada fila guardada (`predicciones`) conserva los límites de monto y cantidad,
 `modelo`, `horizonte`, `extrapolacion`, `r2_validacion` y `wape_validacion` del

@@ -128,7 +128,8 @@ class Prediccion(Base):
 
     Rows saved together share ``lote``. ``tipo`` is ``mensual`` for saved monthly
     projections and ``diaria`` for next-day forecasts stored before saving became
-    explicit. A null ``categoria`` means the projection covers every category.
+    explicit. A null ``categoria`` means the projection covers every category; a
+    null ``producto`` means it covers every product of ``categoria``.
     """
 
     __tablename__ = "predicciones"
@@ -140,6 +141,7 @@ class Prediccion(Base):
     lote: Mapped[str] = mapped_column(String(40), nullable=False)
     tipo: Mapped[str] = mapped_column(String(10), nullable=False, server_default="mensual")
     categoria: Mapped[str | None] = mapped_column(String(100))
+    producto: Mapped[str | None] = mapped_column(String(150))
     producto_referencia: Mapped[str] = mapped_column(String(150), nullable=False)
     fecha_proyeccion: Mapped[date] = mapped_column(Date, nullable=False)
     monto_proyectado: Mapped[Decimal | None] = mapped_column(DECIMAL(12, 2))

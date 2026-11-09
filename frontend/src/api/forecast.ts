@@ -7,17 +7,20 @@ export async function getForecast(): Promise<ForecastResponse> {
   return response.data;
 }
 
-/** Monthly projection, overall or for one category. Never stores anything. */
-export async function getMonthlyForecast(categoria?: string): Promise<MonthlyForecastResponse> {
+/** Monthly projection, overall, for one category, or for one of its products. Never stores anything. */
+export async function getMonthlyForecast(categoria?: string, producto?: string): Promise<MonthlyForecastResponse> {
   const response = await http.get<MonthlyForecastResponse>("/analytics/forecast", {
-    params: { categoria: categoria || undefined },
+    params: { categoria: categoria || undefined, producto: (categoria && producto) || undefined },
   });
   return response.data;
 }
 
 /** Saves the projection the server recomputes; no client value is sent. */
-export async function savePrediction(categoria?: string): Promise<SavedBatch> {
-  const response = await http.post<SavedBatch>("/analytics/predicciones", { categoria: categoria || null });
+export async function savePrediction(categoria?: string, producto?: string): Promise<SavedBatch> {
+  const response = await http.post<SavedBatch>("/analytics/predicciones", {
+    categoria: categoria || null,
+    producto: (categoria && producto) || null,
+  });
   return response.data;
 }
 

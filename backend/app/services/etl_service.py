@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models import models
-from app.services.category_service import normalize_category
+from app.services.category_service import normalize_category, normalize_product
 
 ALLOWED_EXTENSIONS = {"csv", "xlsx", "sql"}
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
@@ -265,7 +265,7 @@ def build_venta(row: dict[str, Any], user_id: int) -> models.Venta:
     producto = row.get("producto")
     if _is_missing(producto) or not str(producto).strip():
         raise RowValidationError("el producto es obligatorio")
-    product_name = str(producto).strip()
+    product_name = normalize_product(str(producto))
     if len(product_name) > MAX_PRODUCT_LENGTH:
         raise RowValidationError("el producto supera el largo maximo")
 

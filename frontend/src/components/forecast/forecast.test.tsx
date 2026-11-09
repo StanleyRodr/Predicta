@@ -23,6 +23,7 @@ function forecast(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyFore
   return {
     usuario: "ana",
     categoria: null,
+    producto: null,
     modelo: "tendencia",
     horizonte_aplicado: 2,
     meses_observados: 3,
@@ -168,6 +169,7 @@ describe("SavedPredictions", () => {
       lote: "legado-1",
       tipo: "diaria",
       categoria: null,
+      producto: null,
       modelo: null,
       horizonte: null,
       r2_validacion: 0.22,
@@ -199,6 +201,7 @@ describe("SavedPredictions", () => {
       lote,
       tipo: "mensual",
       categoria: null,
+      producto: null,
       modelo: "tendencia",
       horizonte: 2,
       r2_validacion: null,

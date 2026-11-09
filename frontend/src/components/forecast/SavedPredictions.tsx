@@ -25,6 +25,7 @@ export function savedRows(batch: SavedBatch): ForecastRow[] {
 
 function batchTitle(batch: SavedBatch): string {
   if (batch.tipo === "diaria") return "Proyección diaria (anterior)";
+  if (batch.categoria && batch.producto) return `${batch.categoria} · ${batch.producto}`;
   return batch.categoria ? `Categoría: ${batch.categoria}` : "Todas las categorías";
 }
 

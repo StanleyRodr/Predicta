@@ -1,5 +1,6 @@
 """Canonical category names shared by ingestion and analytics."""
 
+import string
 import unicodedata
 
 CANONICAL_CATEGORIES = (
@@ -36,3 +37,12 @@ def normalize_category(value: object) -> str:
 
     # Keep user-defined categories instead of silently mapping them to General.
     return cleaned.title()
+
+
+def normalize_product(value: str) -> str:
+    """Return a product's stable display name: single spaces, each word capitalized.
+
+    Accents are kept, so ``Café`` and ``Cafe`` stay two products. Ingestion,
+    the ``0006`` migration, and the product filters all use this rule.
+    """
+    return string.capwords(value)
