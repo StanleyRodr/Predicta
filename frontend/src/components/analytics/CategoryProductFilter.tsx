@@ -15,7 +15,7 @@ interface CategoryProductFilterProps {
   allCategoriesLabel?: string;
 }
 
-const selectClass =
+export const selectClass =
   "rounded-md border border-terminal-border bg-terminal-bg px-2 py-1.5 text-terminal-text disabled:cursor-not-allowed disabled:opacity-50";
 
 /** Category select plus a product select that lists only that category's products. */

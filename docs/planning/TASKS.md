@@ -43,7 +43,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | HECHO |
 | 033 | Panel del "i" sin barras de desplazamiento | `docs/planning/plans/033-panel-info-flotante.md` | P2 | S | 032 | HECHO |
 | 034 | Predicción e historial por producto | `docs/planning/plans/034-prediccion-producto.md` | P1 | M | 033 | HECHO |
-| 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034 | TODO |
+| 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034 | HECHO |
 
 ## Reglas de ejecución
 
@@ -467,11 +467,11 @@ Plan: `docs/planning/plans/034-prediccion-producto.md` | Depende de: 033 | Esfue
 
 Plan: `docs/planning/plans/035-mapeo-columnas.md` | Depende de: 034 | Esfuerzo: M
 
-- [ ] 035.1 Crear `column_mapping.py`. Verificar: `pytest tests/test_column_mapping.py` con sinónimos, empates, orden de roles, validación y dataset generado.
-- [ ] 035.2 Agregar `read_table`, la regla SQL, `mapeo` en `load_sales`, el monto derivado y las tres excepciones. Verificar: los tests ETL actuales pasan sin cambios y los nuevos pasan.
-- [ ] 035.3 Crear `POST /etl/analizar-columnas` y `mapeo` en la carga. Verificar: tests CSV/XLSX/SQL, sin escrituras, 400, 409 y 401, y `test_isolation.py`.
-- [ ] 035.4 Agregar `ColumnMappingPanel` en la carga. Verificar: RTL de propuesta, badges, habilitación, `mapeo` enviado, error del análisis y cambio de archivo.
-- [ ] 035.5 Actualizar `CLAUDE.md`. Verificar: la verificación global termina con código 0.
+- [x] 035.1 Crear `column_mapping.py`. Verificar: `pytest tests/test_column_mapping.py` con sinónimos, empates, orden de roles, validación y dataset generado.
+- [x] 035.2 Agregar `read_table`, la regla SQL, `mapeo` en `load_sales`, el monto derivado y las tres excepciones. Verificar: los tests ETL actuales pasan sin cambios y los nuevos pasan.
+- [x] 035.3 Crear `POST /etl/analizar-columnas` y `mapeo` en la carga. Verificar: tests CSV/XLSX/SQL, sin escrituras, 400, 409 y 401, y `test_isolation.py`.
+- [x] 035.4 Agregar `ColumnMappingPanel` en la carga. Verificar: RTL de propuesta, badges, habilitación, `mapeo` enviado, error del análisis y cambio de archivo.
+- [x] 035.5 Actualizar `CLAUDE.md`. Verificar: la verificación global termina con código 0.
 
 ## Verificación global
 

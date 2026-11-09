@@ -311,6 +311,26 @@ class UploadRowError(BaseModel):
     error: str
 
 
+ColumnRole = Literal["producto", "categoria", "monto", "precio_unitario", "cantidad", "fecha"]
+
+
+class ColumnProposal(BaseModel):
+    """The header proposed for one role, or the tied headers when none was chosen."""
+
+    columna: str | None
+    origen: Literal["exacto", "sinonimo"] | None
+    candidatos: list[str]
+
+
+class ColumnAnalysis(BaseModel):
+    """Response of ``POST /etl/analizar-columnas``."""
+
+    columnas: list[str]
+    muestra: list[dict[str, str | None]]
+    propuesta: dict[ColumnRole, ColumnProposal]
+    faltantes: list[ColumnRole]
+
+
 class UploadResponse(BaseModel):
     """Response of ``POST /etl/upload-ventas``."""
 
