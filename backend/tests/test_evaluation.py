@@ -14,6 +14,7 @@ from app.ml_models.evaluation import (
     mase,
     moving_average,
     naive_last,
+    point_metrics,
     rolling_origin,
     seasonal_naive,
     wape,
@@ -54,6 +55,35 @@ def test_moving_average_uses_the_last_three_months():
 
 
 # ---------------------------------------------------------------- metrics
+
+
+def test_mae_and_rmse_follow_the_thesis_formulas():
+    actual = np.array([1000.0, 1000.0, 1000.0])
+    predicted = np.array([900.0, 1100.0, 1300.0])
+
+    scores = point_metrics(actual, predicted, np.array([]))
+
+    # MAE = (1/n) sum |y - y_hat| and RMSE = sqrt((1/n) sum (y - y_hat)^2).
+    assert scores["mae"] == pytest.approx((100 + 100 + 300) / 3)
+    assert scores["rmse"] == pytest.approx(math.sqrt((100**2 + 100**2 + 300**2) / 3))
+    assert scores["mape"] == pytest.approx((10 + 10 + 30) / 3)
+
+
+def test_rmse_keeps_its_previous_value():
+    rng = np.random.default_rng(7)
+    actual = rng.uniform(100, 1000, size=12)
+    predicted = actual + rng.normal(0, 50, size=12)
+
+    scores = point_metrics(actual, predicted, actual)
+
+    assert scores["rmse"] == pytest.approx(float(np.sqrt(np.mean((actual - predicted) ** 2))))
+    assert scores["mae"] == pytest.approx(float(np.mean(np.abs(actual - predicted))))
+
+
+def test_point_metrics_are_null_without_unseen_months():
+    scores = point_metrics(np.array([]), np.array([]), np.array([]))
+
+    assert scores == {"r2": None, "mape": None, "mae": None, "rmse": None, "wape": None, "mase": None}
 
 
 def test_wape_divides_absolute_errors_by_total_actuals():

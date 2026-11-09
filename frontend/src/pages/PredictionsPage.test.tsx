@@ -42,7 +42,7 @@ function month(periodo: string, monto: number, extrapolacion = false): Projected
   };
 }
 
-const metrics = { r2: 0.4, mape: 8, rmse: 90, wape: 7, mase: 0.6, mejora_vs_referencia: 12, referencia: "ultimo_valor" as const, origenes: 6 };
+const metrics = { r2: 0.4, mape: 8, mae: 70, rmse: 90, wape: 7, mase: 0.6, mejora_vs_referencia: 12, referencia: "ultimo_valor" as const, origenes: 6 };
 
 function monthly(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyForecastResponse {
   return {
@@ -80,7 +80,7 @@ const daily: ForecastResponse = {
   cantidad_predicha: 4,
   monto_original_crudo: 321.5,
   intervalos_prediccion: { monto: { inferior: 300, superior: 340 }, cantidad: { inferior: 3, superior: 5 } },
-  metricas: { monto: { r2: null, mape: 5, rmse: 2 }, cantidad: { r2: null, mape: 5, rmse: 2 } },
+  metricas: { monto: { r2: null, mape: 5, mae: 1.5, rmse: 2 }, cantidad: { r2: null, mape: 5, mae: 1.5, rmse: 2 } },
   mensaje: "Predicción ajustada.",
 };
 

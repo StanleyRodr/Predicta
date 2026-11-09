@@ -1,4 +1,4 @@
-# Plan 034: Predicción e historial por producto
+# Plan 034b: Predicción e historial por producto
 
 ## Estado
 

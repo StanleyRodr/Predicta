@@ -6,7 +6,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (cambia el código que lee los tres formatos; ver `## Riesgos y mitigaciones`)
-- **Depende de:** `docs/planning/plans/034-prediccion-producto.md`, que introduce `normalize_product`; `build_venta` la sigue aplicando al producto mapeado.
+- **Depende de:** `docs/planning/plans/034b-prediccion-producto.md`, que introduce `normalize_product`; `build_venta` la sigue aplicando al producto mapeado.
 - **Categoría:** backend / frontend
 - **Origen:** pedido del usuario, entrevista de diseño y revisión Goldfish del 2026-11-09 (`docs/planning/plans/035.5-correciones.md`)
 - **Planificado en:** commit `3e92380`, 2026-11-09
