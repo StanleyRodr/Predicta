@@ -66,7 +66,24 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+@app.middleware("http")
+async def unhandled_error_as_json(request: Request, call_next):
+    """Turn an unhandled exception into a generic 500 inside the CORS layer.
+
+    Starlette answers unhandled errors from its outermost middleware, which
+    sits outside ``CORSMiddleware``. That response has no CORS headers, so the
+    browser drops it and the frontend reports the API as unreachable. This
+    middleware is registered before CORS, which makes it the inner layer.
+    """
+    try:
+        return await call_next(request)
+    except Exception:  # noqa: BLE001 - last resort for every error a route did not handle
+        logger.exception("Error no controlado en {} {}", request.method, request.url.path)
+        return JSONResponse(status_code=500, content={"detail": "Error interno del servidor."})
+
+
 # CORS: explicit origins; "*" is only accepted in development (see config).
+# Registered after the error middleware above, so CORS wraps it.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
