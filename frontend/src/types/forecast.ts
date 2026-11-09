@@ -3,6 +3,8 @@
 export interface ForecastMetrics {
   r2: number | null;
   mape: number | null;
+  /** Mean absolute error, in money or units. */
+  mae: number | null;
   rmse: number | null;
 }
 
@@ -59,6 +61,8 @@ export interface ProjectedMonth {
 export interface ValidationMetrics {
   r2: number | null;
   mape: number | null;
+  /** Mean absolute error, in money or units. */
+  mae: number | null;
   rmse: number | null;
   wape: number | null;
   mase: number | null;

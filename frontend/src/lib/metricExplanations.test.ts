@@ -14,6 +14,7 @@ function metrics(overrides: Partial<ValidationMetrics> = {}): ValidationMetrics 
   return {
     r2: 0.8,
     mape: 12.5,
+    mae: 1000,
     rmse: 1250,
     wape: 11,
     mase: 0.6,
@@ -24,7 +25,7 @@ function metrics(overrides: Partial<ValidationMetrics> = {}): ValidationMetrics 
   };
 }
 
-const empty = metrics({ r2: null, mape: null, rmse: null, wape: null, mase: null, mejora_vs_referencia: null, referencia: null, origenes: 0 });
+const empty = metrics({ r2: null, mape: null, mae: null, rmse: null, wape: null, mase: null, mejora_vs_referencia: null, referencia: null, origenes: 0 });
 
 describe("explainMetric", () => {
   it("builds plain sentences with the right unit for normal values", () => {
@@ -201,9 +202,11 @@ describe("qualitySummary", () => {
 
 describe("technicalRows", () => {
   it("formats every raw metric with its unit and keeps null unavailable", () => {
-    expect(technicalRows(metrics(), "monto").map((row) => row.value)).toEqual(["0.80", "12.50%", "$1,250.00", "11.00%", "0.60", "6"]);
-    expect(technicalRows(metrics({ rmse: 3 }), "cantidad")[2].value).toBe("3 unidades");
+    expect(technicalRows(metrics(), "monto").map((row) => row.acronym)).toEqual(["R²", "MAPE", "MAE", "RMSE", "WAPE", "MASE", "Meses evaluados"]);
+    expect(technicalRows(metrics(), "monto").map((row) => row.value)).toEqual(["0.80", "12.50%", "$1,000.00", "$1,250.00", "11.00%", "0.60", "6"]);
+    expect(technicalRows(metrics({ mae: 2.5, rmse: 3 }), "cantidad").slice(2, 4).map((row) => row.value)).toEqual(["2.5 unidades", "3 unidades"]);
     expect(technicalRows(empty, "monto").map((row) => row.value)).toEqual([
+      "No disponible",
       "No disponible",
       "No disponible",
       "No disponible",

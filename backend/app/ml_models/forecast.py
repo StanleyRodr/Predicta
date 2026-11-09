@@ -32,7 +32,7 @@ import statsmodels.api as sm
 
 from app.ml_models.evaluation import ModelFn, one_step_metrics, point_metrics
 
-DAILY_METRIC_NAMES = ("r2", "mape", "rmse")
+DAILY_METRIC_NAMES = ("r2", "mape", "mae", "rmse")
 TARGETS = ("monto", "cantidad")
 MIN_MONTHS = 6
 #: History length from which the full 12-month horizon is projected.
@@ -186,7 +186,7 @@ def _with_constant(features: pd.DataFrame) -> pd.DataFrame:
 
 
 def _metrics(actual: np.ndarray, predicted: np.ndarray) -> Metrics:
-    """R², MAPE, and RMSE on a temporal holdout, never on training rows."""
+    """R², MAPE, MAE, and RMSE on a temporal holdout, never on training rows."""
     scores = point_metrics(actual, predicted, np.array([]))
     return {name: scores[name] for name in DAILY_METRIC_NAMES}
 

@@ -75,7 +75,20 @@ def test_forecast_returns_history_projection_and_metrics_without_writing(client,
             assert 0 <= values["inferior"] <= values["prediccion"] <= values["superior"]
     assert body["metricas"]["monto"]["origenes"] == 6
     assert body["metricas"]["monto"]["referencia"] in {"ultimo_valor", "mismo_mes_anio_anterior", "promedio_movil_3"}
+    for target in ("monto", "cantidad"):
+        metrics = body["metricas"][target]
+        assert 0 <= metrics["mae"] <= metrics["rmse"]
     assert _count_predictions(test_db) == 0
+
+
+def test_forecast_metrics_are_null_when_no_month_could_be_evaluated(client, auth_headers):
+    _upload(client, auth_headers, _months(6))
+
+    metrics = client.get("/analytics/forecast", headers=auth_headers).json()["metricas"]["monto"]
+
+    assert metrics["origenes"] == 0
+    assert metrics["mae"] is None
+    assert metrics["rmse"] is None
 
 
 def test_forecast_for_a_category_ignores_accents(client, auth_headers):

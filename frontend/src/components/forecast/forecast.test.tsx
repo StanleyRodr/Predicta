@@ -37,8 +37,8 @@ function forecast(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyFore
     mes_parcial: null,
     proyeccion: [projected("2025-05", 150), projected("2025-06", 160, true)],
     metricas: {
-      monto: { r2: null, mape: 5, rmse: 3, wape: 4, mase: 0.5, mejora_vs_referencia: 10, referencia: "ultimo_valor", origenes: 3 },
-      cantidad: { r2: null, mape: 5, rmse: 3, wape: 4, mase: 0.5, mejora_vs_referencia: 10, referencia: "ultimo_valor", origenes: 3 },
+      monto: { r2: null, mape: 5, mae: 2, rmse: 3, wape: 4, mase: 0.5, mejora_vs_referencia: 10, referencia: "ultimo_valor", origenes: 3 },
+      cantidad: { r2: null, mape: 5, mae: 2, rmse: 3, wape: 4, mase: 0.5, mejora_vs_referencia: 10, referencia: "ultimo_valor", origenes: 3 },
     },
     ...overrides,
   };
@@ -245,6 +245,7 @@ describe("ForecastQuality", () => {
   const good: ValidationMetrics = {
     r2: 0.8,
     mape: 12.5,
+    mae: 1000,
     rmse: 1250,
     wape: 11,
     mase: 0.6,
@@ -255,6 +256,7 @@ describe("ForecastQuality", () => {
   const empty: ValidationMetrics = {
     r2: null,
     mape: null,
+    mae: null,
     rmse: null,
     wape: null,
     mase: null,
@@ -335,11 +337,15 @@ describe("ForecastQuality", () => {
 
     await user.click(toggle);
     const table = screen.getByRole("table", { name: "Métricas técnicas de la validación" });
-    for (const acronym of ["R²", "MAPE", "RMSE", "WAPE", "MASE"]) {
+    for (const acronym of ["R²", "MAPE", "MAE", "RMSE", "WAPE", "MASE"]) {
       expect(within(table).getByRole("rowheader", { name: acronym })).toBeInTheDocument();
     }
     expect(within(within(table).getByRole("rowheader", { name: "WAPE" }).closest("tr") as HTMLElement).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
       "11.00%",
+      "No disponible",
+    ]);
+    expect(within(within(table).getByRole("rowheader", { name: "MAE" }).closest("tr") as HTMLElement).getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
+      "$1,000.00",
       "No disponible",
     ]);
 

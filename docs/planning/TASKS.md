@@ -42,8 +42,9 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 031 | Limpieza y documentación | `docs/planning/plans/031-limpieza-documentacion.md` | P3 | S-M | 015-030 | HECHO |
 | 032 | Explicaciones claras en predicciones | `docs/planning/plans/032-explicaciones-predicciones.md` | P1 | M | 027, 028 | HECHO |
 | 033 | Panel del "i" sin barras de desplazamiento | `docs/planning/plans/033-panel-info-flotante.md` | P2 | S | 032 | HECHO |
-| 034 | Predicción e historial por producto | `docs/planning/plans/034-prediccion-producto.md` | P1 | M | 033 | HECHO |
-| 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034 | HECHO |
+| 034 | Métrica MAE | `docs/planning/plans/034-metrica-mae.md` | P1 | S-M | 022, 032 | HECHO |
+| 034b | Predicción e historial por producto | `docs/planning/plans/034b-prediccion-producto.md` | P1 | M | 033 | HECHO |
+| 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034b | HECHO |
 
 ## Reglas de ejecución
 
@@ -429,6 +430,16 @@ Plan: `docs/planning/plans/033-panel-info-flotante.md` | Depende de: 032 | Esfue
 - [x] 033.2 Dibujar el panel en un portal que siga al botón. Verificar: RTL de portal, clic fuera y Escape.
 - [x] 033.3 Explicar una vez el rango y la extrapolación en las proyecciones guardadas. Verificar: RTL sin "i" en las tablas de lotes.
 
+### Tarea 034 — Métrica MAE
+
+Plan: `docs/planning/plans/034-metrica-mae.md` | Depende de: 022, 032 | Esfuerzo: S-M
+
+- [x] 034.1 Calcular MAE y RMSE con `sklearn.metrics`. Verificar: test con la fórmula de la tesis y RMSE sin cambios.
+- [x] 034.2 Exponer `mae` en las métricas mensuales y diarias. Verificar: tests de la API con valor y con `null`.
+- [x] 034.3 Mostrar el MAE en "Detalle técnico". Verificar: RTL de unidad y "No disponible".
+- [x] 034.4 Agregar el MAE a la evaluación y regenerarla. Verificar: columna MAE del modelo y de las referencias.
+- [x] 034.5 Actualizar la documentación y resolver REQ-37. Verificar: `docs/ml-models.md` y `CLAUDE.md` listan el MAE.
+
 ## Fase 4: predicción por producto
 
 **Base:** commit `a734296` (merge del PR #3). **Origen:** pedido del usuario y entrevista de diseño del 2026-11-09.
@@ -441,15 +452,15 @@ Plan: `docs/planning/plans/033-panel-info-flotante.md` | Depende de: 032 | Esfue
 - La proyección de un producto se compara con la de su categoría.
 - `predicciones.producto` es una columna nueva que acepta nulos.
 
-### Tarea 034 — Predicción e historial por producto
+### Tarea 034b — Predicción e historial por producto
 
-Plan: `docs/planning/plans/034-prediccion-producto.md` | Depende de: 033 | Esfuerzo: M
+Plan: `docs/planning/plans/034b-prediccion-producto.md` | Depende de: 033 | Esfuerzo: M
 
-- [x] 034.1 Normalizar el producto al cargar y en la migración `0006`. Verificar: tests de normalización; `upgrade`, `check` y `downgrade -1` pasan.
-- [x] 034.2 Crear `GET /analytics/productos?categoria=`. Verificar: tests de orden, 422 y aislamiento.
-- [x] 034.3 Agregar `producto` a `/forecast`, `POST /predicciones` y `/ventas`. Verificar: tests de proyección, guardado, 422 y paginación.
-- [x] 034.4 Agregar el selector dependiente en predicciones. Verificar: RTL de selector, petición tras el clic, aviso y título del lote.
-- [x] 034.5 Agregar los selectores al historial de ventas. Verificar: RTL de página 1 y parámetros.
+- [x] 034b.1 Normalizar el producto al cargar y en la migración `0006`. Verificar: tests de normalización; `upgrade`, `check` y `downgrade -1` pasan.
+- [x] 034b.2 Crear `GET /analytics/productos?categoria=`. Verificar: tests de orden, 422 y aislamiento.
+- [x] 034b.3 Agregar `producto` a `/forecast`, `POST /predicciones` y `/ventas`. Verificar: tests de proyección, guardado, 422 y paginación.
+- [x] 034b.4 Agregar el selector dependiente en predicciones. Verificar: RTL de selector, petición tras el clic, aviso y título del lote.
+- [x] 034b.5 Agregar los selectores al historial de ventas. Verificar: RTL de página 1 y parámetros.
 
 ## Fase 5: mapeo de columnas
 
@@ -465,7 +476,7 @@ Plan: `docs/planning/plans/034-prediccion-producto.md` | Depende de: 033 | Esfue
 
 ### Tarea 035 — Mapeo de columnas en la carga de ventas
 
-Plan: `docs/planning/plans/035-mapeo-columnas.md` | Depende de: 034 | Esfuerzo: M
+Plan: `docs/planning/plans/035-mapeo-columnas.md` | Depende de: 034b | Esfuerzo: M
 
 - [x] 035.1 Crear `column_mapping.py`. Verificar: `pytest tests/test_column_mapping.py` con sinónimos, empates, orden de roles, validación y dataset generado.
 - [x] 035.2 Agregar `read_table`, la regla SQL, `mapeo` en `load_sales`, el monto derivado y las tres excepciones. Verificar: los tests ETL actuales pasan sin cambios y los nuevos pasan.

@@ -161,6 +161,7 @@ class TemporalStatsResponse(BaseModel):
 class DailyMetrics(BaseModel):
     r2: float | None
     mape: float | None
+    mae: float | None = Field(None, description="Error absoluto medio, en dinero o unidades.")
     rmse: float | None
 
 
@@ -216,6 +217,7 @@ class ValidationMetrics(BaseModel):
 
     r2: float | None
     mape: float | None
+    mae: float | None = Field(None, description="Error absoluto medio, en dinero o unidades.")
     rmse: float | None
     wape: float | None
     mase: float | None

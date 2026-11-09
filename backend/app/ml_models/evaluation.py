@@ -13,6 +13,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 
 ModelFn = Callable[[pd.DataFrame, str, Sequence[pd.Timestamp]], pd.DataFrame | None]
 BaselineFn = Callable[[pd.DataFrame, str, pd.Timestamp], float | None]
@@ -20,7 +21,7 @@ BaselineFn = Callable[[pd.DataFrame, str, pd.Timestamp], float | None]
 MOVING_AVERAGE_MONTHS = 3
 #: The runtime evaluation predicts each of the last months one step ahead.
 RUNTIME_ORIGINS = 6
-METRIC_NAMES = ("r2", "mape", "rmse", "wape", "mase")
+METRIC_NAMES = ("r2", "mape", "mae", "rmse", "wape", "mase")
 
 
 # ---------------------------------------------------------------- baselines
@@ -84,7 +85,10 @@ def mase(actual: np.ndarray, predicted: np.ndarray, training: np.ndarray) -> flo
 
 
 def point_metrics(actual: np.ndarray, predicted: np.ndarray, training: np.ndarray) -> dict[str, float | None]:
-    """R², MAPE, RMSE, WAPE, and MASE of predictions against unseen actuals."""
+    """R², MAPE, MAE, RMSE, WAPE, and MASE of predictions against unseen actuals.
+
+    MAE and RMSE come from ``sklearn.metrics``, as the thesis states.
+    """
     if len(actual) == 0:
         return {name: None for name in METRIC_NAMES}
     errors = actual - predicted
@@ -93,7 +97,8 @@ def point_metrics(actual: np.ndarray, predicted: np.ndarray, training: np.ndarra
     return {
         "r2": float(1 - np.sum(errors**2) / spread) if len(actual) > 1 and spread > 0 else None,
         "mape": float(np.mean(np.abs(errors[nonzero] / actual[nonzero])) * 100) if np.any(nonzero) else None,
-        "rmse": float(np.sqrt(np.mean(errors**2))),
+        "mae": float(mean_absolute_error(actual, predicted)),
+        "rmse": float(root_mean_squared_error(actual, predicted)),
         "wape": wape(actual, predicted),
         "mase": mase(actual, predicted, training),
     }

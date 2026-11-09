@@ -207,7 +207,7 @@ Los agentes agregan una fila por cada diferencia entre la tesis y el código. **
 | 2026-11-08 | REQ-29 | Un ETL alimenta consultas y modelo | Consultas usan SQL; ML agrega sus propios datos | Centralizar la salida ETL o documentar pipelines distintos | Abierta |
 | 2026-11-08 | REQ-33 | Features: tendencia, estacionalidad y lag | Usa tendencia y dummies; no usa lag | Resolver definición de features en tesis/código | Abierta |
 | 2026-11-08 | REQ-36 | `train_test_split`, 70–80/20–30 | Usa holdout temporal propio | Resolver P-03 y sincronizar tesis/código | Abierta |
-| 2026-11-08 | REQ-37 | MAE y RMSE con `sklearn.metrics` | Calcula RMSE, MAPE y R² con función propia; no MAE | Alinear métricas y registrar valores | Abierta |
+| 2026-11-08 | REQ-37 | MAE y RMSE con `sklearn.metrics` | Calcula RMSE, MAPE y R² con función propia; no MAE | Alinear métricas y registrar valores | Resuelta (tarea 034): `backend/app/ml_models/evaluation.py` · `point_metrics` usa `mean_absolute_error` y `root_mean_squared_error` sobre meses no vistos; prueba `backend/tests/test_evaluation.py::test_mae_and_rmse_follow_the_thesis_formulas`; MAE del modelo y de las referencias en `docs/evaluacion/resultados.md` |
 | 2026-11-08 | REQ-42 | ETL y modelo asíncronos | Rutas y servicios son síncronos | Cambiar implementación o tesis | Abierta |
 | 2026-11-08 | REQ-50..52 | Histórico/proyección y dos vistas arquitectónicas | Línea histórica y barras existen; falta vista combinada y nombres exactos | Completar frontend o precisar alcance | Abierta |
 | 2026-11-08 | REQ-53, REQ-62 | Responsive y renderizado dinámico validado | No hay pruebas E2E ni capturas | Incorporar E2E y evidencia reproducible | Abierta |

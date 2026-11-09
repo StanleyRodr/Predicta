@@ -186,6 +186,10 @@ def test_predict_with_two_days_returns_forecast(client, auth_headers):
     assert response.json()["proxima_fecha"] == "2026-01-03"
     assert response.json()["monto_predicho"] >= 0
     assert response.json()["cantidad_predicha"] >= 0
+    for target in ("monto", "cantidad"):
+        metrics = response.json()["metricas"][target]
+        assert set(metrics) == {"r2", "mape", "mae", "rmse"}
+        assert metrics["mae"] is not None and metrics["mae"] >= 0
 
 
 def test_predict_never_stores_a_forecast(client, auth_headers, test_db):
