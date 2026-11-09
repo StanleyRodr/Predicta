@@ -80,8 +80,8 @@ intervalo siempre tenga grados de libertad:
 | 14 o más, con los 7 días de la semana | Tendencia y `dia_2` … `dia_7` (martes a domingo; lunes es la referencia) |
 
 El intervalo es el mismo intervalo de observación al 95 % del modelo mensual.
-Sus métricas (`R²`, `MAPE`, `RMSE`) salen de un holdout cronológico del último
-20 % de los días.
+Sus métricas (`R²`, `MAPE`, `MAE`, `RMSE`) salen de un holdout cronológico del
+último 20 % de los días.
 
 ## Métricas de la proyección mensual
 
@@ -92,7 +92,11 @@ futuras. Sobre esos errores se calculan:
 - `wape`: error absoluto total sobre las ventas reales totales, en %.
 - `mase`: error absoluto medio dividido por el error del "último valor" dentro
   del entrenamiento. Menor que 1 es mejor que ese modelo ingenuo.
-- `mape`, `rmse` y `r2`. Con un solo mes evaluado, `r2` es `null`.
+- `mae`: error absoluto medio, `(1/n)Σ|yᵢ − ŷᵢ|`, en pesos o unidades.
+- `rmse`: raíz del error cuadrático medio, `√((1/n)Σ(yᵢ − ŷᵢ)²)`; castiga más los
+  errores grandes. `mae` y `rmse` se calculan con `sklearn.metrics`
+  (`mean_absolute_error` y `root_mean_squared_error`).
+- `mape` y `r2`. Con un solo mes evaluado, `r2` es `null`.
 - `referencia`: el mejor de los modelos simples sobre los mismos meses, por WAPE:
   `ultimo_valor`, `mismo_mes_anio_anterior` o `promedio_movil_3`.
 - `mejora_vs_referencia`: reducción porcentual del WAPE frente a esa referencia.
@@ -140,7 +144,7 @@ y gráficos, a partir de `DatosDePrueba/ventas_fabricadas/ventas_tienda_2_anios.
   forzada, ETS con tendencia amortiguada (solo en el script) y los tres modelos
   simples. ETS estacional no se usa: necesita 2 ciclos completos para
   inicializarse y el entrenamiento tiene 18 meses.
-- **Métricas:** WAPE, MASE, MAPE, RMSE, R² y cobertura real del intervalo del
+- **Métricas:** WAPE, MASE, MAPE, MAE, RMSE, R² y cobertura real del intervalo del
   95 %, más Ljung–Box y Breusch–Pagan sobre los residuos del modelo final.
 
 Resultados principales:

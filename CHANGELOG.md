@@ -8,7 +8,13 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ## [Unreleased]
 
-### Phase 3 - user review (tasks 032-033)
+### Phase 3 - user review (tasks 032-034)
+
+#### Added (034)
+- MAE (mean absolute error) on the monthly and next-day forecast metrics, in "Detalle técnico", and in the evaluation for the model and the three baselines.
+
+#### Changed (034)
+- MAE and RMSE are computed with `sklearn.metrics`, as the thesis states; RMSE values are unchanged.
 
 #### Fixed
 - Info panels float on the page body next to their button, so opening one inside a table no longer adds scrollbars; they open above when there is no room below and stay inside the screen (033).
