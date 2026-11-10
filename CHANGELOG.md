@@ -10,6 +10,11 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ### Phase 6 - real datasets (task 036)
 
+#### Added
+- Column-mapping synonyms for the English headers of three real e-commerce datasets: Online Retail II (UCI), Iowa Liquor Sales and Open e-commerce 1.0 (Amazon). Each one is proposed complete with no manual change (036).
+- `backend/scripts/prepare_real_dataset.py` turns those downloads into upload-ready CSV files. They are split by period within the upload limits, the columns that identify a person are dropped, and invalid rows are kept so the ETL reports them. The data stays in `backend/temp_data/`, outside git (036).
+- `docs/pruebas/036-datos-reales.md`: 32 real files loaded (2,990,698 rows), with the app's counts matching the ETL row by row, plus the forecasts and the findings (036).
+
 #### Fixed
 - CSV uploads read escaped quotes (`""`) as RFC 4180 defines them. The delimiter sniffer looked only at the first 8 KB, and when no escaped quote appeared there it misread later quoted fields: product names kept stray quotes, and rows merged or shifted columns (036).
 

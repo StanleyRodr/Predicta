@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** EN PROGRESO
+- **Estado:** HECHO. Resultados en `docs/pruebas/036-datos-reales.md`.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** LOW (cambia solo `SYNONYMS`; el resto son datos locales fuera de git, un script y documentación)

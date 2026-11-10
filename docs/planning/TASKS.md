@@ -45,7 +45,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 034 | Métrica MAE | `docs/planning/plans/034-metrica-mae.md` | P1 | S-M | 022, 032 | HECHO |
 | 034b | Predicción e historial por producto | `docs/planning/plans/034b-prediccion-producto.md` | P1 | M | 033 | HECHO |
 | 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034b | HECHO |
-| 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | EN PROGRESO |
+| 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | HECHO |
 | 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
 
 ## Reglas de ejecución
@@ -505,8 +505,8 @@ Plan: `docs/planning/plans/036-datasets-reales.md` | Depende de: 035 | Esfuerzo:
 - [x] 036.2 Descargar los datasets aprobados en `backend/temp_data/`. Verificar: `git status` no muestra datos.
 - [x] 036.3 Crear `prepare_real_dataset.py`. Verificar: límites de filas y bytes, rangos sin solapar y suma de filas igual al origen.
 - [x] 036.4 Agregar los sinónimos que falten. Verificar: un test de encabezados por dataset, sin empates, y los tests actuales sin cambios.
-- [ ] 036.5 Cargar los archivos de cada empresa en orden. Verificar: totales, serie mensual sin huecos, `meses_observados` de todos los archivos y 409 al repetir.
-- [ ] 036.6 Documentar los resultados y cerrar. Verificar: la verificación global termina con código 0.
+- [x] 036.5 Cargar los archivos de cada empresa en orden. Verificar: totales, serie mensual sin huecos, `meses_observados` de todos los archivos y 409 al repetir.
+- [x] 036.6 Documentar los resultados y cerrar. Verificar: la verificación global termina con código 0.
 
 ## Fase 7: carga de varios archivos
 
