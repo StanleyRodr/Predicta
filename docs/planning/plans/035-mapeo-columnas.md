@@ -33,7 +33,7 @@ cargar las ventas.
   2. Una categoría vacía en XLSX (`NaN`) se guarda como "General". Hoy se guarda como "Nan".
   3. Un XLSX con encabezados y sin filas responde 200 con 0 filas. Hoy responde "faltan columnas requeridas".
 - **Monto derivado:** si el mapeo no asigna `monto` y sí `precio_unitario`, `build_venta` calcula `monto = round(precio_unitario * cantidad, 2)`. El precio se lee sin redondear y solo se redondea el producto. Si falta la cantidad, se usa 1, como hoy. Si el mapeo asigna `monto`, solo se usa esa columna: no hay recaída por fila.
-- **Descarga estandarizada:** se pasa a la tarea 036. Se descartó incluirla aquí porque era la única causa de la doble carga, del orden de hojas y del escape de fórmulas, y duplicaba el bucle de filas de `load_sales`.
+- **Descarga estandarizada:** se pasa a la tarea 037. Se descartó incluirla aquí porque era la única causa de la doble carga, del orden de hojas y del escape de fórmulas, y duplicaba el bucle de filas de `load_sales`.
 
 ## Reglas del mapeo
 
@@ -236,7 +236,7 @@ ventas guardadas.
 
 ## Fuera de alcance
 
-- La descarga del XLSX estandarizado (tarea 036).
+- La descarga del XLSX estandarizado (tarea 037).
 - Un asistente de dudas (un chat que responda sobre conceptos y valores), descartado en la entrevista de diseño.
 - La coincidencia aproximada de encabezados.
 - Mapear valores, por ejemplo traducir nombres de categoría o códigos de producto.

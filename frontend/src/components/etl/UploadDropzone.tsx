@@ -2,13 +2,17 @@ import { useRef, useState } from "react";
 import { Alert } from "../ui/Alert";
 import { cn } from "../../lib/cn";
 import { validateSalesFile } from "../../lib/fileValidation";
+import { MAX_BATCH_FILES, TOO_MANY_FILES } from "../../lib/uploadBatch";
 
 interface UploadDropzoneProps {
+  /** One file, already validated. */
   onFileSelected: (file: File) => void;
+  /** Several files, unvalidated: the page lists the invalid ones with their reason. */
+  onFilesSelected?: (files: File[]) => void;
   disabled?: boolean;
 }
 
-export function UploadDropzone({ onFileSelected, disabled = false }: UploadDropzoneProps) {
+export function UploadDropzone({ onFileSelected, onFilesSelected, disabled = false }: UploadDropzoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,6 +21,20 @@ export function UploadDropzone({ onFileSelected, disabled = false }: UploadDropz
     const validationError = validateSalesFile(file ?? null);
     setError(validationError);
     if (!validationError && file) onFileSelected(file);
+  }
+
+  function selectFiles(list: FileList | null | undefined) {
+    const files = Array.from(list ?? []);
+    if (files.length <= 1 || !onFilesSelected) {
+      selectFile(files[0]);
+      return;
+    }
+    if (files.length > MAX_BATCH_FILES) {
+      setError(TOO_MANY_FILES);
+      return;
+    }
+    setError(null);
+    onFilesSelected(files);
   }
 
   return (
@@ -39,14 +57,18 @@ export function UploadDropzone({ onFileSelected, disabled = false }: UploadDropz
         onDrop={(event) => {
           event.preventDefault();
           setIsDragging(false);
-          selectFile(event.dataTransfer.files[0]);
+          selectFiles(event.dataTransfer.files);
         }}
         type="button"
       >
         <span className="grid gap-2">
           <strong className="font-mono text-terminal-amber">+ cargar archivo</strong>
-          <span className="text-sm text-terminal-muted">Arrastra aqui o selecciona CSV, XLSX o SQL</span>
-          <span className="font-mono text-xs text-terminal-muted">max 25 MB</span>
+          <span className="text-sm text-terminal-muted">
+            {onFilesSelected ? "Arrastra aqui o selecciona uno o varios archivos CSV, XLSX o SQL" : "Arrastra aqui o selecciona CSV, XLSX o SQL"}
+          </span>
+          <span className="font-mono text-xs text-terminal-muted">
+            {onFilesSelected ? `max 25 MB por archivo, hasta ${MAX_BATCH_FILES} archivos` : "max 25 MB"}
+          </span>
         </span>
       </button>
       <input
@@ -54,7 +76,12 @@ export function UploadDropzone({ onFileSelected, disabled = false }: UploadDropz
         aria-label="Seleccionar archivo"
         className="sr-only"
         disabled={disabled}
-        onChange={(event) => selectFile(event.target.files?.[0])}
+        multiple={Boolean(onFilesSelected)}
+        onChange={(event) => {
+          selectFiles(event.target.files);
+          // Choosing the same files again must still fire onChange.
+          event.target.value = "";
+        }}
         ref={inputRef}
         type="file"
       />

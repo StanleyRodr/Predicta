@@ -36,17 +36,40 @@ ROLE_LABELS: dict[str, str] = {
 
 # "dia", "linea", "subtotal" and "venta" are left out on purpose: they usually
 # name a day of the month, an invoice line, a pre-tax amount, or a sale id.
+# Each "# 036" group adds the English headers of the real datasets tested in
+# task 036: Online Retail II (UCI), Iowa Liquor Sales and Open e-commerce 1.0
+# (Amazon). Their tests in tests/test_column_mapping.py use the full headers.
 SYNONYMS: dict[str, frozenset[str]] = {
     "producto": frozenset(
         {"producto", "product", "item", "articulo", "descripcion", "nombre_producto", "sku_descripcion"}
+        # 036
+        | {"description", "im_desc", "title"}
     ),
-    "categoria": frozenset({"categoria", "category", "rubro", "familia", "tipo", "departamento"}),
-    "monto": frozenset({"monto", "total", "importe", "ventas", "monto_total", "total_venta", "amount"}),
+    "categoria": frozenset(
+        {"categoria", "category", "rubro", "familia", "tipo", "departamento"}
+        # 036
+        | {"category_name"}
+    ),
+    "monto": frozenset(
+        {"monto", "total", "importe", "ventas", "monto_total", "total_venta", "amount"}
+        # 036
+        | {"sales_dollars"}
+    ),
     "precio_unitario": frozenset(
         {"precio", "precio_unitario", "precio_unit", "pu", "valor_unitario", "unit_price", "price"}
+        # 036
+        | {"purchase_price_per_unit"}
     ),
-    "cantidad": frozenset({"cantidad", "unidades", "qty", "quantity", "cant", "uds", "piezas"}),
-    "fecha": frozenset({"fecha", "fecha_venta", "fecha_de_venta", "date", "fecha_emision"}),
+    "cantidad": frozenset(
+        {"cantidad", "unidades", "qty", "quantity", "cant", "uds", "piezas"}
+        # 036
+        | {"sales_bottles"}
+    ),
+    "fecha": frozenset(
+        {"fecha", "fecha_venta", "fecha_de_venta", "date", "fecha_emision"}
+        # 036
+        | {"invoicedate", "ordered_on", "order_date"}
+    ),
 }
 
 NON_ALPHANUMERIC = re.compile(r"[^0-9a-z]+")

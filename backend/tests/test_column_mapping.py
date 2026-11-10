@@ -140,3 +140,94 @@ def test_generated_dataset_is_proposed_as_exact():
         "cantidad": "exacto",
         "fecha": "exacto",
     }
+
+
+# Full headers of the real datasets of task 036, as the upload exposes them
+# (``etl_service._normalize_header``). The columns that identify a person are
+# dropped by ``scripts/prepare_real_dataset.py`` and are not listed.
+ONLINE_RETAIL_II_HEADERS = [
+    "invoice",
+    "stockcode",
+    "description",
+    "quantity",
+    "invoicedate",
+    "price",
+    "country",
+]
+IOWA_LIQUOR_HEADERS = [
+    "invoice_id",
+    "ordered_on",
+    "store_no",
+    "store_name",
+    "store_address",
+    "store_city",
+    "store_zip_code",
+    "county_fips_code",
+    "county_name",
+    "category_code",
+    "category_name",
+    "vendor_number",
+    "vendor_name",
+    "item_no",
+    "im_desc",
+    "pack",
+    "bottle_volume_ml",
+    "state_bottle_cost",
+    "state_bottle_retail",
+    "sales_bottles",
+    "sales_dollars",
+    "sales_liters",
+    "sales_gallons",
+]
+AMAZON_HEADERS = [
+    "order_date",
+    "purchase_price_per_unit",
+    "quantity",
+    "shipping_address_state",
+    "title",
+    "asin/isbn_(product_code)",
+    "category",
+]
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected"),
+    [
+        (
+            ONLINE_RETAIL_II_HEADERS,
+            {
+                "producto": "description",
+                "precio_unitario": "price",
+                "cantidad": "quantity",
+                "fecha": "invoicedate",
+            },
+        ),
+        (
+            IOWA_LIQUOR_HEADERS,
+            {
+                "producto": "im_desc",
+                "categoria": "category_name",
+                "monto": "sales_dollars",
+                "cantidad": "sales_bottles",
+                "fecha": "ordered_on",
+            },
+        ),
+        (
+            AMAZON_HEADERS,
+            {
+                "producto": "title",
+                "categoria": "category",
+                "precio_unitario": "purchase_price_per_unit",
+                "cantidad": "quantity",
+                "fecha": "order_date",
+            },
+        ),
+    ],
+    ids=["online-retail-ii", "iowa-liquor", "amazon-open-ecommerce"],
+)
+def test_real_dataset_headers_are_proposed(headers, expected):
+    proposal = propose_mapping(headers)
+
+    assert _assigned(proposal) == expected
+    assert all(not entry["candidatos"] for entry in proposal.values())
+    assert missing_roles(_assigned(proposal)) == []

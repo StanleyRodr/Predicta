@@ -9,16 +9,41 @@ import {
   mappingFromAnalysis,
   mappingProblem,
   SalesHistoryTable,
+  UploadBatchTable,
   UploadDropzone,
   UploadSummary,
+  type BatchRow,
 } from "../components/etl";
 import { Alert, Button, Card, Modal, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
+import { validateSalesFile } from "../lib/fileValidation";
 import { refreshSalesData } from "../lib/salesCache";
+import { fileStatus, groupByHeaders, headerKey, sortFiles } from "../lib/uploadBatch";
 import { useAuthStore } from "../stores/authStore";
-import type { ColumnMapping } from "../types/etl";
+import type { ColumnAnalysis, ColumnMapping } from "../types/etl";
 
 const PAGE_SIZE = 10;
+
+interface BatchItem extends BatchRow {
+  file: File;
+  analysis?: ColumnAnalysis;
+}
+
+type AnalyzedItem = BatchItem & { analysis: ColumnAnalysis };
+type BatchPhase = "analizando" | "listo" | "cargando" | "terminado";
+
+function isAnalyzed(item: BatchItem): item is AnalyzedItem {
+  return item.analysis !== undefined;
+}
+
+function replaceItem(items: BatchItem[], next: BatchItem): BatchItem[] {
+  return items.map((item) => (item.file === next.file ? next : item));
+}
+
+function groupTitle(items: BatchItem[]): string {
+  if (items.length === 1) return `1 archivo: ${items[0].name}`;
+  return `${items.length} archivos: ${items[0].name} … ${items[items.length - 1].name}`;
+}
 
 export function UploadPage() {
   const queryClient = useQueryClient();
@@ -30,6 +55,13 @@ export function UploadPage() {
   const [filter, setFilter] = useState<CategoryProduct>({ categoria: "", producto: "" });
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [clientError, setClientError] = useState<string | null>(null);
+  // Several files: each keeps its own analysis and result; files with the same
+  // headers share one mapping. A new selection makes every pending answer stale.
+  const [batch, setBatch] = useState<BatchItem[] | null>(null);
+  const [groupMappings, setGroupMappings] = useState<Record<string, ColumnMapping>>({});
+  const [batchPhase, setBatchPhase] = useState<BatchPhase>("listo");
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const selection = useRef(0);
 
   const categories = useQuery({
     queryKey: ["analytics", userId, "categories", null, null],
@@ -77,6 +109,9 @@ export function UploadPage() {
   });
 
   function selectFile(selectedFile: File) {
+    selection.current += 1;
+    setBatch(null);
+    setBatchPhase("listo");
     currentFile.current = selectedFile;
     setFile(selectedFile);
     setMapping(null);
@@ -85,6 +120,85 @@ export function UploadPage() {
     analysis.reset();
     analysis.mutate(selectedFile);
   }
+
+  async function selectFiles(selectedFiles: File[]) {
+    const id = ++selection.current;
+    currentFile.current = null;
+    setFile(null);
+    setMapping(null);
+    setClientError(null);
+    upload.reset();
+    analysis.reset();
+
+    let items: BatchItem[] = sortFiles(selectedFiles).map((selectedFile): BatchItem => {
+      const invalid = validateSalesFile(selectedFile);
+      return invalid
+        ? { file: selectedFile, name: selectedFile.name, status: "No válido", message: invalid }
+        : { file: selectedFile, name: selectedFile.name, status: "Pendiente" };
+    });
+    const pending = items.filter((item) => item.status === "Pendiente");
+    setBatch(items);
+    setGroupMappings({});
+    setBatchPhase("analizando");
+    setProgress({ done: 0, total: pending.length });
+
+    for (const [index, item] of pending.entries()) {
+      let next: BatchItem;
+      try {
+        next = { ...item, analysis: await analyzeColumns(item.file) };
+      } catch (analysisFailure) {
+        next = { ...item, status: "Error al analizar", message: getApiErrorMessage(analysisFailure, "No se pudo analizar el archivo.") };
+      }
+      if (selection.current !== id) return;
+      items = replaceItem(items, next);
+      setBatch(items);
+      setProgress({ done: index + 1, total: pending.length });
+    }
+
+    const mappings: Record<string, ColumnMapping> = {};
+    for (const group of groupByHeaders(items.filter(isAnalyzed))) {
+      mappings[group.key] = mappingFromAnalysis(group.items[0].analysis);
+    }
+    setGroupMappings(mappings);
+    setBatchPhase("listo");
+  }
+
+  async function uploadBatch() {
+    if (!batch) return;
+    const id = selection.current;
+    const targets = batch.filter(isAnalyzed);
+    let items = batch;
+    setBatchPhase("cargando");
+    setProgress({ done: 0, total: targets.length });
+
+    for (const [index, item] of targets.entries()) {
+      let next: BatchItem;
+      try {
+        const result = await uploadSales(item.file, groupMappings[headerKey(item.analysis)]);
+        next = { ...item, status: "Cargado", result, message: undefined };
+      } catch (uploadFailure) {
+        next = { ...item, status: fileStatus(uploadFailure), message: getApiErrorMessage(uploadFailure, "No se pudo procesar el archivo.") };
+      }
+      if (selection.current !== id) return;
+      items = replaceItem(items, next);
+      setBatch(items);
+      setProgress({ done: index + 1, total: targets.length });
+    }
+
+    await refreshSalesData(queryClient);
+    setBatchPhase("terminado");
+  }
+
+  const batchGroups = batch ? groupByHeaders(batch.filter(isAnalyzed)) : [];
+  const batchProblems = batchGroups.map((group) => {
+    const groupMapping = groupMappings[group.key];
+    return groupMapping ? mappingProblem(groupMapping) : null;
+  });
+  const canUploadBatch =
+    batchPhase === "listo" &&
+    batchGroups.length > 0 &&
+    batchGroups.every((group) => groupMappings[group.key]) &&
+    batchProblems.every((problem) => problem === null);
 
   const analyzed = analysis.data && analysis.data.file === file ? analysis.data.result : null;
   const problem = mapping ? mappingProblem(mapping) : null;
@@ -111,7 +225,11 @@ export function UploadPage() {
       </header>
 
       <Card className="grid gap-5">
-        <UploadDropzone disabled={upload.isPending} onFileSelected={selectFile} />
+        <UploadDropzone
+          disabled={upload.isPending || batchPhase === "cargando"}
+          onFileSelected={selectFile}
+          onFilesSelected={selectFiles}
+        />
         <p className="text-sm text-terminal-muted">Escribe los montos como 1,234.56. Una coma seguida de 3 dígitos se lee como miles: 1,234 significa mil doscientos treinta y cuatro.</p>
         {file && (
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-terminal-border bg-terminal-bg p-3">
@@ -130,6 +248,43 @@ export function UploadPage() {
             <ColumnMappingPanel analysis={analyzed} onChange={setMapping} value={mapping} />
             {problem && <p className="text-sm text-terminal-amber">{problem}</p>}
           </>
+        )}
+        {batch && (
+          <div className="grid gap-5">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-terminal-border bg-terminal-bg p-3">
+              <span className="font-mono text-sm text-terminal-text">
+                {batchPhase === "analizando" && `Analizando ${progress.done} de ${progress.total}`}
+                {batchPhase === "cargando" && `Cargando ${progress.done} de ${progress.total}`}
+                {batchPhase === "listo" && `${batch.length} archivos seleccionados`}
+                {batchPhase === "terminado" && `Carga terminada: ${progress.total} archivos procesados`}
+              </span>
+              {batchPhase === "analizando" || batchPhase === "cargando" ? (
+                <Spinner label={batchPhase === "analizando" ? "Analizando columnas" : "Procesando"} />
+              ) : (
+                <Button disabled={!canUploadBatch} onClick={uploadBatch}>
+                  Cargar ventas
+                </Button>
+              )}
+            </div>
+            {batchPhase !== "analizando" &&
+              batchGroups.map((group, index) => {
+                const groupMapping = groupMappings[group.key];
+                if (!groupMapping) return null;
+                const title = groupTitle(group.items);
+                return (
+                  <section aria-label={`Mapeo para ${title}`} className="grid gap-3" key={group.key}>
+                    <h2 className="font-mono text-sm text-terminal-amber">{title}</h2>
+                    <ColumnMappingPanel
+                      analysis={group.items[0].analysis}
+                      onChange={(next) => setGroupMappings((current) => ({ ...current, [group.key]: next }))}
+                      value={groupMapping}
+                    />
+                    {batchProblems[index] && <p className="text-sm text-terminal-amber">{batchProblems[index]}</p>}
+                  </section>
+                );
+              })}
+            <UploadBatchTable rows={batch} />
+          </div>
         )}
         {error && <Alert tone="error">{error}</Alert>}
         {upload.data && <UploadSummary result={upload.data} />}

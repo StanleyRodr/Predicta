@@ -184,10 +184,14 @@ def _parse_csv(contents: bytes) -> Table:
     """Parse comma, semicolon, or tab-delimited CSV content into headers and rows."""
     text = _decode_text(contents)
     try:
-        dialect = csv.Sniffer().sniff(text[:8192], delimiters=",;\t")
+        sniffed = csv.Sniffer().sniff(text[:8192], delimiters=",;\t")
     except csv.Error:
-        dialect = csv.excel
-    reader = csv.DictReader(io.StringIO(text), dialect=dialect)
+        sniffed = csv.excel
+    # The sniffer only sees the first 8 KB: when no escaped quote ("") appears
+    # there it guesses doublequote=False, and every later quoted field with an
+    # escaped quote is cut short or merged with the next row. Escaped quotes are
+    # always read as RFC 4180 defines them; only the delimiter comes from the sample.
+    reader = csv.DictReader(io.StringIO(text), delimiter=sniffed.delimiter, quotechar='"', doublequote=True)
     headers = [_normalize_header(header) for header in reader.fieldnames or []]
     return headers, [_normalize_row(row) for row in reader]
 

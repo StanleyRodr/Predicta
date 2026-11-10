@@ -45,6 +45,8 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 034 | Métrica MAE | `docs/planning/plans/034-metrica-mae.md` | P1 | S-M | 022, 032 | HECHO |
 | 034b | Predicción e historial por producto | `docs/planning/plans/034b-prediccion-producto.md` | P1 | M | 033 | HECHO |
 | 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034b | HECHO |
+| 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | HECHO |
+| 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
 
 ## Reglas de ejecución
 
@@ -472,7 +474,7 @@ Plan: `docs/planning/plans/034b-prediccion-producto.md` | Depende de: 033 | Esfu
 - La UI muestra la propuesta y el usuario la confirma antes de cargar. El servidor no guarda el archivo entre pasos.
 - Sin `mapeo`, la carga exige los nombres exactos en CSV y XLSX, igual que hoy. Hay tres excepciones intencionales: se rechazan las fechas numéricas, una categoría `NaN` pasa a "General" y un XLSX sin filas responde 200.
 - Sin columna de monto, `build_venta` calcula `monto = round(precio_unitario * cantidad, 2)`.
-- La descarga del XLSX estandarizado pasa a la tarea 036.
+- La descarga del XLSX estandarizado pasa a la tarea 037.
 
 ### Tarea 035 — Mapeo de columnas en la carga de ventas
 
@@ -483,6 +485,50 @@ Plan: `docs/planning/plans/035-mapeo-columnas.md` | Depende de: 034b | Esfuerzo:
 - [x] 035.3 Crear `POST /etl/analizar-columnas` y `mapeo` en la carga. Verificar: tests CSV/XLSX/SQL, sin escrituras, 400, 409 y 401, y `test_isolation.py`.
 - [x] 035.4 Agregar `ColumnMappingPanel` en la carga. Verificar: RTL de propuesta, badges, habilitación, `mapeo` enviado, error del análisis y cambio de archivo.
 - [x] 035.5 Actualizar `CLAUDE.md`. Verificar: la verificación global termina con código 0.
+
+## Fase 6: datos reales
+
+**Base:** commit `bf0c7c7`. **Origen:** pedido del usuario del 2026-11-10.
+
+**Decisiones tomadas:**
+
+- Ningún dataset se descarga sin la aprobación del usuario. Solo se aceptan datasets con 12 meses o más de ventas con fecha, y se prefieren los que traen varios archivos de la misma empresa.
+- Los datos reales quedan en `backend/temp_data/`, fuera de git. `backend/scripts/prepare_real_dataset.py` los prepara sin borrar filas inválidas.
+- La 036 agrega a `SYNONYMS` los encabezados en inglés que falten para los datasets aprobados.
+- Cada empresa se carga en su propia cuenta de prueba. Los resultados van en `docs/pruebas/036-datos-reales.md`.
+
+### Tarea 036 — Pruebas con datasets reales de e-commerce
+
+Plan: `docs/planning/plans/036-datasets-reales.md` | Depende de: 035 | Esfuerzo: M
+
+- [x] 036.1 Obtener la aprobación de cada dataset y confirmar su ficha. Verificar: la tabla del plan marca cada dataset como aprobado o rechazado.
+- [x] 036.2 Descargar los datasets aprobados en `backend/temp_data/`. Verificar: `git status` no muestra datos.
+- [x] 036.3 Crear `prepare_real_dataset.py`. Verificar: límites de filas y bytes, rangos sin solapar y suma de filas igual al origen.
+- [x] 036.4 Agregar los sinónimos que falten. Verificar: un test de encabezados por dataset, sin empates, y los tests actuales sin cambios.
+- [x] 036.5 Cargar los archivos de cada empresa en orden. Verificar: totales, serie mensual sin huecos, `meses_observados` de todos los archivos y 409 al repetir.
+- [x] 036.6 Documentar los resultados y cerrar. Verificar: la verificación global termina con código 0.
+
+## Fase 7: carga de varios archivos
+
+**Base:** commit `bf0c7c7`. **Origen:** hallazgo de la tarea 036 y pedido del usuario del 2026-11-10.
+
+**Decisiones tomadas:**
+
+- El 037 sigue reservado para la descarga del XLSX estandarizado; la carga de varios archivos es la 038.
+- Solo frontend: la página llama a `analizar-columnas` y `upload-ventas` una vez por archivo, en serie y en orden natural de nombre. La API no cambia.
+- Los archivos con los mismos encabezados comparten un solo mapeo; uno con encabezados distintos muestra el suyo.
+- Si un archivo falla (409, 400, 413 o 500), la carga sigue con el resto y una tabla muestra el estado de cada uno.
+- Un solo archivo se carga igual que hoy. Máximo de 50 archivos por selección.
+
+### Tarea 038 — Carga de varios archivos a la vez
+
+Plan: `docs/planning/plans/038-carga-varios-archivos.md` | Depende de: 035 | Esfuerzo: M
+
+- [x] 038.1 Crear `uploadBatch.ts` con orden, grupos, totales y estado de error. Verificar: `npx vitest run src/lib/uploadBatch.test.ts`.
+- [x] 038.2 Aceptar varios archivos en `UploadDropzone`. Verificar: RTL de `drop` con tres archivos, `multiple`, límite de 50 y archivo no válido.
+- [x] 038.3 Crear `UploadBatchTable`. Verificar: RTL de estados, conteos, totales y detalle.
+- [x] 038.4 Rehacer el flujo de `UploadPage`. Verificar: tests actuales sin cambios; RTL de un grupo, dos grupos, 409 en medio y selección reemplazada.
+- [x] 038.5 Actualizar `CLAUDE.md` y el hallazgo de la 036. Verificar: la verificación global termina con código 0.
 
 ## Verificación global
 
