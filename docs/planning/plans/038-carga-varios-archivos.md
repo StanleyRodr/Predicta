@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO. La verificación automática pasó el 2026-11-10. La prueba en la app real con Iowa y Amazon se registra con el paso 036.5, en `docs/pruebas/036-datos-reales.md`.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (rehace el flujo de `UploadPage`; la carga de un solo archivo no puede cambiar)
@@ -118,6 +118,14 @@ Tomadas por el usuario el 2026-11-10.
 - `docs/planning/plans/036-datasets-reales.md`: el hallazgo del dropzone apunta a esta tarea.
 
 No se toca el backend.
+
+### Cambios respecto del plan al ejecutarlo
+
+- `UploadDropzone` conserva `onFileSelected(file)` para un solo archivo y suma `onFilesSelected(files)` para dos o más. Si se cambiaba la firma, se rompían los tests actuales de `etl.test.tsx`, que es una condición de STOP. Con un archivo, la validación y el mensaje de error siguen igual que antes.
+- Los tests nuevos van en archivos propios para no tocar los existentes:
+  - `frontend/src/components/etl/batch.test.tsx`, para el dropzone y la tabla;
+  - `frontend/src/pages/UploadPage.batch.test.tsx`, que además simula `refreshSalesData` para contar sus llamadas.
+- El `input` limpia su valor después de cada selección, así volver a elegir los mismos archivos repite el análisis.
 
 ## Pasos
 

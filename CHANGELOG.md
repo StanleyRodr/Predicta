@@ -8,6 +8,16 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ## [Unreleased]
 
+### Phase 7 - several files per upload (task 038)
+
+#### Added
+- The upload page accepts up to 50 files per selection, dropped or picked. It analyzes and uploads them one at a time in natural name order, so files named by year or quarter load in time order (038).
+- Files with identical headers share one reviewed column mapping; a file with other headers gets its own (038).
+- A table lists every selected file with its status (loaded, already loaded, error, invalid, analysis error), its row counts and its summary on demand, plus the totals (038).
+
+#### Fixed
+- Dropping several files no longer uploads only the first one and silently ignores the rest (038).
+
 ### Phase 5 - column mapping (task 035)
 
 #### Added

@@ -46,7 +46,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 034b | Predicción e historial por producto | `docs/planning/plans/034b-prediccion-producto.md` | P1 | M | 033 | HECHO |
 | 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034b | HECHO |
 | 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | EN PROGRESO |
-| 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | TODO |
+| 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
 
 ## Reglas de ejecución
 
@@ -524,11 +524,11 @@ Plan: `docs/planning/plans/036-datasets-reales.md` | Depende de: 035 | Esfuerzo:
 
 Plan: `docs/planning/plans/038-carga-varios-archivos.md` | Depende de: 035 | Esfuerzo: M
 
-- [ ] 038.1 Crear `uploadBatch.ts` con orden, grupos, totales y estado de error. Verificar: `npx vitest run src/lib/uploadBatch.test.ts`.
-- [ ] 038.2 Aceptar varios archivos en `UploadDropzone`. Verificar: RTL de `drop` con tres archivos, `multiple`, límite de 50 y archivo no válido.
-- [ ] 038.3 Crear `UploadBatchTable`. Verificar: RTL de estados, conteos, totales y detalle.
-- [ ] 038.4 Rehacer el flujo de `UploadPage`. Verificar: tests actuales sin cambios; RTL de un grupo, dos grupos, 409 en medio y selección reemplazada.
-- [ ] 038.5 Actualizar `CLAUDE.md` y el hallazgo de la 036. Verificar: la verificación global termina con código 0.
+- [x] 038.1 Crear `uploadBatch.ts` con orden, grupos, totales y estado de error. Verificar: `npx vitest run src/lib/uploadBatch.test.ts`.
+- [x] 038.2 Aceptar varios archivos en `UploadDropzone`. Verificar: RTL de `drop` con tres archivos, `multiple`, límite de 50 y archivo no válido.
+- [x] 038.3 Crear `UploadBatchTable`. Verificar: RTL de estados, conteos, totales y detalle.
+- [x] 038.4 Rehacer el flujo de `UploadPage`. Verificar: tests actuales sin cambios; RTL de un grupo, dos grupos, 409 en medio y selección reemplazada.
+- [x] 038.5 Actualizar `CLAUDE.md` y el hallazgo de la 036. Verificar: la verificación global termina con código 0.
 
 ## Verificación global
 
