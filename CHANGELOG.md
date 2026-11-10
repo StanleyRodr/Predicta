@@ -8,6 +8,19 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ## [Unreleased]
 
+### Phase 5 - column mapping (task 035)
+
+#### Added
+- `POST /etl/analizar-columnas` returns a file's headers, a 5-row sample, and a proposed column per role (exact name or synonym only); nothing is stored (035).
+- The upload page shows the proposal for review and sends the confirmed `mapeo` to `POST /etl/upload-ventas` (035).
+- Without a `monto` column, the amount is derived as `precio_unitario * cantidad`, rounded to 2 decimals (035).
+
+#### Changed
+- Plain numbers are rejected as dates, an empty XLSX category becomes "General", and an XLSX without rows answers 200 (035).
+
+#### Fixed
+- Unhandled errors answer a generic 500 with CORS headers, so the browser shows the error instead of reporting the API as unreachable.
+
 ### Phase 4 - product forecasts (task 034b)
 
 #### Added
