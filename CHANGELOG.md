@@ -8,6 +8,11 @@ Task numbers refer to [docs/planning/TASKS.md](./docs/planning/TASKS.md).
 
 ## [Unreleased]
 
+### Phase 6 - real datasets (task 036)
+
+#### Fixed
+- CSV uploads read escaped quotes (`""`) as RFC 4180 defines them. The delimiter sniffer looked only at the first 8 KB, and when no escaped quote appeared there it misread later quoted fields: product names kept stray quotes, and rows merged or shifted columns (036).
+
 ### Phase 7 - several files per upload (task 038)
 
 #### Added

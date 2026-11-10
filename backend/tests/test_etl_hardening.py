@@ -229,3 +229,22 @@ def test_file_with_no_valid_rows_can_be_fixed_and_retried(client, auth_headers):
 
     assert _upload(client, auth_headers, contents).status_code == 200
     assert _upload(client, auth_headers, contents).status_code == 200
+
+
+@pytest.mark.parametrize("delimiter", [",", ";"])
+def test_escaped_quotes_after_the_sniffed_sample_are_read_as_rfc_4180(delimiter):
+    # The first 8 KB have no escaped quote, so the sniffer alone would guess
+    # doublequote=False and misread the quoted product further down.
+    header = delimiter.join(["producto", "monto", "fecha"])
+    plain = [delimiter.join([f"Producto {i}", "10", "2026-01-05"]) for i in range(400)]
+    quoted = delimiter.join(['"RETRO ""TEA FOR ONE"" "', "12.5", "2026-01-06"])
+    last = delimiter.join(["Ultimo", "3", "2026-01-07"])
+    contents = "\n".join([header, *plain, quoted, last]).encode("utf-8")
+    assert '""' not in contents[:8192].decode("utf-8")
+
+    headers, rows = etl_service.read_table("csv", contents)
+
+    assert headers == ["producto", "monto", "fecha"]
+    assert len(rows) == 402
+    assert rows[400] == {"producto": 'RETRO "TEA FOR ONE" ', "monto": "12.5", "fecha": "2026-01-06"}
+    assert rows[401]["producto"] == "Ultimo"
