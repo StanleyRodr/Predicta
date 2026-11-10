@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (cambia el código que lee los tres formatos; ver `## Riesgos y mitigaciones`)

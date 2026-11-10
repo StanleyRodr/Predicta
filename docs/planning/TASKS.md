@@ -289,73 +289,73 @@ Plan: `docs/planning/plans/019-frontend-sesion-descargas.md` | Depende de: ningu
 
 Plan: `docs/planning/plans/020-reportes-servicios.md` | Depende de: 017, 018 | Esfuerzo: L
 
-- [ ] 020.1 Agregar tests de caracterización. Verificar: pasan sobre el código actual.
-- [ ] 020.2 Eliminar `plt.` y temporales. Verificar: búsquedas vacías y dos reportes concurrentes sin error.
-- [ ] 020.3 Extraer `report_service`, `analytics_service` y `etl_service`. Verificar: los tests pasan sin cambios.
-- [ ] 020.4 Agregar en SQL y acotar el PDF a resúmenes y top 20. Verificar: valores iguales y páginas acotadas.
-- [ ] 020.5 Mostrar el año real en el reporte mensual. Verificar: test de etiquetas.
+- [x] 020.1 Agregar tests de caracterización. Verificar: pasan sobre el código actual.
+- [x] 020.2 Eliminar `plt.` y temporales. Verificar: búsquedas vacías y dos reportes concurrentes sin error.
+- [x] 020.3 Extraer `report_service`, `analytics_service` y `etl_service`. Verificar: los tests pasan sin cambios.
+- [x] 020.4 Agregar en SQL y acotar el PDF a resúmenes y top 20. Verificar: valores iguales y páginas acotadas.
+- [x] 020.5 Mostrar el año real en el reporte mensual. Verificar: test de etiquetas.
 
 ### Tarea 021 — Corregir modelo y proyectar 12 meses
 
 Plan: `docs/planning/plans/021-modelo-horizonte.md` | Depende de: 020 | Esfuerzo: L
 
-- [ ] 021.1 Corregir tendencia y dummies. Verificar: tests de distancia entre meses y de columnas.
-- [ ] 021.2 Excluir el último mes incompleto y aplicar el modelo escalonado. Verificar: tests con mes cortado y con 5, 6, 23 y 24 meses.
-- [ ] 021.3 Calcular intervalos con `statsmodels`. Verificar: `inferior ≤ prediccion ≤ superior`, sin negativos.
-- [ ] 021.4 Crear `monthly_forecast_series` y migrar reportes. Verificar: puntos según el horizonte aplicado y tests de exportación.
-- [ ] 021.5 Proyectar por categoría. Verificar: las categorías suman el general en el caso del plan.
-- [ ] 021.6 Actualizar `docs/ml-models.md` y `CLAUDE.md`. Verificar: describen el modelo real.
+- [x] 021.1 Corregir tendencia y dummies. Verificar: tests de distancia entre meses y de columnas.
+- [x] 021.2 Excluir el último mes incompleto y aplicar el modelo escalonado. Verificar: tests con mes cortado y con 5, 6, 23 y 24 meses.
+- [x] 021.3 Calcular intervalos con `statsmodels`. Verificar: `inferior ≤ prediccion ≤ superior`, sin negativos.
+- [x] 021.4 Crear `monthly_forecast_series` y migrar reportes. Verificar: puntos según el horizonte aplicado y tests de exportación.
+- [x] 021.5 Proyectar por categoría. Verificar: las categorías suman el general en el caso del plan.
+- [x] 021.6 Actualizar `docs/ml-models.md` y `CLAUDE.md`. Verificar: describen el modelo real.
 
 ### Tarea 022 — Evaluación y modelos de referencia
 
 Plan: `docs/planning/plans/022-evaluacion-baselines.md` | Depende de: 021 | Esfuerzo: L
 
-- [ ] 022.1 Implementar backtesting con origen móvil. Verificar: ningún origen ve datos futuros.
-- [ ] 022.2 Implementar modelos de referencia, WAPE y MASE. Verificar: tests con valores calculados a mano.
-- [ ] 022.3 Medir la cobertura del intervalo y diagnosticar residuos. Verificar: el reporte incluye ambos.
-- [ ] 022.4 Comparar contra SARIMA o ETS en un script reproducible. Verificar: dos ejecuciones dan lo mismo.
-- [ ] 022.5 Evaluar los niveles del modelo recortando a 6, 12 y 18 meses. Verificar: la tabla muestra el error de cada nivel.
-- [ ] 022.6 Documentar los resultados y sus límites. Verificar: incluye los casos donde la regresión pierde.
+- [x] 022.1 Implementar backtesting con origen móvil. Verificar: ningún origen ve datos futuros.
+- [x] 022.2 Implementar modelos de referencia, WAPE y MASE. Verificar: tests con valores calculados a mano.
+- [x] 022.3 Medir la cobertura del intervalo y diagnosticar residuos. Verificar: el reporte incluye ambos.
+- [x] 022.4 Comparar contra SARIMA o ETS en un script reproducible. Verificar: dos ejecuciones dan lo mismo.
+- [x] 022.5 Evaluar los niveles del modelo recortando a 6, 12 y 18 meses. Verificar: la tabla muestra el error de cada nivel.
+- [x] 022.6 Documentar los resultados y sus límites. Verificar: incluye los casos donde la regresión pierde.
 
 ### Tarea 023 — Contrato de predicción y esquemas
 
 Plan: `docs/planning/plans/023-contrato-prediccion.md` | Depende de: 016, 022 | Esfuerzo: L
 
-- [ ] 023.1 Quitar la escritura de `/predict` y devolver 422. Verificar: dos llamadas no crean filas.
-- [ ] 023.2 Crear la migración `0005`. Verificar: `upgrade`, `check` y `downgrade -1` pasan.
-- [ ] 023.3 Crear `GET /analytics/forecast` con modelo, horizonte, advertencia y extrapolación. Verificar: tests de general, categoría, 422 con 5 meses y advertencia con 12.
-- [ ] 023.4 Crear `POST` y `GET /analytics/predicciones`. Verificar: guardado, paginación y aislamiento.
-- [ ] 023.5 Declarar `response_model` en analytics y ETL. Verificar: `/docs` documenta cada respuesta.
+- [x] 023.1 Quitar la escritura de `/predict` y devolver 422. Verificar: dos llamadas no crean filas.
+- [x] 023.2 Crear la migración `0005`. Verificar: `upgrade`, `check` y `downgrade -1` pasan.
+- [x] 023.3 Crear `GET /analytics/forecast` con modelo, horizonte, advertencia y extrapolación. Verificar: tests de general, categoría, 422 con 5 meses y advertencia con 12.
+- [x] 023.4 Crear `POST` y `GET /analytics/predicciones`. Verificar: guardado, paginación y aislamiento.
+- [x] 023.5 Declarar `response_model` en analytics y ETL. Verificar: `/docs` documenta cada respuesta.
 
 ### Tarea 024 — Series de analítica por dimensión
 
 Plan: `docs/planning/plans/024-analitica-dimensiones.md` | Depende de: 020 | Esfuerzo: M
 
-- [ ] 024.1 Crear `/analytics/stats/series` por mes y día. Verificar: pasa en SQLite y PostgreSQL.
-- [ ] 024.2 Agregar filtro de categoría y validación. Verificar: tests de categoría y de 422.
-- [ ] 024.3 Omitir periodos sin ventas. Verificar: febrero no aparece entre enero y marzo.
-- [ ] 024.4 Agregar filtros a `/ventas`. Verificar: test de paginación con filtro.
-- [ ] 024.5 Probar el aislamiento. Verificar: un usuario no recibe datos de otro.
+- [x] 024.1 Crear `/analytics/stats/series` por mes y día. Verificar: pasa en SQLite y PostgreSQL.
+- [x] 024.2 Agregar filtro de categoría y validación. Verificar: tests de categoría y de 422.
+- [x] 024.3 Omitir periodos sin ventas. Verificar: febrero no aparece entre enero y marzo.
+- [x] 024.4 Agregar filtros a `/ventas`. Verificar: test de paginación con filtro.
+- [x] 024.5 Probar el aislamiento. Verificar: un usuario no recibe datos de otro.
 
 ### Tarea 025 — Dashboard general, categoría y mes
 
 Plan: `docs/planning/plans/025-dashboard-explorador.md` | Depende de: 018, 019, 024 | Esfuerzo: L
 
-- [ ] 025.1 Crear cliente, tipos y selector de vistas y medida. Verificar: tests de cliente y RTL de Monto / Cantidad.
-- [ ] 025.2 Crear la gráfica de años superpuestos. Verificar: meses faltantes en `null`, nunca en cero.
-- [ ] 025.3 Crear vistas por categoría y por mes. Verificar: parámetros correctos por vista.
-- [ ] 025.4 Conservar el historial completo mensual. Verificar: RTL de la vista secundaria.
-- [ ] 025.5 Integrar filtros, caché y móvil. Verificar: claves completas y sin desbordamiento a 375 px.
+- [x] 025.1 Crear cliente, tipos y selector de vistas y medida. Verificar: tests de cliente y RTL de Monto / Cantidad.
+- [x] 025.2 Crear la gráfica de años superpuestos. Verificar: meses faltantes en `null`, nunca en cero.
+- [x] 025.3 Crear vistas por categoría y por mes. Verificar: parámetros correctos por vista.
+- [x] 025.4 Conservar el historial completo mensual. Verificar: RTL de la vista secundaria.
+- [x] 025.5 Integrar filtros, caché y móvil. Verificar: claves completas y sin desbordamiento a 375 px.
 
 ### Tarea 026 — Proyecciones en gráficos
 
 Plan: `docs/planning/plans/026-proyecciones-graficas.md` | Depende de: 018, 019, 023 | Esfuerzo: L
 
-- [ ] 026.1 Crear cliente, tipos y selector. Verificar: no hay petición antes del clic.
-- [ ] 026.2 Crear gráfico con historial, proyección y banda. Verificar: sin puntos inventados.
-- [ ] 026.3 Marcar la extrapolación y mostrar las advertencias del backend. Verificar: RTL de nota, estilo, horizonte menor a 12 y aviso de categoría.
-- [ ] 026.4 Crear la tabla mensual, la selección de mes y el selector Monto / Cantidad. Verificar: RTL con valores, cero y `null`.
-- [ ] 026.5 Agregar guardado y lista de proyecciones. Verificar: RTL de guardado, error y lista vacía.
+- [x] 026.1 Crear cliente, tipos y selector. Verificar: no hay petición antes del clic.
+- [x] 026.2 Crear gráfico con historial, proyección y banda. Verificar: sin puntos inventados.
+- [x] 026.3 Marcar la extrapolación y mostrar las advertencias del backend. Verificar: RTL de nota, estilo, horizonte menor a 12 y aviso de categoría.
+- [x] 026.4 Crear la tabla mensual, la selección de mes y el selector Monto / Cantidad. Verificar: RTL con valores, cero y `null`.
+- [x] 026.5 Agregar guardado y lista de proyecciones. Verificar: RTL de guardado, error y lista vacía.
 
 ### Tarea 027 — Métricas comprensibles
 
