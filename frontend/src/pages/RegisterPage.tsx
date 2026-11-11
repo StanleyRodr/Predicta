@@ -7,6 +7,7 @@ import { AuthLayout } from "../components/auth/AuthLayout";
 import { Alert, Button, Card, Input, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { registerSchema, type RegisterForm } from "../lib/authSchemas";
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_BYTES, MAX_USERNAME_LENGTH } from "../lib/fieldLimits";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -40,12 +41,14 @@ export function RegisterPage() {
             autoComplete="username"
             error={errors.nombre_usuario?.message}
             label="Nombre de usuario"
+            maxLength={MAX_USERNAME_LENGTH}
             {...register("nombre_usuario")}
           />
           <Input
             autoComplete="email"
             error={errors.correo_electronico?.message}
             label="Correo electronico"
+            maxLength={MAX_EMAIL_LENGTH}
             type="email"
             {...register("correo_electronico")}
           />
@@ -53,6 +56,7 @@ export function RegisterPage() {
             autoComplete="new-password"
             error={errors.password?.message}
             label="Contraseña"
+            maxLength={MAX_PASSWORD_BYTES}
             type="password"
             {...register("password")}
           />

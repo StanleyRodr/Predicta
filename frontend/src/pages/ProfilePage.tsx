@@ -5,6 +5,7 @@ import { updateCurrentUser } from "../api/auth";
 import { Alert, Button, Card, Input, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { profileSchema, type ProfileForm } from "../lib/authSchemas";
+import { MAX_EMAIL_LENGTH, MAX_USERNAME_LENGTH } from "../lib/fieldLimits";
 import { useAuthStore } from "../stores/authStore";
 
 export function ProfilePage() {
@@ -46,10 +47,16 @@ export function ProfilePage() {
         <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
           {serverError && <Alert tone="error">{serverError}</Alert>}
           {saved && <Alert tone="success">Perfil actualizado.</Alert>}
-          <Input error={errors.nombre_usuario?.message} label="Nombre de usuario" {...register("nombre_usuario")} />
+          <Input
+            error={errors.nombre_usuario?.message}
+            label="Nombre de usuario"
+            maxLength={MAX_USERNAME_LENGTH}
+            {...register("nombre_usuario")}
+          />
           <Input
             error={errors.correo_electronico?.message}
             label="Correo electronico"
+            maxLength={MAX_EMAIL_LENGTH}
             type="email"
             {...register("correo_electronico")}
           />

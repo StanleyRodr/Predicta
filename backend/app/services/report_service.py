@@ -179,6 +179,21 @@ def _write_warning(pdf: FPDF, forecast: MonthlyForecast) -> None:
 # =====================================================================
 
 
+# A spreadsheet runs a cell that starts with one of these as a formula.
+FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
+
+
+def neutralize_formula(value: object) -> object:
+    """Prefix an apostrophe to text a spreadsheet would run as a formula.
+
+    Numbers and other non-text values pass through unchanged. Every export to
+    Excel or CSV goes through this function.
+    """
+    if isinstance(value, str) and value.startswith(FORMULA_PREFIXES):
+        return "'" + value
+    return value
+
+
 def sales_excel(db: Session, user_id: int, username: str) -> Report:
     """Return the user's full sales history as an .xlsx file."""
     ventas = analytics_service.sales_for_export(db, user_id)
@@ -188,9 +203,9 @@ def sales_excel(db: Session, user_id: int, username: str) -> Report:
     df = pd.DataFrame(
         {
             "ID Venta": v.id_venta,
-            "Producto": v.producto,
+            "Producto": neutralize_formula(v.producto),
             "Monto": float(v.monto),
-            "Categoria": v.categoria,
+            "Categoria": neutralize_formula(v.categoria),
             "Fecha": v.fecha_venta.strftime("%Y-%m-%d %H:%M:%S"),
         }
         for v in ventas

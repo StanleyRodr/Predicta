@@ -11,7 +11,7 @@ from collections.abc import Callable
 from datetime import date
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -26,11 +26,15 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 DATE_FROM = Query(None, description="Fecha inicial inclusiva en formato YYYY-MM-DD.")
 DATE_TO = Query(None, description="Fecha final inclusiva en formato YYYY-MM-DD.")
 CATEGORY = Query(
-    None, description="Categoría; no distingue mayúsculas, espacios ni tildes."
+    None,
+    max_length=schemas.MAX_CATEGORY_LENGTH,
+    pattern=schemas.NO_CONTROL_CHARACTERS,
+    description="Categoría; no distingue mayúsculas, espacios ni tildes.",
 )
 PRODUCT = Query(
     None,
-    max_length=150,
+    max_length=schemas.MAX_PRODUCT_LENGTH,
+    pattern=schemas.NO_CONTROL_CHARACTERS,
     description="Producto de la categoría; requiere categoria. No distingue mayúsculas ni espacios.",
 )
 
@@ -174,7 +178,12 @@ def sales_series(
 
 @router.get("/productos", response_model=schemas.ProductListResponse)
 def category_products(
-    categoria: str = Query(..., description="Categoría; no distingue mayúsculas, espacios ni tildes."),
+    categoria: str = Query(
+        ...,
+        max_length=schemas.MAX_CATEGORY_LENGTH,
+        pattern=schemas.NO_CONTROL_CHARACTERS,
+        description="Categoría; no distingue mayúsculas, espacios ni tildes.",
+    ),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
@@ -330,7 +339,7 @@ def annual_forecast_pdf(
 
 @router.get("/reporte-mensual/{mes}")
 def monthly_report_pdf(
-    mes: str,
+    mes: str = Path(..., max_length=20, pattern=schemas.NO_CONTROL_CHARACTERS),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> Response:
@@ -342,7 +351,9 @@ def monthly_report_pdf(
 
 @router.get("/prediccion-categorias/{categoria}")
 def category_forecast_pdf(
-    categoria: str,
+    categoria: str = Path(
+        ..., max_length=schemas.MAX_CATEGORY_LENGTH, pattern=schemas.NO_CONTROL_CHARACTERS
+    ),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> Response:

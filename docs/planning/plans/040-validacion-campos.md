@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-11.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (endurece validaciones que hoy aceptan datos; los tests actuales pueden depender de lo laxo)
@@ -94,6 +94,16 @@ No hace falta migración de datos: la tarea 042 borra todos los usuarios actuale
 - Cada campo de la tabla tiene la misma regla en Zod y Pydantic, con tests en ambos lados.
 - Ninguna respuesta 422 contiene el valor enviado.
 - Ningún texto exportado a Excel empieza con un carácter de fórmula sin apóstrofo.
+
+## Cambios respecto del plan al ejecutarlo
+
+- `UserResponse` ya no hereda de `UserBase`. Declara `nombre_usuario` y `correo_electronico` como texto simple, así una cuenta guardada antes de estas reglas (con mayúsculas o caracteres que hoy se rechazan) se sigue pudiendo leer.
+- `PRODUCT` ya tenía `max_length=150`; se le agregó la regla de caracteres de control. También se acotaron `GET /analytics/productos?categoria=`, el path `/analytics/prediccion-categorias/{categoria}` (100) y `/analytics/reporte-mensual/{mes}` (20).
+- La contraseña también rechaza caracteres de control (`validate_new_password`, reutilizable por la 043).
+- La ETL no acepta montos negativos (F-03), así que el caso "monto `-5.0` sigue siendo número" se prueba con `neutralize_formula(-5.0)`. En el Excel se comprueba que los montos `10` y `1234.5` siguen numéricos.
+- La ETL comprueba los caracteres de control después de normalizar. `normalize_product` y `normalize_category` ya convierten tabulador, salto de línea y los separadores `\x1c`-`\x1f` en espacios. Lo que queda, por ejemplo `\x00`, rechaza la fila.
+- Las pruebas del frontend se agregaron a `authSchemas.test.ts`, sin cambiar los casos existentes.
+- `pytest --cov` muestra más `ResourceWarning` de conexiones SQLite (184). Ya pasaba antes: el commit `cbbf520` daba 110 con cobertura. Sin cobertura la suite tiene 1 warning, como antes.
 
 ## Fuera de alcance
 

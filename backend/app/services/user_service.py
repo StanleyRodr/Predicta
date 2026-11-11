@@ -4,6 +4,7 @@ Keeps route handlers thin by isolating persistence and security
 operations from HTTP concerns.
 """
 
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -25,8 +26,17 @@ def get_role_by_name(db: Session, name: str) -> models.Rol | None:
 
 
 def get_user_by_email(db: Session, email: str) -> models.Usuario | None:
-    """Return the user with the given email, or None if not found."""
-    return db.query(models.Usuario).filter(models.Usuario.correo_electronico == email).first()
+    """Return the user with the given email, or None if not found.
+
+    The comparison ignores case and surrounding spaces, so ``Ana@x.com`` finds
+    the account stored as ``ana@x.com``.
+    """
+    normalized = email.strip().lower()
+    return (
+        db.query(models.Usuario)
+        .filter(func.lower(models.Usuario.correo_electronico) == normalized)
+        .first()
+    )
 
 
 def get_user_by_username(db: Session, username: str) -> models.Usuario | None:

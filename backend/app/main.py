@@ -14,6 +14,8 @@ import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
 from slowapi import _rate_limit_exceeded_handler
@@ -91,6 +93,19 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type"],
 )
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_without_input(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Answer 422 without echoing what the client sent.
+
+    Pydantic adds ``input`` (the rejected value, a password included), ``ctx``
+    and ``url`` to each error. Only ``loc``, ``msg`` and ``type`` are returned.
+    """
+    errors = [
+        {key: error[key] for key in ("loc", "msg", "type") if key in error} for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(errors)})
+
 
 app.state.limiter = limiter
 # slowapi's handler narrows the exception type, which Starlette's signature rejects.

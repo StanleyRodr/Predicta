@@ -7,6 +7,7 @@ import { Alert, Button, Card, Input, Spinner } from "../components/ui";
 import { AuthLayout } from "../components/auth/AuthLayout";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { loginSchema, type LoginForm } from "../lib/authSchemas";
+import { MAX_EMAIL_LENGTH, MAX_PASSWORD_BYTES } from "../lib/fieldLimits";
 import { useAuthStore } from "../stores/authStore";
 
 export function LoginPage() {
@@ -48,6 +49,7 @@ export function LoginPage() {
             autoComplete="email"
             error={errors.correo_electronico?.message}
             label="Correo electronico"
+            maxLength={MAX_EMAIL_LENGTH}
             type="email"
             {...register("correo_electronico")}
           />
@@ -55,6 +57,7 @@ export function LoginPage() {
             autoComplete="current-password"
             error={errors.password?.message}
             label="Contraseña"
+            maxLength={MAX_PASSWORD_BYTES}
             type="password"
             {...register("password")}
           />

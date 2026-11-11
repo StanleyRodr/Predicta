@@ -48,7 +48,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | HECHO |
 | 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
 | 039 | Auditoría de seguridad | `docs/planning/plans/039-auditoria-seguridad.md` | P1 | M | — | HECHO |
-| 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | TODO |
+| 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | HECHO |
 | 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | TODO |
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
@@ -574,12 +574,12 @@ Plan: `docs/planning/plans/039-auditoria-seguridad.md` | Depende de: ninguna | E
 
 Plan: `docs/planning/plans/040-validacion-campos.md` | Depende de: 039 | Esfuerzo: M
 
-- [ ] 040.1 Aplicar las reglas de campos en Pydantic. Verificar: `pytest tests/test_field_validation.py` con un caso válido y uno inválido por regla.
-- [ ] 040.2 Guardar y buscar el correo en minúsculas. Verificar: registro con mayúsculas, duplicado y login.
-- [ ] 040.3 Acotar `categoria` y `producto` y rechazar caracteres de control en la API y la ETL. Verificar: tests de 422 y de fila rechazada.
-- [ ] 040.4 Neutralizar fórmulas en el Excel. Verificar: `'=1+1` como texto y montos numéricos sin cambio.
-- [ ] 040.5 Quitar el eco del valor en los 422. Verificar: el cuerpo no contiene la contraseña enviada.
-- [ ] 040.6 Repetir las reglas en Zod con `fieldLimits.ts`. Verificar: tests de `authSchemas` y `test_field_limits_contract.py`.
+- [x] 040.1 Aplicar las reglas de campos en Pydantic. Verificar: `pytest tests/test_field_validation.py` con un caso válido y uno inválido por regla.
+- [x] 040.2 Guardar y buscar el correo en minúsculas. Verificar: registro con mayúsculas, duplicado y login.
+- [x] 040.3 Acotar `categoria` y `producto` y rechazar caracteres de control en la API y la ETL. Verificar: tests de 422 y de fila rechazada.
+- [x] 040.4 Neutralizar fórmulas en el Excel. Verificar: `'=1+1` como texto y montos numéricos sin cambio.
+- [x] 040.5 Quitar el eco del valor en los 422. Verificar: el cuerpo no contiene la contraseña enviada.
+- [x] 040.6 Repetir las reglas en Zod con `fieldLimits.ts`. Verificar: tests de `authSchemas` y `test_field_limits_contract.py`.
 
 ### Tarea 041 — Rate limit, proxy, cabeceras y configuración de producción
 
