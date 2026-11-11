@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** HECHO el 2026-11-11, salvo el paso 4 (CI en GitHub), que espera el push de la branch.
+- **Estado:** HECHO el 2026-11-11. CI en verde en la ejecución `43113057602` (jobs `backend`, `frontend` y `secrets`).
 - **Prioridad:** P1
 - **Esfuerzo:** S
 - **Riesgo:** LOW (solo agrega jobs y hooks; puede bloquear merges si una dependencia tiene una CVE nueva)
