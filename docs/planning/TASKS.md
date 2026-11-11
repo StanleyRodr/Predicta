@@ -47,6 +47,13 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034b | HECHO |
 | 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | HECHO |
 | 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
+| 039 | Auditoría de seguridad | `docs/planning/plans/039-auditoria-seguridad.md` | P1 | M | — | TODO |
+| 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | TODO |
+| 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | TODO |
+| 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
+| 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
+| 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | TODO |
+| 045 | CSP del frontend y guía de despliegue | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | TODO |
 
 ## Reglas de ejecución
 
@@ -529,6 +536,102 @@ Plan: `docs/planning/plans/038-carga-varios-archivos.md` | Depende de: 035 | Esf
 - [x] 038.3 Crear `UploadBatchTable`. Verificar: RTL de estados, conteos, totales y detalle.
 - [x] 038.4 Rehacer el flujo de `UploadPage`. Verificar: tests actuales sin cambios; RTL de un grupo, dos grupos, 409 en medio y selección reemplazada.
 - [x] 038.5 Actualizar `CLAUDE.md` y el hallazgo de la 036. Verificar: la verificación global termina con código 0.
+
+## Fase 8: seguridad y despliegue
+
+**Base:** commit `faa97af`. **Origen:** pedido del usuario y entrevista de diseño del 2026-11-11.
+
+**Decisiones tomadas:**
+
+- Auditoría y corrección: se corrigen los hallazgos altos y medios; los bajos e informativos quedan en el informe. Un hallazgo alto o medio sin tarea es STOP y, con aprobación, se agrega como subtarea.
+- Uso esperado: demo pública de tesis, con registro abierto.
+- Host: PaaS, aún sin elegir. Todo se configura con variables de entorno; la 045 trae plantillas y una guía.
+- Herramientas: revisión manual, reglas `S` de ruff (bandit), `pip-audit`, `npm audit`, `gitleaks` y OWASP ZAP baseline (a mano, con Java).
+- Sesión: el JWT sigue en `localStorage`, mitigado con CSP estricta.
+- Rate limit por IP real tras proxy confiable (`TRUSTED_PROXIES`): login 5/min, registro 3/min, carga 10/min, cómputo 20/min y global 120/min.
+- En producción: Swagger oculto, `SECRET_KEY` de 32 caracteres o más, PostgreSQL con `sslmode=require` y cabeceras de seguridad.
+- Campos: reglas estrictas iguales en Zod y Pydantic; correo en minúsculas; 422 sin eco del valor; Excel con apóstrofo ante fórmulas.
+- Correo: verificación obligatoria por enlace de 24 h, enviado por Brevo vía SMTP genérico. Los enlaces van al frontend con el token en el fragmento y se confirman por `POST`.
+- La migración `0007` borra todos los usuarios actuales y sus datos (son de prueba).
+- Contraseñas: cambio con la actual, restablecimiento por enlace de 30 min, bloqueo de 15 min tras 10 fallos con aviso por correo, revocación de sesiones por `version_token`.
+- Cambio de correo: exige la contraseña actual y confirmar el correo nuevo antes de aplicarlo.
+- Una sola branch `feat/039-seguridad`, con un commit por tarea y sin coautoría.
+
+**Orden de ejecución acordado:** 039, 040, 041, 042, 043, 044, 045.
+
+### Tarea 039 — Auditoría de seguridad
+
+Plan: `docs/planning/plans/039-auditoria-seguridad.md` | Depende de: ninguna | Esfuerzo: M
+
+- [ ] 039.1 Revisar el código con la checklist manual. Verificar: cada punto tiene resultado con archivo y línea en el informe.
+- [ ] 039.2 Activar las reglas `S` de ruff. Verificar: `ruff check app/` termina con código 0 y cada `noqa: S` tiene motivo.
+- [ ] 039.3 Ejecutar `pip-audit` y `npm audit`. Verificar: resultados registrados en el informe.
+- [ ] 039.4 Ejecutar `gitleaks` sobre el historial. Verificar: cada coincidencia clasificada; un secreto real es STOP.
+- [ ] 039.5 Ejecutar ZAP baseline en local. Verificar: informe en `docs/seguridad/` y cada alerta en la tabla.
+- [ ] 039.6 Escribir `docs/seguridad/auditoria-039.md`. Verificar: todo hallazgo alto o medio tiene tarea o pasó por el STOP.
+
+### Tarea 040 — Validación de campos y exportación segura
+
+Plan: `docs/planning/plans/040-validacion-campos.md` | Depende de: 039 | Esfuerzo: M
+
+- [ ] 040.1 Aplicar las reglas de campos en Pydantic. Verificar: `pytest tests/test_field_validation.py` con un caso válido y uno inválido por regla.
+- [ ] 040.2 Guardar y buscar el correo en minúsculas. Verificar: registro con mayúsculas, duplicado y login.
+- [ ] 040.3 Acotar `categoria` y `producto` y rechazar caracteres de control en la API y la ETL. Verificar: tests de 422 y de fila rechazada.
+- [ ] 040.4 Neutralizar fórmulas en el Excel. Verificar: `'=1+1` como texto y montos numéricos sin cambio.
+- [ ] 040.5 Quitar el eco del valor en los 422. Verificar: el cuerpo no contiene la contraseña enviada.
+- [ ] 040.6 Repetir las reglas en Zod con `fieldLimits.ts`. Verificar: tests de `authSchemas` y `test_field_limits_contract.py`.
+
+### Tarea 041 — Rate limit, proxy, cabeceras y configuración de producción
+
+Plan: `docs/planning/plans/041-endurecer-api.md` | Depende de: 039 | Esfuerzo: M
+
+- [ ] 041.1 Validar `SECRET_KEY` y SSL en producción. Verificar: tests de configuración en producción y desarrollo.
+- [ ] 041.2 Leer la IP real tras un proxy confiable. Verificar: test con proxy confiable y no confiable.
+- [ ] 041.3 Aplicar límites por ruta y global con 429 en español. Verificar: `pytest tests/test_rate_limit.py`.
+- [ ] 041.4 Agregar cabeceras y ocultar Swagger en producción. Verificar: `pytest tests/test_security_headers.py`.
+- [ ] 041.5 Documentar `TRUSTED_PROXIES` y los límites. Verificar: la verificación global termina con código 0.
+
+### Tarea 042 — Verificación de correo
+
+Plan: `docs/planning/plans/042-verificacion-correo.md` | Depende de: 040, 041 | Esfuerzo: L
+
+- [ ] 042.1 Crear `email_service` y sus variables. Verificar: tests con `console` y SMTP simulado; producción sin SMTP no arranca.
+- [ ] 042.2 Crear la migración `0007` que borra los usuarios. Verificar: STOP y confirmación antes de aplicarla; `upgrade`, `check` y `downgrade -1` pasan.
+- [ ] 042.3 Crear `token_service`. Verificar: solo se guarda el hash y un token sirve una vez.
+- [ ] 042.4 Exigir la verificación en el login y agregar reenvío y confirmación. Verificar: `pytest tests/test_email_verification.py`.
+- [ ] 042.5 Cambiar el correo con contraseña y confirmación. Verificar: tests de `correo_pendiente`.
+- [ ] 042.6 Agregar `VerifyEmailPage` y los cambios en registro, login y perfil. Verificar: RTL de cada página.
+
+### Tarea 043 — Contraseñas, bloqueo y revocación de sesiones
+
+Plan: `docs/planning/plans/043-contrasenas-bloqueo.md` | Depende de: 042 | Esfuerzo: L
+
+- [ ] 043.1 Crear la migración `0008`. Verificar: `upgrade`, `check` y `downgrade -1` pasan.
+- [ ] 043.2 Revocar sesiones con el claim `ver`. Verificar: token con `ver` vieja o sin `ver` da 401.
+- [ ] 043.3 Agregar el cambio de contraseña. Verificar: `pytest tests/test_passwords.py`.
+- [ ] 043.4 Agregar olvido y restablecimiento por correo. Verificar: mismo mensaje con y sin cuenta, 30 min y un solo uso.
+- [ ] 043.5 Bloquear tras 10 fallos durante 15 min. Verificar: `pytest tests/test_lockout.py`.
+- [ ] 043.6 Agregar las páginas de olvido y restablecimiento y el cambio en el perfil. Verificar: RTL de cada página.
+
+### Tarea 044 — Escáneres de seguridad en CI
+
+Plan: `docs/planning/plans/044-escaneres-ci.md` | Depende de: 039 | Esfuerzo: S
+
+- [ ] 044.1 Agregar `pip-audit` al job `backend`. Verificar: termina con código 0 en local.
+- [ ] 044.2 Agregar `npm audit` al job `frontend`. Verificar: termina con código 0 en local.
+- [ ] 044.3 Agregar el job `secrets` y el hook de `gitleaks`. Verificar: `pre-commit run gitleaks --all-files` pasa y falla con un secreto falso.
+- [ ] 044.4 Comprobar CI en la branch. Verificar: los tres jobs pasan en GitHub Actions.
+
+### Tarea 045 — CSP del frontend y guía de despliegue
+
+Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 | Esfuerzo: M
+
+- [ ] 045.1 Agregar la CSP en `index.html` con el origen del API. Verificar: `dist/index.html` contiene el `connect-src` esperado.
+- [ ] 045.2 Recorrer la app con la CSP. Verificar: la consola no muestra violaciones.
+- [ ] 045.3 Crear las plantillas de cabeceras y la reescritura de rutas. Verificar: test que compara ambas plantillas.
+- [ ] 045.4 Escribir `docs/despliegue.md`. Verificar: cada variable de `.env.example` y cada punto de la checklist aparecen.
+- [ ] 045.5 Repetir ZAP baseline. Verificar: las alertas de cabeceras de la 039 desaparecen.
+- [ ] 045.6 Verificación global. Verificar: todos los comandos terminan con código 0.
 
 ## Verificación global
 
