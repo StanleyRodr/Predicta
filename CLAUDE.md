@@ -35,7 +35,7 @@ npx vitest run src/api/auth.test.ts  # single test file
 npm run build                        # tsc -b && vite build
 ```
 
-Before submitting: backend `ruff check app/`, `mypy`, `pytest --cov=app`; frontend `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`. CI (`.github/workflows/ci.yml`, every push) also runs `alembic upgrade head`, `alembic check`, `alembic downgrade -1`, `alembic upgrade head` against PostgreSQL 17, so a model change without a matching migration fails CI.
+Before submitting: backend `ruff check app/`, `mypy`, `pytest --cov=app`; frontend `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`. CI (`.github/workflows/ci.yml`, every push) also runs `alembic upgrade head`, `alembic check`, `alembic downgrade -1`, `alembic upgrade head` against PostgreSQL 17, so a model change without a matching migration fails CI. CI also fails on a high or critical vulnerability in production dependencies (`pip-audit -r requirements.txt`, `npm audit --omit=dev --audit-level=high`) and on any secret in the git history (`secrets` job, gitleaks); every ignored advisory carries its reason in `ci.yml`.
 
 ## Environment
 

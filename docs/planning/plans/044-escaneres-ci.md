@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-11, salvo el paso 4 (CI en GitHub), que espera el push de la branch.
 - **Prioridad:** P1
 - **Esfuerzo:** S
 - **Riesgo:** LOW (solo agrega jobs y hooks; puede bloquear merges si una dependencia tiene una CVE nueva)
@@ -30,7 +30,6 @@ Tomadas por el usuario el 2026-11-11.
   - `npm audit --omit=dev --audit-level=high`: solo dependencias de producción, porque las de desarrollo no llegan al build.
   - `pip-audit -r requirements.txt`: no filtra por severidad. Una excepción se declara con `--ignore-vuln <ID>` y un comentario con el motivo y la fecha de revisión.
 - **ZAP** no entra en CI: se ejecuta a mano antes de cada despliegue importante, como en la 039.
-- **`gitleaks` también en pre-commit**, para frenar el secreto antes del commit.
 
 - **Dependencias vulnerables primero (S-18 y S-19, agregado el 2026-11-11 tras la auditoría 039):**
   - `PyJWT` sube de 2.10.1 a 2.15.1;
@@ -72,6 +71,14 @@ Tomadas por el usuario el 2026-11-11.
 
 - Cada push ejecuta ruff `S`, `pip-audit`, `npm audit` y `gitleaks`.
 - Toda excepción a un escáner tiene un motivo escrito en el archivo donde se declara.
+
+## Cambios respecto del plan al ejecutarlo
+
+- **Sin pre-commit (decisión del usuario del 2026-11-11).** El commit `bc72bf7` (2026-11-08) quitó `.pre-commit-config.yaml` porque el hook nunca se instaló y CI ya corría lo mismo. Se mantiene esa decisión: gitleaks corre solo en el job `secrets` de CI. Un secreto se detecta después del push, no antes del commit.
+- **gitleaks sin `gitleaks-action`.** El job descarga el binario oficial 8.30.1, verifica su SHA-256 contra `gitleaks_8.30.1_checksums.txt` del release y escanea con `gitleaks git . --redact --exit-code 1`. Así no depende de la licencia de la acción ni de una versión flotante.
+- **Clave de tests más larga.** PyJWT 2.15 avisa (`InsecureKeyLengthWarning`) con claves HMAC de menos de 32 bytes. La clave de `tests/conftest.py` y la `SECRET_KEY` de CI pasan a tener 32 bytes o más. La suite volvió a tener 1 warning.
+- **Sin `.gitleaks.toml`:** la 039 no encontró falsos positivos.
+- El paso 3 se verificó con el binario local: el repositorio da 0 hallazgos, y una carpeta temporal con credenciales falsas de AWS da código 1.
 
 ## Fuera de alcance
 

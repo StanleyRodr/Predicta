@@ -52,7 +52,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | TODO |
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
-| 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | TODO |
+| 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | EN PROGRESO (falta 044.4: CI en GitHub) |
 | 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | TODO |
 
 ## Reglas de ejecución
@@ -618,10 +618,10 @@ Plan: `docs/planning/plans/043-contrasenas-bloqueo.md` | Depende de: 042 | Esfue
 
 Plan: `docs/planning/plans/044-escaneres-ci.md` | Depende de: 039 | Esfuerzo: S
 
-- [ ] 044.0 Subir `PyJWT` a 2.15.1 y aplicar `npm audit fix` (S-18, S-19). Verificar: suites de auth y frontend pasan; `pip-audit` y `npm audit --omit=dev --audit-level=high` terminan con código 0.
-- [ ] 044.1 Agregar `pip-audit` al job `backend`. Verificar: termina con código 0 en local.
-- [ ] 044.2 Agregar `npm audit` al job `frontend`. Verificar: termina con código 0 en local.
-- [ ] 044.3 Agregar el job `secrets` y el hook de `gitleaks`. Verificar: `pre-commit run gitleaks --all-files` pasa y falla con un secreto falso.
+- [x] 044.0 Subir `PyJWT` a 2.15.1 y aplicar `npm audit fix` (S-18, S-19). Verificar: suites de auth y frontend pasan; `pip-audit` y `npm audit --omit=dev --audit-level=high` terminan con código 0.
+- [x] 044.1 Agregar `pip-audit` al job `backend`. Verificar: termina con código 0 en local.
+- [x] 044.2 Agregar `npm audit` al job `frontend`. Verificar: termina con código 0 en local.
+- [x] 044.3 Agregar el job `secrets` con gitleaks (sin pre-commit, decisión del 2026-11-11). Verificar: `gitleaks git .` pasa y un secreto falso da código 1.
 - [ ] 044.4 Comprobar CI en la branch. Verificar: los tres jobs pasan en GitHub Actions.
 
 ### Tarea 045 — CSP y despliegue en Vercel, Railway y Neon

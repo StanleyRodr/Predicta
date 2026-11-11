@@ -90,7 +90,8 @@ Tomadas por el usuario el 2026-11-11.
      - 2 MB a `/users/register` da 413;
      - un CSV de 1 MB se sigue cargando.
 6. Suite completa con el limitador desactivado como hoy.
-   - **Verificar:** la verificación global de `docs/planning/TASKS.md` termina con código 0. CI sigue usando `ENVIRONMENT=test`, sin SSL exigido.
+   - **Verificar:** la verificación global de `docs/planning/TASKS.md` termina con código 0.
+   - Hoy `.github/workflows/ci.yml` no define `ENVIRONMENT`, así que CI corre como producción (hallado en la 044). Hay que agregar `ENVIRONMENT: test` al job `backend`; si no, las validaciones de SSL y de Swagger lo rompen.
 
 ## Criterios de terminado
 

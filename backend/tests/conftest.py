@@ -5,7 +5,7 @@ import os
 # Keep tests isolated from a developer's database. The application imports its
 # engine at module load time, so configure SQLite before importing the app.
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ.setdefault("SECRET_KEY", "test-secret-key")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only-0123456789")
 # Do not inherit a developer's CORS settings from backend/.env.
 os.environ["ENVIRONMENT"] = "test"
 os.environ["CORS_ORIGINS"] = "http://localhost:5173"

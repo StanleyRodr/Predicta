@@ -13,6 +13,9 @@ pypdf==6.21.4
 # Linting & formatting
 ruff==0.17.1
 
+# Security audit of dependencies
+pip-audit==2.10.1
+
 # Static type checking
 mypy==2.4.0
 sqlalchemy[mypy]==2.1.5

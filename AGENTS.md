@@ -20,7 +20,7 @@
 - Every private endpoint must appear in `backend/tests/test_isolation.py::PRIVATE_CASES`; a test fails when a route is missing.
 - Before submitting backend changes, run from `backend/`: `ruff check app/`, `mypy app/`, and `pytest --cov=app --cov-report=term-missing`; run `ruff check --fix app/ && ruff format app/` only when intentionally applying Ruff fixes/formatting. Ruff includes the security rules (`S`, flake8-bandit); every `noqa: S...` states its reason.
 - Before submitting frontend changes, run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test -- --run`, and `npm run build`.
-- `.github/workflows/ci.yml` runs lint, types, migrations (`upgrade`, `check`, `downgrade`), the backend suite on SQLite and PostgreSQL, and the frontend checks on every push.
+- `.github/workflows/ci.yml` runs lint, types, migrations (`upgrade`, `check`, `downgrade`), the backend suite on SQLite and PostgreSQL, the frontend checks, and the security scanners on every push: `pip-audit` and `npm audit --omit=dev --audit-level=high` fail on high or critical vulnerabilities in production dependencies, and the `secrets` job runs gitleaks over the full history. Every ignored advisory carries its reason in `ci.yml`.
 
 ## Data And Schema Changes
 
