@@ -6,7 +6,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (un límite mal puesto o una IP mal leída bloquea a usuarios legítimos)
-- **Depende de:** `docs/planning/plans/039-auditoria-seguridad.md` (S-01, S-02, S-10, S-11, S-12, S-13)
+- **Depende de:** `docs/planning/plans/039-auditoria-seguridad.md` (S-01, S-02, S-10, S-11, S-12, S-13, S-20, S-21)
 - **Categoría:** backend
 - **Origen:** pedido del usuario y entrevista de diseño del 2026-11-11
 - **Planificado en:** commit `faa97af`, 2026-11-11
@@ -55,6 +55,8 @@ Tomadas por el usuario el 2026-11-11.
   - `Strict-Transport-Security: max-age=31536000; includeSubDomains`, solo en producción
   - `Cache-Control: no-store` en respuestas de rutas privadas
   - En desarrollo, `/docs` necesita scripts de CDN; la CSP estricta no se aplica a `/docs` y `/redoc` fuera de producción.
+- **Tamaño del cuerpo (S-20, agregado el 2026-11-11 tras la auditoría 039):** un middleware rechaza con 413 y un mensaje en español las peticiones a `/etl/*` de más de 26 MB, y de más de 1 MB en el resto de la API. Mira `Content-Length` y, si no viene, cuenta los bytes recibidos y corta al pasar el límite. El rechazo ocurre antes de que Starlette escriba el archivo en disco. `read_limited` conserva su límite de 25 MB como segunda defensa.
+- **Raíz de la API (S-21):** `GET /` deja de llamar a `url_for("swagger_ui")`, que no existe y responde 500. Devuelve el nombre y la versión, y la URL de `/docs` solo fuera de producción.
 - **`SECRET_KEY` en producción:** mínimo 32 caracteres y distinta de `CHANGE_ME_GENERATE_WITH_OPENSSL`. Si no cumple, el arranque falla con un mensaje claro.
 - **PostgreSQL con SSL en producción:** `DATABASE_URL` debe incluir `sslmode=require`, `verify-ca` o `verify-full`. Si no, el arranque falla. Neon entrega su cadena con `sslmode=require` y a veces `channel_binding=require`; ambos parámetros se aceptan.
 
@@ -79,9 +81,15 @@ Tomadas por el usuario el 2026-11-11.
    - **Verificar:** test con `X-Forwarded-For` desde `127.0.0.1` (confiable) y desde otra IP (no confiable).
 3. Límites por ruta y global.
    - **Verificar:** `cd backend; pytest tests/test_rate_limit.py -q`. La petición número 4 a `/users/register` en un minuto responde 429.
-4. Cabeceras y Swagger.
-   - **Verificar:** `cd backend; pytest tests/test_security_headers.py -q`.
-5. Suite completa con el limitador desactivado como hoy.
+4. Cabeceras, Swagger y raíz.
+   - **Verificar:** `cd backend; pytest tests/test_security_headers.py -q`. `GET /` responde 200 en producción y en desarrollo.
+5. Límite de tamaño del cuerpo.
+   - **Verificar:** `backend/tests/test_body_limit.py` (nuevo):
+     - `Content-Length` de 27 MB a `/etl/upload-ventas` da 413 sin llamar a `read_limited`;
+     - un cuerpo `chunked` sin `Content-Length` que pasa los 26 MB da 413;
+     - 2 MB a `/users/register` da 413;
+     - un CSV de 1 MB se sigue cargando.
+6. Suite completa con el limitador desactivado como hoy.
    - **Verificar:** la verificación global de `docs/planning/TASKS.md` termina con código 0. CI sigue usando `ENVIRONMENT=test`, sin SSL exigido.
 
 ## Criterios de terminado

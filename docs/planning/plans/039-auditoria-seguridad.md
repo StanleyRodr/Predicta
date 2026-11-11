@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-11. Informe en `docs/seguridad/auditoria-039.md`.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** LOW (solo lee código y escribe un informe; no cambia el comportamiento)
@@ -115,6 +115,16 @@ No se corrige código de la aplicación en esta tarea, salvo lo que exija activa
 - Corregir los hallazgos (tareas 040-045).
 - Pruebas de penetración manuales con explotación activa.
 - Endurecimiento de un servidor propio (VPS): el host será Vercel + Railway + Neon (ver la 045).
+
+## Cambios respecto del plan al ejecutarlo
+
+- ruff no tenía `select` propio; se agregó `[tool.ruff.lint] extend-select = ["S"]` en `backend/pyproject.toml`. También se agregaron `per-file-ignores` para `tests/` y `scripts/`.
+- gitleaks se instaló con winget. ZAP no se pudo instalar con winget: su instalador y el de su JRE piden permisos de administrador. Se usó el zip multiplataforma oficial (SHA-256 verificado contra el release) con Java 26, en una carpeta temporal fuera del repositorio.
+- ZAP corrió solo en modo pasivo: importación de `/openapi.json`, spider y escaneo pasivo. La API se escaneó en `127.0.0.1:8000`, porque `localhost` resolvía a IPv6, donde uvicorn no escuchaba.
+- Hubo tres STOP por hallazgos imprevistos (S-18, S-19 y S-20). El usuario aprobó el 2026-11-11:
+  - la subtarea 044.0 (dependencias), adelantando la 044 para que se ejecute justo después de la 039;
+  - la subtarea 041.6 (límite del cuerpo).
+- S-21 (500 en `GET /`) es baja y se corrige dentro de la 041, que ya cambia esa ruta.
 
 ## STOP
 

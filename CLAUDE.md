@@ -14,7 +14,7 @@ uvicorn app.main:app --reload                             # port 8000
 alembic upgrade head
 alembic revision --autogenerate -m "description"
 python scripts/generate_dataset.py                        # -> backend/ventas_*.csv (gitignored)
-ruff check app/                                           # lint
+ruff check app/                                           # lint, includes security rules (S, flake8-bandit)
 ruff check --fix app/ && ruff format app/                 # only when intentionally reformatting
 mypy                                                      # typecheck (pyproject sets files = app)
 python scripts/evaluate_models.py                         # regenerate docs/evaluacion/
@@ -68,6 +68,7 @@ Before submitting: backend `ruff check app/`, `mypy`, `pytest --cov=app`; fronte
 ## Conventions and workflow
 
 - Code, docstrings, and comments are in English; user-facing API messages and UI text are in Spanish.
+- Ruff runs the security rules (`S`, flake8-bandit); every `# noqa: S...` states its reason.
 - Work is planned in `docs/planning/TASKS.md` (status table) with one detailed plan per task in `docs/planning/plans/NNN-*.md`. When executing a task, read its plan fully, run each listed verification, stop and report on any STOP condition, and update the task status in `docs/planning/TASKS.md`. Do not edit the root `README.md` as part of these tasks, and do not add an index inside `docs/planning/plans/`.
 - Commits follow Conventional Commits on feature branches (GitHub Flow).
 - Project skills: `.agents/skills/` is the source of truth (opencode, tracked by `skills-lock.json`); `.claude/skills/` is a copy for Claude Code (without the opencode-only `agents/` subfolders). `code-review` is copied as `code-review-spec` to avoid shadowing Claude Code's built-in `/code-review`. After adding or updating a skill in `.agents/skills/`, re-copy it to `.claude/skills/`.

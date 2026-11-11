@@ -18,7 +18,7 @@
 - Run focused tests from `backend/`, for example `pytest tests/test_auth.py` or `pytest -k test_register`; run the full suite with `pytest --cov=app --cov-report=term-missing`.
 - Tests do not need PostgreSQL: `backend/tests/conftest.py` sets `DATABASE_URL=sqlite:///:memory:` before importing the app and gives each test a fresh in-memory SQLite database. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database to run the same suite on PostgreSQL.
 - Every private endpoint must appear in `backend/tests/test_isolation.py::PRIVATE_CASES`; a test fails when a route is missing.
-- Before submitting backend changes, run from `backend/`: `ruff check app/`, `mypy app/`, and `pytest --cov=app --cov-report=term-missing`; run `ruff check --fix app/ && ruff format app/` only when intentionally applying Ruff fixes/formatting.
+- Before submitting backend changes, run from `backend/`: `ruff check app/`, `mypy app/`, and `pytest --cov=app --cov-report=term-missing`; run `ruff check --fix app/ && ruff format app/` only when intentionally applying Ruff fixes/formatting. Ruff includes the security rules (`S`, flake8-bandit); every `noqa: S...` states its reason.
 - Before submitting frontend changes, run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test -- --run`, and `npm run build`.
 - `.github/workflows/ci.yml` runs lint, types, migrations (`upgrade`, `check`, `downgrade`), the backend suite on SQLite and PostgreSQL, and the frontend checks on every push.
 

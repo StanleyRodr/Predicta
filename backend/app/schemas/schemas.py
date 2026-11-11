@@ -12,10 +12,10 @@ from pydantic import BaseModel, EmailStr, Field, field_validator, model_validato
 
 # Password policy: at least 8 chars, one uppercase, one lowercase, one digit.
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
-PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."
+PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."  # noqa: S105 - user-facing message, not a secret
 # bcrypt ignores everything past 72 bytes, so longer passwords are refused.
 MAX_PASSWORD_BYTES = 72
-PASSWORD_TOO_LONG = "La contraseña no puede superar 72 bytes (las letras con tilde ocupan 2)."
+PASSWORD_TOO_LONG = "La contraseña no puede superar 72 bytes (las letras con tilde ocupan 2)."  # noqa: S105 - user-facing message, not a secret
 PRODUCT_NEEDS_CATEGORY = "Para filtrar por producto, elige también su categoría."
 
 

@@ -47,7 +47,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 035 | Mapeo de columnas en la carga de ventas | `docs/planning/plans/035-mapeo-columnas.md` | P1 | M | 034b | HECHO |
 | 036 | Pruebas con datasets reales de e-commerce | `docs/planning/plans/036-datasets-reales.md` | P1 | M | 035 | HECHO |
 | 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
-| 039 | Auditoría de seguridad | `docs/planning/plans/039-auditoria-seguridad.md` | P1 | M | — | TODO |
+| 039 | Auditoría de seguridad | `docs/planning/plans/039-auditoria-seguridad.md` | P1 | M | — | HECHO |
 | 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | TODO |
 | 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | TODO |
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
@@ -557,18 +557,18 @@ Plan: `docs/planning/plans/038-carga-varios-archivos.md` | Depende de: 035 | Esf
 - Cambio de correo: exige la contraseña actual y confirmar el correo nuevo antes de aplicarlo.
 - Una sola branch `feat/039-seguridad`, con un commit por tarea y sin coautoría.
 
-**Orden de ejecución acordado:** 039, 040, 041, 042, 043, 044, 045.
+**Orden de ejecución acordado:** 039, 044, 040, 041, 042, 043, 045. La 044 se adelantó el 2026-11-11, tras la auditoría, para que el CI vigile el resto.
 
 ### Tarea 039 — Auditoría de seguridad
 
 Plan: `docs/planning/plans/039-auditoria-seguridad.md` | Depende de: ninguna | Esfuerzo: M
 
-- [ ] 039.1 Revisar el código con la checklist manual. Verificar: cada punto tiene resultado con archivo y línea en el informe.
-- [ ] 039.2 Activar las reglas `S` de ruff. Verificar: `ruff check app/` termina con código 0 y cada `noqa: S` tiene motivo.
-- [ ] 039.3 Ejecutar `pip-audit` y `npm audit`. Verificar: resultados registrados en el informe.
-- [ ] 039.4 Ejecutar `gitleaks` sobre el historial. Verificar: cada coincidencia clasificada; un secreto real es STOP.
-- [ ] 039.5 Ejecutar ZAP baseline en local. Verificar: informe en `docs/seguridad/` y cada alerta en la tabla.
-- [ ] 039.6 Escribir `docs/seguridad/auditoria-039.md`. Verificar: todo hallazgo alto o medio tiene tarea o pasó por el STOP.
+- [x] 039.1 Revisar el código con la checklist manual. Verificar: cada punto tiene resultado con archivo y línea en el informe.
+- [x] 039.2 Activar las reglas `S` de ruff. Verificar: `ruff check app/` termina con código 0 y cada `noqa: S` tiene motivo.
+- [x] 039.3 Ejecutar `pip-audit` y `npm audit`. Verificar: resultados registrados en el informe.
+- [x] 039.4 Ejecutar `gitleaks` sobre el historial. Verificar: cada coincidencia clasificada; un secreto real es STOP.
+- [x] 039.5 Ejecutar ZAP baseline en local. Verificar: informe en `docs/seguridad/` y cada alerta en la tabla.
+- [x] 039.6 Escribir `docs/seguridad/auditoria-039.md`. Verificar: todo hallazgo alto o medio tiene tarea o pasó por el STOP.
 
 ### Tarea 040 — Validación de campos y exportación segura
 
@@ -590,6 +590,7 @@ Plan: `docs/planning/plans/041-endurecer-api.md` | Depende de: 039 | Esfuerzo: M
 - [ ] 041.3 Aplicar límites por ruta y global con 429 en español. Verificar: `pytest tests/test_rate_limit.py`.
 - [ ] 041.4 Agregar cabeceras y ocultar Swagger en producción. Verificar: `pytest tests/test_security_headers.py`.
 - [ ] 041.5 Documentar `TRUSTED_PROXIES` y los límites. Verificar: la verificación global termina con código 0.
+- [ ] 041.6 Limitar el tamaño del cuerpo antes de leerlo (S-20) y corregir el 500 de `GET /` (S-21). Verificar: `pytest tests/test_body_limit.py` y `GET /` responde 200.
 
 ### Tarea 042 — Verificación de correo
 
@@ -617,6 +618,7 @@ Plan: `docs/planning/plans/043-contrasenas-bloqueo.md` | Depende de: 042 | Esfue
 
 Plan: `docs/planning/plans/044-escaneres-ci.md` | Depende de: 039 | Esfuerzo: S
 
+- [ ] 044.0 Subir `PyJWT` a 2.15.1 y aplicar `npm audit fix` (S-18, S-19). Verificar: suites de auth y frontend pasan; `pip-audit` y `npm audit --omit=dev --audit-level=high` terminan con código 0.
 - [ ] 044.1 Agregar `pip-audit` al job `backend`. Verificar: termina con código 0 en local.
 - [ ] 044.2 Agregar `npm audit` al job `frontend`. Verificar: termina con código 0 en local.
 - [ ] 044.3 Agregar el job `secrets` y el hook de `gitleaks`. Verificar: `pre-commit run gitleaks --all-files` pasa y falla con un secreto falso.

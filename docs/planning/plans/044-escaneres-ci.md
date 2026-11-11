@@ -6,7 +6,7 @@
 - **Prioridad:** P1
 - **Esfuerzo:** S
 - **Riesgo:** LOW (solo agrega jobs y hooks; puede bloquear merges si una dependencia tiene una CVE nueva)
-- **Depende de:** `docs/planning/plans/039-auditoria-seguridad.md` (S-16; las herramientas ya se ejecutaron a mano)
+- **Depende de:** `docs/planning/plans/039-auditoria-seguridad.md` (S-16, S-18, S-19; las herramientas ya se ejecutaron a mano)
 - **Categoría:** CI
 - **Origen:** pedido del usuario y entrevista de diseño del 2026-11-11
 - **Planificado en:** commit `faa97af`, 2026-11-11
@@ -32,8 +32,17 @@ Tomadas por el usuario el 2026-11-11.
 - **ZAP** no entra en CI: se ejecuta a mano antes de cada despliegue importante, como en la 039.
 - **`gitleaks` también en pre-commit**, para frenar el secreto antes del commit.
 
+- **Dependencias vulnerables primero (S-18 y S-19, agregado el 2026-11-11 tras la auditoría 039):**
+  - `PyJWT` sube de 2.10.1 a 2.15.1;
+  - `npm audit fix`, sin `--force`, sube `follow-redirects` dentro de `package-lock.json`.
+  - Sin esto, los jobs nuevos fallarían desde el primer push.
+  - CVE-2025-45768 (PyJWT, disputada y sin corrección) se ignora en `pip-audit` con `--ignore-vuln PYSEC-2025-183`. El motivo: la mitiga la `SECRET_KEY` mínima de 32 caracteres de la 041.
+- **Orden:** la 044 se ejecuta justo después de la 039, para que el CI vigile las tareas 040 a 045.
+
 ## Alcance
 
+- `backend/requirements.txt`: `PyJWT==2.15.1`.
+- `frontend/package-lock.json`: resultado de `npm audit fix`.
 - `.github/workflows/ci.yml`:
   - `backend`: paso `pip install pip-audit` y `pip-audit -r requirements.txt`;
   - `frontend`: paso `npm audit --omit=dev --audit-level=high`;
@@ -45,6 +54,11 @@ Tomadas por el usuario el 2026-11-11.
 
 ## Pasos
 
+0. Actualizar las dependencias vulnerables.
+   - **Verificar:**
+     - `cd backend; pip install -r requirements.txt; pytest tests/test_auth.py tests/test_isolation.py -q` pasa;
+     - `pip-audit -r requirements.txt --ignore-vuln PYSEC-2025-183` termina con código 0;
+     - `cd frontend; npm audit --omit=dev --audit-level=high` termina con código 0 y `npm test -- --run` pasa.
 1. `pip-audit` en el job `backend`.
    - **Verificar:** `cd backend; pip-audit -r requirements.txt` termina con código 0 en local.
 2. `npm audit` en el job `frontend`.

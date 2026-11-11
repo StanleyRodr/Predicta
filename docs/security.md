@@ -11,3 +11,7 @@ La migracion reemplaza `python-jose` sin cambiar el contrato publico.
 Tokens existentes conservan formato y claims. La migracion no invalida tokens
 activos; se rechazan al expirar normalmente. Rotar `SECRET_KEY` requiere una
 estrategia operativa separada porque invalida todos los tokens activos.
+
+## Auditorías
+
+- `docs/seguridad/auditoria-039.md`: auditoría del 2026-11-11 (tarea 039), con hallazgos, severidad y tarea que corrige cada uno.
