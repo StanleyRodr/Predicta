@@ -29,7 +29,7 @@ seguridad, Swagger oculto, `SECRET_KEY` fuerte y PostgreSQL con SSL.
 
 Tomadas por el usuario el 2026-11-11.
 
-- **Host:** PaaS, aún sin elegir. Todo se configura con variables de entorno, sin archivos de un proveedor (eso es la 045).
+- **Host:** frontend en Vercel, backend en Railway (plan Hobby) y PostgreSQL en Neon (decisión del 2026-11-11). Todo se configura con variables de entorno. Los archivos del proveedor son la 045.
 - **Límites por IP:**
 
   | Ruta | Límite |
@@ -42,10 +42,10 @@ Tomadas por el usuario el 2026-11-11.
 
   Las rutas nuevas de 042 y 043 declaran su límite en su propia tarea.
 - **IP real:** `ProxyHeadersMiddleware` de uvicorn lee `X-Forwarded-For` solo si la conexión viene de un proxy confiable. Variable nueva `TRUSTED_PROXIES` (por comas; por defecto `127.0.0.1`).
-  - En un PaaS la app no es accesible sin pasar por el proxy, así que `TRUSTED_PROXIES=*` es seguro allí. La guía de la 045 lo indica por proveedor.
+  - En Railway la app solo recibe tráfico a través del proxy de Railway, que agrega `X-Forwarded-For`. Por eso allí `TRUSTED_PROXIES=*` es seguro y es el valor de producción. Antes de fijarlo, la 045 comprueba en el despliegue que la IP registrada es la del cliente.
   - Sin proxy confiable, `X-Forwarded-For` se ignora. Así nadie falsifica su IP para saltarse el límite.
 - **429:** cuerpo JSON en español: `{"detail": "Demasiadas solicitudes. Intenta de nuevo en un momento."}` con cabecera `Retry-After`.
-- **Almacenamiento del limitador:** en memoria, como hoy. Vale para un solo proceso. Con varios workers cada uno cuenta aparte. La 045 documenta que se despliega con un worker. Redis queda fuera de alcance.
+- **Almacenamiento del limitador:** en memoria, como hoy. Vale para un solo proceso; con varios workers, cada uno cuenta aparte. En Railway se despliega una réplica con un worker (045). Redis queda fuera de alcance.
 - **Swagger:** `/docs`, `/redoc` y `/openapi.json` responden 404 con `ENVIRONMENT=production`. Siguen visibles en `development` y `test`.
 - **Cabeceras de seguridad** en toda respuesta de la API:
   - `X-Content-Type-Options: nosniff`
@@ -56,7 +56,7 @@ Tomadas por el usuario el 2026-11-11.
   - `Cache-Control: no-store` en respuestas de rutas privadas
   - En desarrollo, `/docs` necesita scripts de CDN; la CSP estricta no se aplica a `/docs` y `/redoc` fuera de producción.
 - **`SECRET_KEY` en producción:** mínimo 32 caracteres y distinta de `CHANGE_ME_GENERATE_WITH_OPENSSL`. Si no cumple, el arranque falla con un mensaje claro.
-- **PostgreSQL con SSL en producción:** `DATABASE_URL` debe incluir `sslmode=require`, `verify-ca` o `verify-full`. Si no, el arranque falla.
+- **PostgreSQL con SSL en producción:** `DATABASE_URL` debe incluir `sslmode=require`, `verify-ca` o `verify-full`. Si no, el arranque falla. Neon entrega su cadena con `sslmode=require` y a veces `channel_binding=require`; ambos parámetros se aceptan.
 
 ## Alcance
 
@@ -99,7 +99,7 @@ Tomadas por el usuario el 2026-11-11.
 ## STOP
 
 - `ProxyHeadersMiddleware` no está en la versión de uvicorn de `requirements.txt` o cambia su API.
-- Un PaaS candidato no permite `sslmode=require` en su PostgreSQL administrado.
+- `psycopg2-binary` no acepta `channel_binding=require` en la cadena de Neon.
 - Activar `SlowAPIMiddleware` rompe tests actuales de forma que no se arregla con `limiter.enabled = False`.
 
 ## Mantenimiento

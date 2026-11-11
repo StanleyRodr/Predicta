@@ -114,7 +114,7 @@ No se corrige código de la aplicación en esta tarea, salvo lo que exija activa
 
 - Corregir los hallazgos (tareas 040-045).
 - Pruebas de penetración manuales con explotación activa.
-- Endurecimiento de un servidor propio (VPS): el host será un PaaS, aún sin elegir.
+- Endurecimiento de un servidor propio (VPS): el host será Vercel + Railway + Neon (ver la 045).
 
 ## STOP
 

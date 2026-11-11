@@ -53,7 +53,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | TODO |
-| 045 | CSP del frontend y guía de despliegue | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | TODO |
+| 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | TODO |
 
 ## Reglas de ejecución
 
@@ -545,7 +545,7 @@ Plan: `docs/planning/plans/038-carga-varios-archivos.md` | Depende de: 035 | Esf
 
 - Auditoría y corrección: se corrigen los hallazgos altos y medios; los bajos e informativos quedan en el informe. Un hallazgo alto o medio sin tarea es STOP y, con aprobación, se agrega como subtarea.
 - Uso esperado: demo pública de tesis, con registro abierto.
-- Host: PaaS, aún sin elegir. Todo se configura con variables de entorno; la 045 trae plantillas y una guía.
+- Host: frontend en Vercel (Hobby, gratis), backend en Railway (Hobby, ~US$5/mes, sin suspensión y memoria según uso) y PostgreSQL en Neon (gratis, sin caducidad). Se descartaron Render gratis (se suspende, 512 MB y base que caduca) y Render Starter (512 MB). Todo se configura con variables de entorno; la 045 agrega `vercel.json`, `railway.json` y la guía.
 - Herramientas: revisión manual, reglas `S` de ruff (bandit), `pip-audit`, `npm audit`, `gitleaks` y OWASP ZAP baseline (a mano, con Java).
 - Sesión: el JWT sigue en `localStorage`, mitigado con CSP estricta.
 - Rate limit por IP real tras proxy confiable (`TRUSTED_PROXIES`): login 5/min, registro 3/min, carga 10/min, cómputo 20/min y global 120/min.
@@ -622,16 +622,18 @@ Plan: `docs/planning/plans/044-escaneres-ci.md` | Depende de: 039 | Esfuerzo: S
 - [ ] 044.3 Agregar el job `secrets` y el hook de `gitleaks`. Verificar: `pre-commit run gitleaks --all-files` pasa y falla con un secreto falso.
 - [ ] 044.4 Comprobar CI en la branch. Verificar: los tres jobs pasan en GitHub Actions.
 
-### Tarea 045 — CSP del frontend y guía de despliegue
+### Tarea 045 — CSP y despliegue en Vercel, Railway y Neon
 
 Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 | Esfuerzo: M
 
 - [ ] 045.1 Agregar la CSP en `index.html` con el origen del API. Verificar: `dist/index.html` contiene el `connect-src` esperado.
-- [ ] 045.2 Recorrer la app con la CSP. Verificar: la consola no muestra violaciones.
-- [ ] 045.3 Crear las plantillas de cabeceras y la reescritura de rutas. Verificar: test que compara ambas plantillas.
-- [ ] 045.4 Escribir `docs/despliegue.md`. Verificar: cada variable de `.env.example` y cada punto de la checklist aparecen.
-- [ ] 045.5 Repetir ZAP baseline. Verificar: las alertas de cabeceras de la 039 desaparecen.
-- [ ] 045.6 Verificación global. Verificar: todos los comandos terminan con código 0.
+- [ ] 045.2 Recorrer la app con la CSP en local. Verificar: la consola no muestra violaciones.
+- [ ] 045.3 Crear `frontend/vercel.json` con cabeceras y reescritura. Verificar: test que compara su CSP con la del `<meta>`.
+- [ ] 045.4 Crear `backend/railway.json` y `backend/.python-version`. Verificar: JSON válido contra el esquema de Railway.
+- [ ] 045.5 Escribir `docs/despliegue.md`. Verificar: cada variable de `.env.example` y cada punto de la checklist aparecen.
+- [ ] 045.6 Desplegar con la guía. Verificar: la checklist se cumple sobre los dominios reales.
+- [ ] 045.7 Repetir ZAP baseline contra los dominios reales. Verificar: las alertas de cabeceras de la 039 desaparecen.
+- [ ] 045.8 Verificación global. Verificar: todos los comandos terminan con código 0.
 
 ## Verificación global
 
