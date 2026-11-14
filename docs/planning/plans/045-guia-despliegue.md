@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** EN PROGRESO
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (una CSP mal escrita deja la app en blanco o sin conexión al API; un despliegue mal configurado expone la API sin las defensas de 041-043)
