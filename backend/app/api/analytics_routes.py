@@ -11,12 +11,13 @@ from collections.abc import Callable
 from datetime import date
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
+from app.core.rate_limit import COMPUTE_LIMIT, limiter
 from app.models import models
 from app.schemas import schemas
 from app.services import analytics_service, prediction_service, report_service
@@ -234,7 +235,9 @@ def sales_history(
 
 
 @router.get("/predict", response_model=schemas.DailyForecastResponse)
+@limiter.limit(COMPUTE_LIMIT)
 def predict_next_day(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
@@ -244,7 +247,9 @@ def predict_next_day(
 
 
 @router.get("/forecast", response_model=schemas.MonthlyForecastResponse)
+@limiter.limit(COMPUTE_LIMIT)
 def monthly_forecast(
+    request: Request,
     categoria: str | None = CATEGORY,
     producto: str | None = PRODUCT,
     db: Session = Depends(get_db),
@@ -262,7 +267,9 @@ def monthly_forecast(
 
 
 @router.post("/predicciones", response_model=schemas.SavedBatch, status_code=201)
+@limiter.limit(COMPUTE_LIMIT)
 def save_prediction(
+    request: Request,
     payload: schemas.SavePredictionRequest,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
@@ -299,7 +306,9 @@ def saved_predictions(
 
 
 @router.get("/export/excel")
+@limiter.limit(COMPUTE_LIMIT)
 def export_excel(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> Response:
@@ -312,7 +321,9 @@ def export_excel(
 
 
 @router.get("/export/pdf")
+@limiter.limit(COMPUTE_LIMIT)
 def export_pdf(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> Response:
@@ -325,7 +336,9 @@ def export_pdf(
 
 
 @router.get("/reporte-predictivo-anual-pdf")
+@limiter.limit(COMPUTE_LIMIT)
 def annual_forecast_pdf(
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> Response:
@@ -338,7 +351,9 @@ def annual_forecast_pdf(
 
 
 @router.get("/reporte-mensual/{mes}")
+@limiter.limit(COMPUTE_LIMIT)
 def monthly_report_pdf(
+    request: Request,
     mes: str = Path(..., max_length=20, pattern=schemas.NO_CONTROL_CHARACTERS),
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
@@ -350,7 +365,9 @@ def monthly_report_pdf(
 
 
 @router.get("/prediccion-categorias/{categoria}")
+@limiter.limit(COMPUTE_LIMIT)
 def category_forecast_pdf(
+    request: Request,
     categoria: str = Path(
         ..., max_length=schemas.MAX_CATEGORY_LENGTH, pattern=schemas.NO_CONTROL_CHARACTERS
     ),

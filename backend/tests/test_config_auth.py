@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from app.api.analytics_routes import content_disposition
 from app.core import security
-from app.core.config import DEFAULT_CORS_ORIGINS, Settings
+from app.core.config import DEFAULT_CORS_ORIGINS, DEFAULT_TRUSTED_PROXIES, SECRET_KEY_PLACEHOLDER, Settings
 from app.models import models
 from app.schemas import schemas
 from app.services import user_service
@@ -25,8 +25,13 @@ LEGACY_HASHES = {
 }
 
 
+STRONG_SECRET = "a" * 32
+SSL_DATABASE_URL = "postgresql+psycopg2://u:p@db.example/predicta?sslmode=require"
+
+
 def _settings(**values):
-    base = {"database_url": "sqlite:///:memory:", "secret_key": "x", "_env_file": None}
+    """Settings that pass every production rule unless a test overrides one."""
+    base = {"database_url": SSL_DATABASE_URL, "secret_key": STRONG_SECRET, "_env_file": None}
     return Settings(**{**base, **values})
 
 
@@ -56,6 +61,54 @@ def test_wildcard_cors_is_allowed_in_development():
 def test_unset_environment_means_production(monkeypatch):
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     assert _settings().environment == "production"
+
+
+@pytest.mark.parametrize("secret", ["x", "a" * 31, SECRET_KEY_PLACEHOLDER])
+def test_production_rejects_a_weak_secret(secret):
+    with pytest.raises(ValidationError, match="SECRET_KEY debe tener al menos 32"):
+        _settings(secret_key=secret, environment="production")
+
+
+@pytest.mark.parametrize("environment", ["development", "test"])
+def test_weak_secret_is_accepted_outside_production(environment):
+    assert _settings(secret_key="x", environment=environment).secret_key == "x"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "postgresql+psycopg2://u:p@db.example/predicta",
+        "postgresql+psycopg2://u:p@db.example/predicta?sslmode=prefer",
+        "postgresql+psycopg2://u:p@db.example/predicta?sslmode=disable",
+        "sqlite:///:memory:",
+    ],
+)
+def test_production_requires_ssl_to_the_database(url):
+    with pytest.raises(ValidationError, match="sslmode=require"):
+        _settings(database_url=url, environment="production")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        SSL_DATABASE_URL,
+        "postgresql+psycopg2://u:p@db.example/predicta?sslmode=verify-full",
+        # Neon's connection string.
+        "postgresql+psycopg2://u:p@ep-x.neon.tech/predicta?sslmode=require&channel_binding=require",
+    ],
+)
+def test_production_accepts_secure_ssl_modes(url):
+    assert _settings(database_url=url, environment="production").database_url == url
+
+
+def test_database_without_ssl_is_accepted_in_development():
+    assert _settings(database_url="sqlite:///:memory:", environment="development")
+
+
+def test_trusted_proxies_default_to_localhost_and_split_on_commas(monkeypatch):
+    monkeypatch.delenv("TRUSTED_PROXIES", raising=False)
+    assert _settings().trusted_proxies == DEFAULT_TRUSTED_PROXIES == ["127.0.0.1"]
+    assert _settings(trusted_proxies=" 10.0.0.1, 10.0.0.0/8 ,").trusted_proxies == ["10.0.0.1", "10.0.0.0/8"]
 
 
 def test_app_refuses_to_start_with_wildcard_cors_in_production():
@@ -102,6 +155,7 @@ def test_env_example_holds_only_placeholders():
         "CORS_ORIGINS",
         "LOG_LEVEL",
         "MAX_UPLOAD_ROWS",
+        "TRUSTED_PROXIES",
     }
     assert "CHANGE_ME" in values["DATABASE_URL"]
     assert values["SECRET_KEY"].startswith("CHANGE_ME")

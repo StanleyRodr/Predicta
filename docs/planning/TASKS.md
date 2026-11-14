@@ -49,7 +49,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 038 | Carga de varios archivos a la vez | `docs/planning/plans/038-carga-varios-archivos.md` | P1 | M | 035 | HECHO |
 | 039 | Auditoría de seguridad | `docs/planning/plans/039-auditoria-seguridad.md` | P1 | M | — | HECHO |
 | 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | HECHO |
-| 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | TODO |
+| 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | HECHO |
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | HECHO |
@@ -585,12 +585,12 @@ Plan: `docs/planning/plans/040-validacion-campos.md` | Depende de: 039 | Esfuerz
 
 Plan: `docs/planning/plans/041-endurecer-api.md` | Depende de: 039 | Esfuerzo: M
 
-- [ ] 041.1 Validar `SECRET_KEY` y SSL en producción. Verificar: tests de configuración en producción y desarrollo.
-- [ ] 041.2 Leer la IP real tras un proxy confiable. Verificar: test con proxy confiable y no confiable.
-- [ ] 041.3 Aplicar límites por ruta y global con 429 en español. Verificar: `pytest tests/test_rate_limit.py`.
-- [ ] 041.4 Agregar cabeceras y ocultar Swagger en producción. Verificar: `pytest tests/test_security_headers.py`.
-- [ ] 041.5 Documentar `TRUSTED_PROXIES` y los límites. Verificar: la verificación global termina con código 0.
-- [ ] 041.6 Limitar el tamaño del cuerpo antes de leerlo (S-20) y corregir el 500 de `GET /` (S-21). Verificar: `pytest tests/test_body_limit.py` y `GET /` responde 200.
+- [x] 041.1 Validar `SECRET_KEY` y SSL en producción. Verificar: tests de configuración en producción y desarrollo.
+- [x] 041.2 Leer la IP real tras un proxy confiable. Verificar: test con proxy confiable y no confiable.
+- [x] 041.3 Aplicar límites por ruta y global con 429 en español. Verificar: `pytest tests/test_rate_limit.py`. El global va por la dependencia `enforce_default_limit`, porque `SlowAPIMiddleware` no ve las rutas de los routers incluidos.
+- [x] 041.4 Agregar cabeceras y ocultar Swagger en producción. Verificar: `pytest tests/test_security_headers.py`.
+- [x] 041.5 Documentar `TRUSTED_PROXIES` y los límites. Verificar: la verificación global termina con código 0.
+- [x] 041.6 Limitar el tamaño del cuerpo antes de leerlo (S-20) y corregir el 500 de `GET /` (S-21). Verificar: `pytest tests/test_body_limit.py` y `GET /` responde 200.
 
 ### Tarea 042 — Verificación de correo
 

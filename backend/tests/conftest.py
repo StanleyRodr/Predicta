@@ -9,6 +9,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only-0123456789"
 # Do not inherit a developer's CORS settings from backend/.env.
 os.environ["ENVIRONMENT"] = "test"
 os.environ["CORS_ORIGINS"] = "http://localhost:5173"
+os.environ["TRUSTED_PROXIES"] = "127.0.0.1"
 
 import pytest
 from fastapi.testclient import TestClient

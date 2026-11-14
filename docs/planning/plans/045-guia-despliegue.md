@@ -73,7 +73,7 @@ Tomadas por el usuario el 2026-11-11.
 
 - **`backend/railway.json`** (config as code):
   - raíz del servicio `backend/`;
-  - comando de inicio `uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips "*"`, con una réplica y un worker, por el limitador en memoria de la 041;
+  - comando de inicio `uvicorn app.main:app --host 0.0.0.0 --port $PORT --no-proxy-headers`, con una réplica y un worker, por el limitador en memoria de la 041. La app ya lee `X-Forwarded-For` con su propio `ProxyHeadersMiddleware` según `TRUSTED_PROXIES` (041), así que el de uvicorn se apaga para que ese sea el único lugar (cambio del 2026-11-14);
   - comando de pre-despliegue `alembic upgrade head`: si la migración falla, Railway no publica la versión nueva;
   - `healthcheckPath` en `/health/db`, para que una versión sin base no reciba tráfico;
   - reinicio ante fallos.
@@ -119,6 +119,7 @@ Escrita para quien despliega por primera vez. Cada paso dice qué hacer, dónde 
    - el login sin verificar da 403;
    - el sexto login fallido en un minuto da 429;
    - el log de Railway muestra la IP del cliente, no la del proxy;
+   - una petición con `X-Forwarded-For: 203.0.113.7` falsificada no cambia la IP registrada. Con `TRUSTED_PROXIES=*`, `ProxyHeadersMiddleware` toma la dirección de más a la izquierda; si Railway agrega la IP real al final en vez de reemplazar la cabecera, `*` dejaría elegir la IP y saltar el límite. En ese caso se usa la red del proxy de Railway en `TRUSTED_PROXIES` en lugar de `*` (hallado en la 041);
    - la consola del navegador no muestra violaciones de CSP.
 10. Qué hacer si algo falla:
     - dónde ver los logs de Railway y Vercel;

@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-14.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (un límite mal puesto o una IP mal leída bloquea a usuarios legítimos)
@@ -98,6 +98,20 @@ Tomadas por el usuario el 2026-11-11.
 - Toda ruta tiene un límite: el suyo o el global.
 - La IP del límite es la del cliente cuando viene de un proxy confiable, y la de la conexión en otro caso.
 - Con `ENVIRONMENT=production`, la app no arranca con secreto débil ni sin SSL, y no expone Swagger.
+
+## Cambios respecto del plan al ejecutarlo
+
+- **Límite global por dependencia, no por `SlowAPIMiddleware`.** FastAPI 0.143 guarda cada router incluido como una sola entrada `_IncludedRouter` en `app.routes`. El middleware de slowapi busca ahí el handler, no lo encuentra y trata como exentas todas las rutas de `/users`, `/etl` y `/analytics`: el global solo habría cubierto `/health` y `/`. Se reemplazó por la dependencia de la app `rate_limit.enforce_default_limit`, que corre después del ruteo, ya conoce el endpoint y aplica `default_limits` a las rutas sin límite propio. No es la condición STOP (no rompe tests); se resolvió dentro del alcance.
+- **Contadores por endpoint** (`key_style="endpoint"`): con la clave por URL, `/analytics/reporte-mensual/{mes}` y `/analytics/prediccion-categorias/{categoria}` abrían un contador nuevo por cada valor del parámetro.
+- **Una petición rechazada con 422 no cuenta**: FastAPI valida el cuerpo antes de llamar al decorador de slowapi. Esas peticiones no tocan la base ni bcrypt.
+- **`create_app(settings)`** en `app/main.py`, para probar la configuración de producción (Swagger 404, HSTS, `GET /`) sin otro proceso. `app = create_app(settings)` sigue siendo el punto de entrada.
+- **Orden de middlewares** (de afuera hacia adentro): `ProxyHeadersMiddleware` → cabeceras → CORS → tamaño del cuerpo → 500 genérico → rutas. Así el 413 y el 429 llevan cabeceras CORS y el frontend lee su mensaje; CORS expone `Retry-After`.
+- **`Cache-Control: no-store`** en todo `/users`, `/etl` y `/analytics`, también en login y registro (el token viaja en la respuesta).
+- **Cuerpo `chunked` demasiado grande:** el middleware corta la lectura al pasar el límite y reemplaza la respuesta de la app por el 413.
+- **`TRUSTED_PROXIES=*` y la IP de más a la izquierda:** con `*`, `ProxyHeadersMiddleware` toma la primera dirección de `X-Forwarded-For`. Si el proxy de Railway agrega la IP real al final en vez de reemplazar la cabecera, un cliente elegiría su IP. La 045 lo comprueba con una cabecera falsificada y, si pasa, usa la red del proxy en lugar de `*`. También se cambió el comando de inicio de la 045 a `--no-proxy-headers`, para que la app sea el único lugar que lee la cabecera.
+- **Configuración local:** un `backend/.env` sin `ENVIRONMENT` ahora corre como producción y no arranca con un secreto corto o sin SSL. Hay que poner `ENVIRONMENT=development` en el `.env` local.
+- **`channel_binding=require`:** psycopg2-binary 2.9.13 trae libpq 18, que lo reconoce. Contra el PostgreSQL local sin SSL responde "channel binding required, but SSL not in use", así que el parámetro se acepta. La conexión real a Neon se prueba en la 045.
+- **Pruebas:** los casos de configuración se agregaron a `tests/test_config_auth.py`, que ya tenía los de `Settings`.
 
 ## Fuera de alcance
 

@@ -7,12 +7,13 @@ authenticated user.
 import json
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from loguru import logger
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
+from app.core.rate_limit import UPLOAD_LIMIT, limiter
 from app.models import models
 from app.schemas import schemas
 from app.services import column_mapping, etl_service
@@ -66,7 +67,9 @@ def _http_error(exc: Exception, failure_detail: str) -> HTTPException:
 # Declared as plain functions so FastAPI runs this blocking work in its
 # threadpool instead of stalling the event loop for every other request.
 @router.post("/analizar-columnas", response_model=schemas.ColumnAnalysis)
+@limiter.limit(UPLOAD_LIMIT)
 def analizar_columnas(
+    request: Request,
     file: UploadFile = File(...),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
@@ -80,7 +83,9 @@ def analizar_columnas(
 
 
 @router.post("/upload-ventas", response_model=schemas.UploadResponse)
+@limiter.limit(UPLOAD_LIMIT)
 def upload_ventas(
+    request: Request,
     file: UploadFile = File(...),
     mapeo: str | None = Form(None),
     db: Session = Depends(get_db),

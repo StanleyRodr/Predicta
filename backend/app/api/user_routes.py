@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core import security
 from app.core.database import get_db
-from app.core.rate_limit import limiter
+from app.core.rate_limit import LOGIN_LIMIT, REGISTER_LIMIT, limiter
 from app.models import models
 from app.schemas import schemas
 from app.services import user_service
@@ -25,7 +25,10 @@ DUPLICATE_ACCOUNT = "El correo electronico o el nombre de usuario ya se encuentr
     response_model=schemas.UserResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)) -> models.Usuario:
+@limiter.limit(REGISTER_LIMIT)
+def register_user(
+    request: Request, user: schemas.UserCreate, db: Session = Depends(get_db)
+) -> models.Usuario:
     """Create a new user account."""
     if user_service.get_user_by_email(db, email=user.correo_electronico):
         raise HTTPException(
@@ -44,7 +47,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)) -> mo
 
 
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit(LOGIN_LIMIT)
 def login(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),

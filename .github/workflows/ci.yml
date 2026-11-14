@@ -17,6 +17,8 @@ jobs:
     env:
       DATABASE_URL: postgresql+psycopg2://predicta:predicta@localhost:5432/predicta_ci
       SECRET_KEY: ci-only-secret-key-not-used-in-production
+      # Unset would mean production, which demands SSL to the database and hides /docs.
+      ENVIRONMENT: test
     services:
       postgres:
         image: postgres:17
