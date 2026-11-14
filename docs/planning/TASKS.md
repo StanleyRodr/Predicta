@@ -633,7 +633,7 @@ Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 |
 - [ ] 045.3 Crear `frontend/vercel.json` con cabeceras y reescritura. Verificar: test que compara su CSP con la del `<meta>`.
 - [ ] 045.4 Crear `backend/railway.json` y `backend/.python-version`. Verificar: JSON válido contra el esquema de Railway.
 - [ ] 045.5 Escribir `docs/despliegue.md`. Verificar: cada variable de `.env.example` y cada punto de la checklist aparecen.
-- [ ] 045.6 Desplegar con la guía. Incluye la prueba real con Brevo que dejó la 042. Verificar: la checklist se cumple sobre los dominios reales.
+- [ ] 045.6 Desplegar con la guía. Verificar: la checklist se cumple sobre los dominios reales.
 - [ ] 045.7 Repetir ZAP baseline contra los dominios reales. Verificar: las alertas de cabeceras de la 039 desaparecen.
 - [ ] 045.8 Verificación global. Verificar: todos los comandos terminan con código 0.
 

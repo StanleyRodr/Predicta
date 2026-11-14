@@ -103,7 +103,7 @@ Escrita para quien despliega por primera vez. Cada paso dice qué hacer, dónde 
 1. Cómo se conectan las piezas: navegador → Vercel (frontend) → Railway (API) → Neon (PostgreSQL), y Railway → Brevo (correo). Incluye un diagrama simple.
 2. Costos y por qué se eligió esta combinación, con enlaces a las páginas oficiales de precios.
 3. Cuentas: GitHub, Vercel, Railway (con tarjeta), Neon y Brevo.
-4. Brevo: crear la cuenta, verificar la dirección remitente y generar la clave SMTP. Antes de desplegar, hacer la prueba real que la 042 dejó pendiente (decisión del 2026-11-14): con las variables SMTP en el `backend/.env` local, registrarse con un correo propio, recibir el enlace y entrar. Si Brevo exige un dominio propio para enviar a destinatarios externos, es el STOP de la 042.
+4. Brevo: crear la cuenta, verificar la dirección remitente y generar la clave SMTP. La cuenta y el remitente ya existen: el usuario los creó para la prueba real de la 042 (2026-11-14). En Railway se cargan las mismas variables SMTP; la guía advierte que `uvicorn --reload` no relee el `.env`.
 5. Neon: crear el proyecto en la región elegida y copiar `DATABASE_URL`.
 6. Railway:
    - crear el servicio desde el repositorio con raíz `backend/`;

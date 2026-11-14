@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** HECHO el 2026-11-14, salvo la prueba real con Brevo, que pasa a la 045.
+- **Estado:** HECHO el 2026-11-14.
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** HIGH (la migración borra todos los usuarios y sus datos; el login cambia para todos)
@@ -124,7 +124,8 @@ Tomadas por el usuario el 2026-11-11.
 ## Cambios respecto del plan al ejecutarlo
 
 - **Migración en la base local:** el STOP se resolvió con el usuario el 2026-11-14. Se respaldó `predicta_db` con `pg_dump -Fc` (74 MB, fuera del repo, en el scratchpad de la sesión) y se aplicó la `0007`: borró 7 usuarios, 2.457.393 ventas, 33 cargas y 16 predicciones, y conservó los 2 roles. Antes se probó en una base temporal `predicta_mig042`: con un usuario y una venta sembrados en la `0006`, el `upgrade` dejó `usuarios` y `ventas` vacías y `roles` con 2; `check`, `downgrade -1` y `upgrade` pasaron. La base temporal se borró.
-- **Prueba real con Brevo:** pasa a la 045, cuando el usuario cree la cuenta (decisión del 2026-11-14). En esta tarea el SMTP se prueba con un `smtplib.SMTP` simulado y el flujo completo, con el servidor real y `EMAIL_BACKEND=console`.
+- **Prueba real con Brevo (2026-11-14):** el usuario creó la cuenta, verificó el remitente y configuró `smtp-relay.brevo.com:587` en su `backend/.env` local. Se registró con un correo propio, recibió el enlace, lo abrió y entró. También cambió el correo de la cuenta con éxito (enlace al nuevo y aviso al anterior), y el remitente se ve bien. Brevo no exigió dominio propio, así que el STOP no aplicó. En los tests el SMTP se prueba con un `smtplib.SMTP` simulado.
+- **`uvicorn --reload` no relee el `.env`:** solo reinicia al cambiar un `.py`. En la prueba, el primer registro salió por `console` porque el `.env` cambió con el servidor ya levantado. Tras reiniciarlo, "Reenviar enlace" lo envió por Brevo.
 - **`FRONTEND_URL` con `https://` en producción:** se agregó a la validación de arranque, porque un enlace a `http://localhost` en un correo real no sirve.
 - **El backend `console` registra el texto decodificado** (destinatario, asunto y cuerpo), no el MIME. En quoted-printable los saltos suaves cortaban el enlace y no se podía copiar.
 - **Fixture `outbox` con `autouse`:** captura los correos de todos los tests, así ninguno llama al backend real. Los helpers `last_token`, `confirm_email` y `register_verified` de `conftest.py` abren el enlace como lo haría el dueño. Los tests que registraban y entraban en el mismo paso ahora confirman el correo antes.
