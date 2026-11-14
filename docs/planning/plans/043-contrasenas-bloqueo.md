@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** HECHO el 2026-11-14. Falta la prueba real con Brevo del restablecimiento, que hace el usuario en local.
+- **Estado:** HECHO el 2026-11-14.
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** HIGH (cambia el login y la validación de cada token)
@@ -121,6 +121,7 @@ Para que el tiempo del 401 no revele si el correo existe, el login con un usuari
 - **Login con `response_model=TokenResponse`**, y `PUT /users/me/password` responde igual.
 - **Migración en la base local:** la `0008` solo agrega columnas, así que se aplicó sin STOP. Antes se probó en una base temporal `predicta_mig043` (`upgrade`, `check`, `downgrade -1` y `upgrade`); una fila existente quedó en `(0, 0, NULL)`. Las sesiones abiertas antes de la migración piden entrar de nuevo, porque su JWT no trae `ver`.
 - **Frontend:** `lib/linkToken.ts` (`useLinkToken` y `MISSING_TOKEN`) es el lector del fragmento que comparten `VerifyEmailPage` y `ResetPasswordPage`. El cambio de contraseña vive en `components/auth/PasswordChangeCard.tsx`, montado en el perfil. El formulario de datos del perfil se llama "Datos de la cuenta" para distinguir sus campos en los tests. En el test de olvido con un correo inválido, el `type="email"` de jsdom frena el envío antes que Zod; se comprueba que no se llama a la API.
+- **Prueba real con Brevo (2026-11-14):** el usuario, en local, pidió el restablecimiento, recibió el correo, eligió una contraseña nueva y entró; el enlace no sirvió una segunda vez. También cambió la contraseña desde el perfil y recibió el aviso, y probó el bloqueo tras 10 fallos con su correo de aviso. Todo salió bien.
 - **Límites:** `PASSWORD_CHANGE_LIMIT` (5/min), `FORGOT_PASSWORD_LIMIT` (3/min) y `RESET_PASSWORD_LIMIT` (10/min), con sus tests en `tests/test_rate_limit.py`.
 
 ## Fuera de alcance
