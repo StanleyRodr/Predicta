@@ -88,3 +88,13 @@ describe("field rules shared with the backend", () => {
     );
   });
 });
+
+describe("profile current password", () => {
+  const base = { nombre_usuario: "ana", correo_electronico: "ana@example.com" };
+
+  it("is optional and limited to 72 bytes", () => {
+    expect(profileSchema.safeParse(base).success).toBe(true);
+    expect(profileSchema.safeParse({ ...base, password_actual: "é".repeat(36) }).success).toBe(true);
+    expect(profileSchema.safeParse({ ...base, password_actual: "é".repeat(37) }).success).toBe(false);
+  });
+});

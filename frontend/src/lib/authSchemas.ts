@@ -49,9 +49,16 @@ export const registerSchema = z.object({
   password: passwordSchema,
 });
 
+export const PASSWORD_REQUIRED_FOR_EMAIL = "Escribe tu contraseña actual para cambiar el correo.";
+
 export const profileSchema = z.object({
   nombre_usuario: usernameSchema,
   correo_electronico: emailSchema,
+  // Only needed when the e-mail changes; ProfilePage enforces that case.
+  password_actual: z
+    .string()
+    .refine((value) => utf8Length(value) <= MAX_PASSWORD_BYTES, PASSWORD_TOO_LONG)
+    .optional(),
 });
 
 export type LoginForm = z.infer<typeof loginSchema>;

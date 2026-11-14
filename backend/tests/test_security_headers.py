@@ -21,6 +21,12 @@ def production_client():
         secret_key="a" * 32,
         environment="production",
         cors_origins="https://predicta.example",
+        email_backend="smtp",
+        smtp_host="smtp.example.com",
+        smtp_user="usuario",
+        smtp_password="clave-smtp",
+        email_from="Predicta <no-responder@example.com>",
+        frontend_url="https://predicta.example",
         _env_file=None,
     )
     # Without ``with``, the lifespan (and its database check) does not run.

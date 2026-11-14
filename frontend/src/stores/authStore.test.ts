@@ -7,6 +7,8 @@ const user = {
   correo_electronico: "ana@example.com",
   id_rol: 2,
   fecha_registro: "2026-01-01T00:00:00Z",
+  correo_verificado: true,
+  correo_pendiente: null,
 };
 
 describe("auth store", () => {

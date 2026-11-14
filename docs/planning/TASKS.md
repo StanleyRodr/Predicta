@@ -50,7 +50,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 039 | Auditoría de seguridad | `docs/planning/plans/039-auditoria-seguridad.md` | P1 | M | — | HECHO |
 | 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | HECHO |
 | 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | HECHO |
-| 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | TODO |
+| 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | HECHO |
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | HECHO |
 | 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | TODO |
@@ -596,12 +596,12 @@ Plan: `docs/planning/plans/041-endurecer-api.md` | Depende de: 039 | Esfuerzo: M
 
 Plan: `docs/planning/plans/042-verificacion-correo.md` | Depende de: 040, 041 | Esfuerzo: L
 
-- [ ] 042.1 Crear `email_service` y sus variables. Verificar: tests con `console` y SMTP simulado; producción sin SMTP no arranca.
-- [ ] 042.2 Crear la migración `0007` que borra los usuarios. Verificar: STOP y confirmación antes de aplicarla; `upgrade`, `check` y `downgrade -1` pasan.
-- [ ] 042.3 Crear `token_service`. Verificar: solo se guarda el hash y un token sirve una vez.
-- [ ] 042.4 Exigir la verificación en el login y agregar reenvío y confirmación. Verificar: `pytest tests/test_email_verification.py`.
-- [ ] 042.5 Cambiar el correo con contraseña y confirmación. Verificar: tests de `correo_pendiente`.
-- [ ] 042.6 Agregar `VerifyEmailPage` y los cambios en registro, login y perfil. Verificar: RTL de cada página.
+- [x] 042.1 Crear `email_service` y sus variables. Verificar: tests con `console` y SMTP simulado; producción sin SMTP no arranca.
+- [x] 042.2 Crear la migración `0007` que borra los usuarios. Verificar: STOP y confirmación antes de aplicarla; `upgrade`, `check` y `downgrade -1` pasan. Aplicada en local el 2026-11-14 tras un `pg_dump`.
+- [x] 042.3 Crear `token_service`. Verificar: solo se guarda el hash y un token sirve una vez.
+- [x] 042.4 Exigir la verificación en el login y agregar reenvío y confirmación. Verificar: `pytest tests/test_email_verification.py`.
+- [x] 042.5 Cambiar el correo con contraseña y confirmación. Verificar: tests de `correo_pendiente`.
+- [x] 042.6 Agregar `VerifyEmailPage` y los cambios en registro, login y perfil. Verificar: RTL de cada página.
 
 ### Tarea 043 — Contraseñas, bloqueo y revocación de sesiones
 
@@ -633,7 +633,7 @@ Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 |
 - [ ] 045.3 Crear `frontend/vercel.json` con cabeceras y reescritura. Verificar: test que compara su CSP con la del `<meta>`.
 - [ ] 045.4 Crear `backend/railway.json` y `backend/.python-version`. Verificar: JSON válido contra el esquema de Railway.
 - [ ] 045.5 Escribir `docs/despliegue.md`. Verificar: cada variable de `.env.example` y cada punto de la checklist aparecen.
-- [ ] 045.6 Desplegar con la guía. Verificar: la checklist se cumple sobre los dominios reales.
+- [ ] 045.6 Desplegar con la guía. Incluye la prueba real con Brevo que dejó la 042. Verificar: la checklist se cumple sobre los dominios reales.
 - [ ] 045.7 Repetir ZAP baseline contra los dominios reales. Verificar: las alertas de cabeceras de la 039 desaparecen.
 - [ ] 045.8 Verificación global. Verificar: todos los comandos terminan con código 0.
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCurrentUser, loginUser, registerUser } from "./auth";
+import { confirmEmail, getCurrentUser, loginUser, registerUser, resendVerification } from "./auth";
 import { http } from "./http";
 
 afterEach(() => vi.restoreAllMocks());
@@ -30,5 +30,15 @@ describe("auth API", () => {
 
     expect(post).toHaveBeenCalledWith("/users/register", expect.any(Object));
     expect(get).toHaveBeenCalledWith("/users/me");
+  });
+
+  it("posts the e-mail to resend and the token to confirm", async () => {
+    const post = vi.spyOn(http, "post").mockResolvedValue({ data: { message: "ok" } } as never);
+
+    await resendVerification("ana@example.com");
+    await confirmEmail("abc");
+
+    expect(post).toHaveBeenNthCalledWith(1, "/users/verificacion/reenviar", { correo_electronico: "ana@example.com" });
+    expect(post).toHaveBeenNthCalledWith(2, "/users/verificacion/confirmar", { token: "abc" });
   });
 });

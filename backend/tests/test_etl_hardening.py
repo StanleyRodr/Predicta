@@ -9,6 +9,7 @@ import pytest
 
 from app.models import models
 from app.services import etl_service
+from tests.conftest import register_verified
 
 HEADER = b"producto,monto,categoria,fecha\n"
 
@@ -197,7 +198,7 @@ def _second_user_headers(client):
         "correo_electronico": "otro@example.com",
         "password": "StrongPass1",
     }
-    assert client.post("/users/register", json=credentials).status_code == 201
+    register_verified(client, credentials)
     login = client.post(
         "/users/login",
         data={"username": credentials["correo_electronico"], "password": credentials["password"]},

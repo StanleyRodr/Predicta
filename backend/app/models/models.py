@@ -21,6 +21,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -59,14 +60,51 @@ class Usuario(Base):
     fecha_registro: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    # Login is refused until a link sent to the address has been opened.
+    correo_verificado: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
+    # A requested new address; it replaces correo_electronico once confirmed.
+    correo_pendiente: Mapped[str | None] = mapped_column(String(100))
 
     rol: Mapped["Rol | None"] = relationship("Rol", lazy="joined")
     ventas: Mapped[list["Venta"]] = relationship(
         "Venta", back_populates="dueno", cascade="all, delete-orphan"
     )
 
+    __table_args__ = (
+        UniqueConstraint("correo_pendiente", name="uq_usuarios_correo_pendiente"),
+    )
+
     def __repr__(self) -> str:
         return f"<Usuario {self.nombre_usuario}>"
+
+
+class TokenUsuario(Base):
+    """Single-use link token; only its SHA-256 is stored.
+
+    ``tipo`` is ``verificacion`` (confirm an e-mail address) or ``restablecer``
+    (password reset, task 043). Managed only through ``token_service``.
+    """
+
+    __tablename__ = "tokens_usuario"
+
+    id_token: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id_usuario: Mapped[int] = mapped_column(
+        Integer, ForeignKey("usuarios.id_usuario", ondelete="CASCADE"), nullable=False, index=True
+    )
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    usado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    creado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    __table_args__ = (
+        UniqueConstraint("token_hash", name="uq_tokens_usuario_hash"),
+        CheckConstraint("tipo IN ('verificacion', 'restablecer')", name="ck_tokens_usuario_tipo"),
+    )
 
 
 class Venta(Base):

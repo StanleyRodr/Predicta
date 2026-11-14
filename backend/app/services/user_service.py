@@ -97,3 +97,31 @@ def authenticate_user(db: Session, email: str, password: str) -> models.Usuario 
     if not security.verify_password(password, user.contrasena_hash):
         return None
     return user
+
+
+def email_in_use(db: Session, email: str, except_user_id: int | None = None) -> bool:
+    """True if another account uses ``email`` as its address or as its pending one."""
+    normalized = email.strip().lower()
+    query = db.query(models.Usuario).filter(
+        (func.lower(models.Usuario.correo_electronico) == normalized)
+        | (func.lower(models.Usuario.correo_pendiente) == normalized)
+    )
+    if except_user_id is not None:
+        query = query.filter(models.Usuario.id_usuario != except_user_id)
+    return db.query(query.exists()).scalar() is True
+
+
+def confirm_email(db: Session, user: models.Usuario) -> bool:
+    """Apply a verification link to ``user``; the caller commits.
+
+    A pending address replaces the current one. Returns False, and drops the
+    pending address, when another account took it in the meantime.
+    """
+    if user.correo_pendiente:
+        pending = user.correo_pendiente
+        user.correo_pendiente = None
+        if get_user_by_email(db, pending) is not None:
+            return False
+        user.correo_electronico = pending
+    user.correo_verificado = True
+    return True

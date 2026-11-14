@@ -118,15 +118,52 @@ class UserResponse(BaseModel):
     correo_electronico: str
     id_rol: int | None
     fecha_registro: datetime
+    correo_verificado: bool
+    correo_pendiente: str | None = Field(
+        None, description="Correo nuevo pedido; reemplaza al actual cuando se confirma."
+    )
 
     model_config = {"from_attributes": True}
 
 
+def _check_password_length(value: str | None) -> str | None:
+    if value is not None and len(value.encode("utf-8")) > MAX_PASSWORD_BYTES:
+        raise ValueError(PASSWORD_TOO_LONG)
+    return value
+
+
+# A password checked against the stored hash: no strength rules, only the bcrypt limit.
+CurrentPassword = Annotated[str, AfterValidator(_check_password_length)]
+
+
 class UserUpdate(BaseModel):
-    """Payload accepted by ``PUT /users/me`` for profile updates."""
+    """Payload accepted by ``PUT /users/me`` for profile updates.
+
+    Changing the e-mail requires ``password_actual``; the new address waits in
+    ``correo_pendiente`` until its link is opened.
+    """
 
     nombre_usuario: Username | None = None
     correo_electronico: Email | None = None
+    password_actual: CurrentPassword | None = None
+
+
+class ResendVerificationRequest(BaseModel):
+    """Payload of ``POST /users/verificacion/reenviar``."""
+
+    correo_electronico: Email
+
+
+class TokenRequest(BaseModel):
+    """A single-use token taken from the fragment of an e-mailed link."""
+
+    token: str = Field(..., min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class MessageResponse(BaseModel):
+    """A Spanish message for the user, without account details."""
+
+    message: str
 
 
 class SeriesPoint(BaseModel):

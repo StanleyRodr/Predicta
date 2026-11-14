@@ -54,6 +54,8 @@ def test_limits_match_the_plan():
     assert rate_limit.UPLOAD_LIMIT == "10/minute"
     assert rate_limit.COMPUTE_LIMIT == "20/minute"
     assert rate_limit.GLOBAL_LIMIT == "120/minute"
+    assert rate_limit.RESEND_VERIFICATION_LIMIT == "3/minute"
+    assert rate_limit.CONFIRM_LINK_LIMIT == "10/minute"
 
 
 def test_fourth_registration_in_a_minute_is_rejected(client, rate_limited):
@@ -67,6 +69,19 @@ def test_sixth_login_in_a_minute_is_rejected(client, rate_limited):
     for _ in range(_limit(rate_limit.LOGIN_LIMIT)):
         assert client.post("/users/login", data=form).status_code == 401
     _assert_too_many(client.post("/users/login", data=form))
+
+
+@pytest.mark.parametrize(
+    ("path", "body", "limit"),
+    [
+        ("/users/verificacion/reenviar", {"correo_electronico": "nadie@example.com"}, rate_limit.RESEND_VERIFICATION_LIMIT),
+        ("/users/verificacion/confirmar", {"token": "desconocido"}, rate_limit.CONFIRM_LINK_LIMIT),
+    ],
+)
+def test_verification_routes_are_limited(client, rate_limited, path, body, limit):
+    for _ in range(_limit(limit)):
+        assert client.post(path, json=body).status_code != 429
+    _assert_too_many(client.post(path, json=body))
 
 
 @pytest.mark.parametrize("path", ["/etl/analizar-columnas", "/etl/upload-ventas"])

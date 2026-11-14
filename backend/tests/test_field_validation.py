@@ -7,6 +7,7 @@ from openpyxl import load_workbook
 
 from app.schemas import schemas
 from app.services.report_service import neutralize_formula
+from tests.conftest import confirm_email
 
 VALID_USER = {
     "nombre_usuario": "ana_maria",
@@ -100,6 +101,7 @@ def test_register_rejects_same_email_with_other_case(client):
 
 def test_login_ignores_email_case(client):
     assert _register(client).status_code == 201
+    confirm_email(client, "ana@example.com")
 
     login = client.post(
         "/users/login",
@@ -109,13 +111,16 @@ def test_login_ignores_email_case(client):
     assert login.status_code == 200
 
 
-def test_profile_update_lowercases_email(client, auth_headers):
+def test_profile_update_lowercases_email(client, auth_headers, user_credentials):
     response = client.put(
-        "/users/me", headers=auth_headers, json={"correo_electronico": "Nuevo@Example.com"}
+        "/users/me",
+        headers=auth_headers,
+        json={"correo_electronico": "Nuevo@Example.com", "password_actual": user_credentials["password"]},
     )
 
     assert response.status_code == 200
-    assert response.json()["correo_electronico"] == "nuevo@example.com"
+    # The new address waits for its link (task 042), already lowercased.
+    assert response.json()["correo_pendiente"] == "nuevo@example.com"
 
 
 def test_profile_update_rejects_invalid_username(client, auth_headers):

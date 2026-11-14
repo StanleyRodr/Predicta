@@ -62,7 +62,7 @@ usuario aprobó su subtarea el 2026-11-11.
 | S-01 | Rate limit solo en `POST /users/login`; registro, carga y cómputo sin límite | Alta | `app/api/user_routes.py:47` es el único `@limiter.limit` | 041 | Corregido en la 041 (2026-11-14) |
 | S-02 | `get_remote_address` detrás de un proxy usa la IP del proxy: un usuario agota el límite de todos | Alta | `app/core/rate_limit.py:18` | 041 | Corregido en la 041 (2026-11-14) |
 | S-20 | La subida no se limita antes de recibirla: Starlette guarda todo el multipart en disco temporal y `read_limited` corta a 25 MB recién después | Alta | `app/api/etl_routes.py:68-104`, `app/services/etl_service.py:324` | 041 (041.6) | Corregido en la 041 (2026-11-14) |
-| S-03 | Sin verificación de correo: cualquiera registra correos ajenos o inventados | Media | `app/api/user_routes.py:23-43` | 042 | Pendiente |
+| S-03 | Sin verificación de correo: cualquiera registra correos ajenos o inventados | Media | `app/api/user_routes.py:23-43` | 042 | Corregido en la 042 (2026-11-14) |
 | S-04 | Sin cambio ni restablecimiento de contraseña; un token robado vale hasta que vence | Media | No existen rutas; `app/core/security.py:27` solo emite `sub` y `exp` | 043 | Pendiente |
 | S-05 | Sin bloqueo por cuenta: con varias IP se prueban contraseñas contra una cuenta sin freno | Media | `app/services/user_service.py:78-90` | 043 | Pendiente |
 | S-06 | Inyección de fórmulas en Excel: un producto `=HYPERLINK(...)` se exporta tal cual | Media | `app/services/report_service.py:201` (`df.to_excel` sin neutralizar) | 040 | Corregido en la 040 (2026-11-11) |

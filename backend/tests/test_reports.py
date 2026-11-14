@@ -16,6 +16,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.database import Base
 from app.models import models
 from app.services import report_service
+from tests.conftest import register_verified
 
 
 def _upload(client, headers, rows):
@@ -56,7 +57,7 @@ def _other_user_headers(client):
         "correo_electronico": "otro@example.com",
         "password": "StrongPass1",
     }
-    assert client.post("/users/register", json=user).status_code == 201
+    register_verified(client, user)
     token = client.post(
         "/users/login",
         data={"username": user["correo_electronico"], "password": user["password"]},

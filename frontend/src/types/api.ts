@@ -4,6 +4,9 @@ export interface User {
   correo_electronico: string;
   id_rol: number | null;
   fecha_registro: string;
+  correo_verificado: boolean;
+  /** New address waiting for its link; it replaces correo_electronico once confirmed. */
+  correo_pendiente: string | null;
 }
 
 export interface LoginResponse {

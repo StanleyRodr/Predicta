@@ -8,6 +8,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { UploadPage } from "./pages/UploadPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { useAuthStore } from "./stores/authStore";
 
 const DashboardPage = lazy(() =>
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route element={<HomePage />} path="/" />
         <Route element={<LoginPage />} path="/login" />
         <Route element={<RegisterPage />} path="/register" />
+        <Route element={<VerifyEmailPage />} path="/verificar-correo" />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route
