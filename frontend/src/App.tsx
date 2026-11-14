@@ -3,11 +3,14 @@ import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-route
 import { getCurrentUser } from "./api/auth";
 import { AppShell, ProtectedRoute, SessionCacheGuard } from "./components/layout";
 import { Spinner } from "./components/ui";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { HomePage } from "./pages/HomePage";
 import { LoginPage } from "./pages/LoginPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { UploadPage } from "./pages/UploadPage";
+import { VerifyEmailPage } from "./pages/VerifyEmailPage";
 import { useAuthStore } from "./stores/authStore";
 
 const DashboardPage = lazy(() =>
@@ -66,6 +69,9 @@ function AppRoutes() {
         <Route element={<HomePage />} path="/" />
         <Route element={<LoginPage />} path="/login" />
         <Route element={<RegisterPage />} path="/register" />
+        <Route element={<VerifyEmailPage />} path="/verificar-correo" />
+        <Route element={<ForgotPasswordPage />} path="/olvide-contrasena" />
+        <Route element={<ResetPasswordPage />} path="/restablecer-contrasena" />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppShell />}>
             <Route

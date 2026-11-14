@@ -64,6 +64,7 @@ def two_users(client, auth_headers, second_user):
 PRIVATE_CASES = [
     ("GET", "/users/me", {}),
     ("PUT", "/users/me", {}),
+    ("PUT", "/users/me/password", {}),
     ("GET", "/analytics/stats", {}),
     ("GET", "/analytics/stats/categories", {}),
     ("GET", "/analytics/stats/temporal", {}),
@@ -120,6 +121,8 @@ def _call(client, headers, method, path, params):
     path_params = {key: value for key, value in params.items() if "{" + key + "}" in path}
     query = {key: value for key, value in params.items() if key not in path_params}
     url = path.format(**path_params)
+    if method == "PUT" and path == "/users/me/password":
+        return client.put(url, headers=headers, json={"password_actual": "StrongPass1", "password_nueva": "OtraClave9"})
     if method == "PUT":
         return client.put(url, headers=headers, json={"nombre_usuario": "second_renamed"})
     if method == "POST" and path in ("/etl/upload-ventas", "/etl/analizar-columnas"):

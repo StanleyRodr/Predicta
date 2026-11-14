@@ -16,7 +16,9 @@ jobs:
         working-directory: backend
     env:
       DATABASE_URL: postgresql+psycopg2://predicta:predicta@localhost:5432/predicta_ci
-      SECRET_KEY: ci-only-secret-key
+      SECRET_KEY: ci-only-secret-key-not-used-in-production
+      # Unset would mean production, which demands SSL to the database and hides /docs.
+      ENVIRONMENT: test
     services:
       postgres:
         image: postgres:17
@@ -41,6 +43,10 @@ jobs:
             backend/requirements.txt
             backend/requirements-dev.txt
       - run: pip install -r requirements.txt -r requirements-dev.txt
+      # PYSEC-2025-183 (CVE-2025-45768, PyJWT): disputed, no fixed release.
+      # Mitigated by requiring a SECRET_KEY of 32+ characters in production
+      # (task 041). Review on every audit (docs/seguridad/auditoria-039.md).
+      - run: pip-audit -r requirements.txt --ignore-vuln PYSEC-2025-183
       - run: ruff check app/
       - run: mypy
       - run: alembic upgrade head
@@ -70,7 +76,27 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # Production dependencies only: dev tools never reach the build.
+      - run: npm audit --omit=dev --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test -- --run
       - run: npm run build
+
+  secrets:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: "8.30.1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install gitleaks (checksum verified)
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "${base}/${archive}"
+          curl -sSfL "${base}/gitleaks_${GITLEAKS_VERSION}_checksums.txt" | grep " ${archive}$" | sha256sum -c -
+          tar -xzf "${archive}" gitleaks
+      - name: Scan the full git history
+        run: ./gitleaks git . --redact --no-banner --exit-code 1

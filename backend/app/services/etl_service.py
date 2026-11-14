@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models import models
+from app.schemas.schemas import CONTROL_CHARACTERS
 from app.services import column_mapping
 from app.services.category_service import normalize_category, normalize_product
 from app.services.errors import UserFacingError
@@ -285,12 +286,16 @@ def build_venta(row: dict[str, Any], user_id: int) -> models.Venta:
     product_name = normalize_product(str(producto))
     if len(product_name) > MAX_PRODUCT_LENGTH:
         raise RowValidationError("el producto supera el largo maximo")
+    if CONTROL_CHARACTERS.search(product_name):
+        raise RowValidationError("el producto contiene caracteres de control")
 
     # An empty spreadsheet cell arrives as NaN, which must not become "Nan".
     raw_category = row.get("categoria")
     category = normalize_category(None if _is_missing(raw_category) else raw_category)
     if category is not None and len(category) > MAX_CATEGORY_LENGTH:
         raise RowValidationError("la categoria supera el largo maximo")
+    if category is not None and CONTROL_CHARACTERS.search(category):
+        raise RowValidationError("la categoria contiene caracteres de control")
 
     if "monto" not in row and "precio_unitario" in row:
         quantity = _parse_quantity(row.get("cantidad"))

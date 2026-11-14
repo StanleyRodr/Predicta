@@ -5,6 +5,7 @@ from datetime import date
 import pytest
 
 from app.models import models
+from tests.conftest import register_verified
 
 
 def _upload(client, headers, rows):
@@ -24,7 +25,7 @@ def _other_headers(client):
         "correo_electronico": "otro@example.com",
         "password": "StrongPass1",
     }
-    assert client.post("/users/register", json=user).status_code == 201
+    register_verified(client, user)
     token = client.post(
         "/users/login",
         data={"username": user["correo_electronico"], "password": user["password"]},

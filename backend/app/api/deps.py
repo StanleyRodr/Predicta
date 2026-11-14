@@ -30,14 +30,16 @@ def get_current_user(
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         sub: str | None = payload.get("sub")
-        if sub is None:
+        version = payload.get("ver")
+        if sub is None or not isinstance(version, int) or isinstance(version, bool):
             raise CREDENTIALS_EXCEPTION
         user_id = int(sub)
     except (InvalidTokenError, TypeError, ValueError):
         raise CREDENTIALS_EXCEPTION from None
 
     user = user_service.get_user_by_id(db, user_id=user_id)
-    if user is None:
+    # A password change or reset raises version_token and closes older sessions.
+    if user is None or user.version_token != version:
         raise CREDENTIALS_EXCEPTION
     return user
 

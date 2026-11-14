@@ -5,10 +5,17 @@ import os
 # Keep tests isolated from a developer's database. The application imports its
 # engine at module load time, so configure SQLite before importing the app.
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
-os.environ.setdefault("SECRET_KEY", "test-secret-key")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-only-0123456789")
 # Do not inherit a developer's CORS settings from backend/.env.
 os.environ["ENVIRONMENT"] = "test"
 os.environ["CORS_ORIGINS"] = "http://localhost:5173"
+os.environ["TRUSTED_PROXIES"] = "127.0.0.1"
+# E-mails are captured by the ``outbox`` fixture, never sent.
+os.environ["EMAIL_BACKEND"] = "console"
+os.environ["FRONTEND_URL"] = "http://localhost:5173"
+
+import re
+from email.message import EmailMessage
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,6 +27,7 @@ from app.core.database import Base, get_db
 from app.core.rate_limit import limiter
 from app.main import app
 from app.models import models
+from app.services import email_service
 
 # Set it to a disposable PostgreSQL database to run the suite on the production
 # engine; every table in it is emptied before each test.
@@ -71,14 +79,50 @@ def test_db(request):
     Base.metadata.drop_all(bind=engine)
 
 
+# Every message the app tried to send during the current test.
+SENT: list[EmailMessage] = []
+TOKEN_IN_LINK = re.compile(r"#token=([A-Za-z0-9_-]+)")
+
+
+@pytest.fixture(autouse=True)
+def outbox(monkeypatch):
+    """Capture e-mails instead of delivering them; returns the list of messages."""
+    SENT.clear()
+    monkeypatch.setattr(email_service, "_deliver", SENT.append)
+    yield SENT
+    SENT.clear()
+
+
+def last_token(to):
+    """Token of the newest link e-mailed to ``to``."""
+    for message in reversed(SENT):
+        if message["To"] == to:
+            match = TOKEN_IN_LINK.search(message.get_content())
+            if match:
+                return match.group(1)
+    raise AssertionError(f"No hay enlace enviado a {to}")
+
+
+def confirm_email(client, correo_electronico):
+    """Open the newest link e-mailed to the address, as its owner would."""
+    response = client.post("/users/verificacion/confirmar", json={"token": last_token(correo_electronico)})
+    assert response.status_code == 200, response.text
+
+
+def register_verified(client, credentials):
+    """Register ``credentials`` and confirm the e-mail."""
+    assert client.post("/users/register", json=credentials).status_code == 201
+    confirm_email(client, credentials["correo_electronico"].strip().lower())
+
+
 def register_and_login(client, nombre_usuario, correo_electronico, password="StrongPass1"):
-    """Create a user and return its Bearer headers."""
+    """Create a verified user and return its Bearer headers."""
     credentials = {
         "nombre_usuario": nombre_usuario,
         "correo_electronico": correo_electronico,
         "password": password,
     }
-    assert client.post("/users/register", json=credentials).status_code == 201
+    register_verified(client, credentials)
     login = client.post("/users/login", data={"username": correo_electronico, "password": password})
     assert login.status_code == 200
     return {"Authorization": f"Bearer {login.json()['access_token']}"}
@@ -118,8 +162,7 @@ def user_credentials(client):
         "correo_electronico": "test@example.com",
         "password": "StrongPass1",
     }
-    response = client.post("/users/register", json=credentials)
-    assert response.status_code == 201
+    register_verified(client, credentials)
 
     login = client.post(
         "/users/login",
@@ -141,3 +184,31 @@ def auth_headers(client, user_credentials):
     )
     assert login.status_code == 200
     return {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+
+class FakeClock:
+    """Replaces ``security.utcnow``; ``advance`` moves time forward."""
+
+    def __init__(self):
+        from datetime import UTC, datetime
+
+        # Real time at start: PyJWT checks "exp" against the real clock.
+        self.now = datetime.now(UTC)
+
+    def __call__(self):
+        return self.now
+
+    def advance(self, **delta):
+        from datetime import timedelta
+
+        self.now += timedelta(**delta)
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    """A controllable clock for lockouts and link expiry (one source of time)."""
+    from app.core import security
+
+    fake = FakeClock()
+    monkeypatch.setattr(security, "utcnow", fake)
+    return fake

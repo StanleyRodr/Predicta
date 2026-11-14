@@ -1,3 +1,13 @@
+[tool.ruff.lint]
+# Security rules (flake8-bandit) on top of ruff's defaults.
+extend-select = ["S"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert by design and use fixed throwaway credentials.
+"tests/**" = ["S101", "S105", "S106", "S107"]
+# Synthetic data and fixed dataset URLs, never user input.
+"scripts/**" = ["S310", "S311"]
+
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI declares dependencies and parameters through default-argument calls.
 extend-immutable-calls = [

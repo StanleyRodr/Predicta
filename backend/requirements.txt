@@ -13,7 +13,7 @@ pydantic[email]==2.14.1
 email-validator==2.3.0
 
 # Authentication
-PyJWT==2.10.1
+PyJWT==2.15.1
 # Used directly; hashes made earlier through passlib keep validating.
 bcrypt==5.0.0
 python-multipart==0.0.32

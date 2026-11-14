@@ -1,8 +1,11 @@
 """FastAPI application factory for the Predicta API.
 
 Bootstraps:
-- CORS middleware (origins from ``CORS_ORIGINS``, see ``app.core.config``)
-- Rate limiting on the login endpoint
+- Client IP from ``X-Forwarded-For`` only behind ``TRUSTED_PROXIES``
+- Security headers, request body size limit, CORS (origins from ``CORS_ORIGINS``)
+- Rate limits per IP: per route where declared, ``GLOBAL_LIMIT`` elsewhere
+  (an app-wide dependency, see ``app.core.rate_limit``)
+- Swagger and ReDoc only outside production
 - Structured logging via loguru
 - API routers (users, ETL, analytics)
 
@@ -13,18 +16,21 @@ starting the server for the first time.
 import sys
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 from starlette.responses import JSONResponse
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from app.api import analytics_routes, etl_routes, user_routes
-from app.core.config import settings
+from app.core.config import Settings, settings
 from app.core.database import engine
-from app.core.rate_limit import limiter
+from app.core.middleware import BodySizeLimitMiddleware, SecurityHeadersMiddleware
+from app.core.rate_limit import enforce_default_limit, limiter, rate_limit_exceeded
 
 # ============================================================
 # Logging
@@ -57,16 +63,8 @@ async def lifespan(_app: FastAPI):
 
 
 # ============================================================
-# Application
+# Handlers shared by every app instance
 # ============================================================
-app = FastAPI(
-    title="Predicta API",
-    description="Motor de analisis y prediccion de ventas para PyMEs",
-    version="0.2.0",
-    lifespan=lifespan,
-)
-
-@app.middleware("http")
 async def unhandled_error_as_json(request: Request, call_next):
     """Turn an unhandled exception into a generic 500 inside the CORS layer.
 
@@ -82,39 +80,23 @@ async def unhandled_error_as_json(request: Request, call_next):
         return JSONResponse(status_code=500, content={"detail": "Error interno del servidor."})
 
 
-# CORS: explicit origins; "*" is only accepted in development (see config).
-# Registered after the error middleware above, so CORS wraps it.
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
-)
+async def validation_error_without_input(_request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Answer 422 without echoing what the client sent.
 
-app.state.limiter = limiter
-# slowapi's handler narrows the exception type, which Starlette's signature rejects.
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+    Pydantic adds ``input`` (the rejected value, a password included), ``ctx``
+    and ``url`` to each error. Only ``loc``, ``msg`` and ``type`` are returned.
+    """
+    errors = [
+        {key: error[key] for key in ("loc", "msg", "type") if key in error} for error in exc.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(errors)})
 
 
-# ============================================================
-# Routers
-# ============================================================
-app.include_router(user_routes.router)
-app.include_router(etl_routes.router)
-app.include_router(analytics_routes.router)
-
-
-# ============================================================
-# Health & root
-# ============================================================
-@app.get("/health", tags=["Health"])
 def healthcheck() -> dict:
     """Lightweight liveness probe: confirms the API process is up."""
     return {"status": "ok"}
 
 
-@app.get("/health/db", tags=["Health"], response_model=None)
 def db_healthcheck() -> dict | JSONResponse:
     """Readiness probe: confirms the database is reachable."""
     try:
@@ -133,11 +115,62 @@ def db_healthcheck() -> dict | JSONResponse:
         )
 
 
-@app.get("/", tags=["Health"])
-def root(request: Request) -> dict:
-    """Service banner; useful for quick connectivity checks."""
-    return {
-        "service": "Predicta API",
-        "version": app.version,
-        "docs": str(request.url_for("swagger_ui")),
-    }
+# ============================================================
+# Application
+# ============================================================
+def create_app(config: Settings) -> FastAPI:
+    """Build the API for ``config``; production hides Swagger and adds HSTS."""
+    docs_enabled = not config.is_production
+    application = FastAPI(
+        title="Predicta API",
+        description="Motor de analisis y prediccion de ventas para PyMEs",
+        version="0.2.0",
+        lifespan=lifespan,
+        docs_url="/docs" if docs_enabled else None,
+        redoc_url="/redoc" if docs_enabled else None,
+        openapi_url="/openapi.json" if docs_enabled else None,
+        # Routes without their own limit share GLOBAL_LIMIT (see rate_limit).
+        dependencies=[Depends(enforce_default_limit)],
+    )
+
+    # Each add wraps the previous one, so the last added runs first:
+    # proxy headers -> security headers -> CORS -> body limit -> errors -> routes.
+    application.middleware("http")(unhandled_error_as_json)
+    application.add_middleware(BodySizeLimitMiddleware)
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=config.cors_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+        expose_headers=["Retry-After"],
+    )
+    application.add_middleware(SecurityHeadersMiddleware, production=config.is_production)
+    application.add_middleware(ProxyHeadersMiddleware, trusted_hosts=config.trusted_proxies)
+
+    application.add_exception_handler(RequestValidationError, validation_error_without_input)  # type: ignore[arg-type]
+    application.state.limiter = limiter
+    # The handler narrows the exception type, which Starlette's signature rejects.
+    application.add_exception_handler(RateLimitExceeded, rate_limit_exceeded)  # type: ignore[arg-type]
+
+    application.include_router(user_routes.router)
+    application.include_router(etl_routes.router)
+    application.include_router(analytics_routes.router)
+
+    application.add_api_route("/health", healthcheck, methods=["GET"], tags=["Health"])
+    application.add_api_route(
+        "/health/db", db_healthcheck, methods=["GET"], tags=["Health"], response_model=None
+    )
+
+    @application.get("/", tags=["Health"])
+    def root() -> dict:
+        """Service banner; useful for quick connectivity checks."""
+        banner = {"service": "Predicta API", "version": application.version}
+        if docs_enabled:
+            banner["docs"] = "/docs"
+        return banner
+
+    return application
+
+
+app = create_app(settings)

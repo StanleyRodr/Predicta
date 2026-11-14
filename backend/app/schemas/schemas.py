@@ -6,24 +6,97 @@ also drive the auto-generated OpenAPI documentation at ``/docs``.
 
 import re
 from datetime import date, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    BeforeValidator,
+    EmailStr,
+    Field,
+    field_validator,
+    model_validator,
+)
+
+# Field limits. frontend/src/lib/fieldLimits.ts repeats them and
+# tests/test_field_limits_contract.py fails if the two files disagree.
+MIN_USERNAME_LENGTH = 3
+MAX_USERNAME_LENGTH = 50
+MAX_EMAIL_LENGTH = 100
+MIN_PASSWORD_LENGTH = 8
+# bcrypt ignores everything past 72 bytes, so longer passwords are refused.
+MAX_PASSWORD_BYTES = 72
+MAX_CATEGORY_LENGTH = 100
+MAX_PRODUCT_LENGTH = 150
 
 # Password policy: at least 8 chars, one uppercase, one lowercase, one digit.
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$")
-PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."
-# bcrypt ignores everything past 72 bytes, so longer passwords are refused.
-MAX_PASSWORD_BYTES = 72
-PASSWORD_TOO_LONG = "La contraseña no puede superar 72 bytes (las letras con tilde ocupan 2)."
+PASSWORD_HINT = "Minimo 8 caracteres, una mayuscula, una minuscula y un digito."  # noqa: S105 - user-facing message, not a secret
+PASSWORD_TOO_LONG = "La contraseña no puede superar 72 bytes (las letras con tilde ocupan 2)."  # noqa: S105 - user-facing message, not a secret
+# Letters (accented included), digits, space, dot, hyphen and underscore.
+USERNAME_PATTERN = re.compile(r"^[\w .\-]+$")
+USERNAME_HINT = (
+    "El nombre de usuario solo admite letras, dígitos, espacios, punto, guion y guion bajo."
+)
+EMAIL_TOO_LONG = f"El correo electrónico no puede superar {MAX_EMAIL_LENGTH} caracteres."
+CONTROL_CHARACTERS = re.compile(r"[\x00-\x1f\x7f]")
+# Same rule as a regex for Query/Path parameters.
+NO_CONTROL_CHARACTERS = r"^[^\x00-\x1f\x7f]*$"
+CONTROL_CHARACTERS_FOUND = "El texto contiene caracteres de control no permitidos."
 PRODUCT_NEEDS_CATEGORY = "Para filtrar por producto, elige también su categoría."
+
+
+def _strip(value: object) -> object:
+    return value.strip() if isinstance(value, str) else value
+
+
+def _clean_email(value: object) -> object:
+    """Trim and lowercase, so one mailbox maps to one account."""
+    return value.strip().lower() if isinstance(value, str) else value
+
+
+def _check_email_length(value: str) -> str:
+    if len(value) > MAX_EMAIL_LENGTH:
+        raise ValueError(EMAIL_TOO_LONG)
+    return value
+
+
+def _check_username(value: str) -> str:
+    if not USERNAME_PATTERN.match(value):
+        raise ValueError(USERNAME_HINT)
+    return value
+
+
+def _reject_control_characters(value: str | None) -> str | None:
+    if value is not None and CONTROL_CHARACTERS.search(value):
+        raise ValueError(CONTROL_CHARACTERS_FOUND)
+    return value
+
+
+Email = Annotated[EmailStr, BeforeValidator(_clean_email), AfterValidator(_check_email_length)]
+Username = Annotated[
+    str,
+    BeforeValidator(_strip),
+    Field(min_length=MIN_USERNAME_LENGTH, max_length=MAX_USERNAME_LENGTH),
+    AfterValidator(_check_username),
+]
+
+
+def validate_new_password(value: str) -> str:
+    """Apply the password policy; reused by every schema that sets a password."""
+    if len(value.encode("utf-8")) > MAX_PASSWORD_BYTES:
+        raise ValueError(PASSWORD_TOO_LONG)
+    _reject_control_characters(value)
+    if not PASSWORD_PATTERN.match(value):
+        raise ValueError(PASSWORD_HINT)
+    return value
 
 
 class UserBase(BaseModel):
     """Shared fields for any user representation."""
 
-    nombre_usuario: str = Field(..., min_length=3, max_length=50)
-    correo_electronico: EmailStr
+    nombre_usuario: Username
+    correo_electronico: Email
 
 
 class UserCreate(UserBase):
@@ -34,28 +107,99 @@ class UserCreate(UserBase):
     @field_validator("password")
     @classmethod
     def _validate_password_strength(cls, value: str) -> str:
-        if len(value.encode("utf-8")) > MAX_PASSWORD_BYTES:
-            raise ValueError(PASSWORD_TOO_LONG)
-        if not PASSWORD_PATTERN.match(value):
-            raise ValueError(PASSWORD_HINT)
-        return value
+        return validate_new_password(value)
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     """User representation returned by the API (never includes the password)."""
 
     id_usuario: int
+    nombre_usuario: str
+    correo_electronico: str
     id_rol: int | None
     fecha_registro: datetime
+    correo_verificado: bool
+    correo_pendiente: str | None = Field(
+        None, description="Correo nuevo pedido; reemplaza al actual cuando se confirma."
+    )
 
     model_config = {"from_attributes": True}
 
 
-class UserUpdate(BaseModel):
-    """Payload accepted by ``PUT /users/me`` for profile updates."""
+def _check_password_length(value: str | None) -> str | None:
+    if value is not None and len(value.encode("utf-8")) > MAX_PASSWORD_BYTES:
+        raise ValueError(PASSWORD_TOO_LONG)
+    return value
 
-    nombre_usuario: str | None = Field(None, min_length=3, max_length=50)
-    correo_electronico: EmailStr | None = None
+
+# A password checked against the stored hash: no strength rules, only the bcrypt limit.
+CurrentPassword = Annotated[str, AfterValidator(_check_password_length)]
+
+
+class UserUpdate(BaseModel):
+    """Payload accepted by ``PUT /users/me`` for profile updates.
+
+    Changing the e-mail requires ``password_actual``; the new address waits in
+    ``correo_pendiente`` until its link is opened.
+    """
+
+    nombre_usuario: Username | None = None
+    correo_electronico: Email | None = None
+    password_actual: CurrentPassword | None = None
+
+
+class ResendVerificationRequest(BaseModel):
+    """Payload of ``POST /users/verificacion/reenviar``."""
+
+    correo_electronico: Email
+
+
+class TokenRequest(BaseModel):
+    """A single-use token taken from the fragment of an e-mailed link."""
+
+    token: str = Field(..., min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
+
+
+class TokenResponse(BaseModel):
+    """A signed access token for the ``Authorization: Bearer`` header."""
+
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - OAuth2 token type, not a secret
+
+
+class PasswordChangeRequest(BaseModel):
+    """Payload of ``PUT /users/me/password``."""
+
+    password_actual: CurrentPassword
+    password_nueva: str
+
+    @field_validator("password_nueva")
+    @classmethod
+    def _validate_new_password(cls, value: str) -> str:
+        return validate_new_password(value)
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Payload of ``POST /users/contrasena/olvido``."""
+
+    correo_electronico: Email
+
+
+class PasswordResetRequest(TokenRequest):
+    """Payload of ``POST /users/contrasena/restablecer``."""
+
+    password_nueva: str
+
+    @field_validator("password_nueva")
+    @classmethod
+    def _validate_new_password(cls, value: str) -> str:
+        return validate_new_password(value)
+
+
+class MessageResponse(BaseModel):
+    """A Spanish message for the user, without account details."""
+
+    message: str
 
 
 class SeriesPoint(BaseModel):
@@ -257,10 +401,17 @@ class MonthlyForecastResponse(BaseModel):
 class SavePredictionRequest(BaseModel):
     """Body of ``POST /analytics/predicciones``; the server recomputes the values."""
 
-    categoria: str | None = Field(None, max_length=100, description="Nulo: todas las categorías.")
-    producto: str | None = Field(
-        None, max_length=150, description="Requiere categoria. Nulo: todos sus productos."
+    categoria: str | None = Field(
+        None, max_length=MAX_CATEGORY_LENGTH, description="Nulo: todas las categorías."
     )
+    producto: str | None = Field(
+        None, max_length=MAX_PRODUCT_LENGTH, description="Requiere categoria. Nulo: todos sus productos."
+    )
+
+    @field_validator("categoria", "producto")
+    @classmethod
+    def _no_control_characters(cls, value: str | None) -> str | None:
+        return _reject_control_characters(value)
 
     @model_validator(mode="after")
     def product_needs_category(self) -> "SavePredictionRequest":

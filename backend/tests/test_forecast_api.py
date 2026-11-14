@@ -6,6 +6,7 @@ from datetime import date
 import pytest
 
 from app.models import models
+from tests.conftest import register_verified
 
 
 def _upload(client, headers, rows):
@@ -35,7 +36,7 @@ def _months(count, start=(2024, 1), partial_last=False):
 
 def _other_headers(client):
     user = {"nombre_usuario": "otra", "correo_electronico": "otra@example.com", "password": "StrongPass1"}
-    assert client.post("/users/register", json=user).status_code == 201
+    register_verified(client, user)
     token = client.post(
         "/users/login", data={"username": user["correo_electronico"], "password": user["password"]}
     ).json()["access_token"]

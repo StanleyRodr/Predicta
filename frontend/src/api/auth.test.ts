@@ -1,5 +1,14 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCurrentUser, loginUser, registerUser } from "./auth";
+import {
+  changePassword,
+  confirmEmail,
+  forgotPassword,
+  getCurrentUser,
+  loginUser,
+  registerUser,
+  resendVerification,
+  resetPassword,
+} from "./auth";
 import { http } from "./http";
 
 afterEach(() => vi.restoreAllMocks());
@@ -30,5 +39,28 @@ describe("auth API", () => {
 
     expect(post).toHaveBeenCalledWith("/users/register", expect.any(Object));
     expect(get).toHaveBeenCalledWith("/users/me");
+  });
+
+  it("posts the e-mail to resend and the token to confirm", async () => {
+    const post = vi.spyOn(http, "post").mockResolvedValue({ data: { message: "ok" } } as never);
+
+    await resendVerification("ana@example.com");
+    await confirmEmail("abc");
+
+    expect(post).toHaveBeenNthCalledWith(1, "/users/verificacion/reenviar", { correo_electronico: "ana@example.com" });
+    expect(post).toHaveBeenNthCalledWith(2, "/users/verificacion/confirmar", { token: "abc" });
+  });
+
+  it("uses the password routes", async () => {
+    const post = vi.spyOn(http, "post").mockResolvedValue({ data: { message: "ok" } } as never);
+    const put = vi.spyOn(http, "put").mockResolvedValue({ data: { access_token: "t" } } as never);
+
+    await forgotPassword("ana@example.com");
+    await resetPassword("abc", "OtraClave9");
+    await changePassword("StrongPass1", "OtraClave9");
+
+    expect(post).toHaveBeenNthCalledWith(1, "/users/contrasena/olvido", { correo_electronico: "ana@example.com" });
+    expect(post).toHaveBeenNthCalledWith(2, "/users/contrasena/restablecer", { token: "abc", password_nueva: "OtraClave9" });
+    expect(put).toHaveBeenCalledWith("/users/me/password", { password_actual: "StrongPass1", password_nueva: "OtraClave9" });
   });
 });

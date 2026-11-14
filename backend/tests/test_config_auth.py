@@ -11,10 +11,11 @@ from pydantic import ValidationError
 
 from app.api.analytics_routes import content_disposition
 from app.core import security
-from app.core.config import DEFAULT_CORS_ORIGINS, Settings
+from app.core.config import DEFAULT_CORS_ORIGINS, DEFAULT_TRUSTED_PROXIES, SECRET_KEY_PLACEHOLDER, Settings
 from app.models import models
 from app.schemas import schemas
 from app.services import user_service
+from tests.conftest import confirm_email, register_verified
 
 BACKEND = Path(__file__).resolve().parents[1]
 
@@ -25,8 +26,28 @@ LEGACY_HASHES = {
 }
 
 
+STRONG_SECRET = "a" * 32
+SSL_DATABASE_URL = "postgresql+psycopg2://u:p@db.example/predicta?sslmode=require"
+
+
+PRODUCTION_MAIL = {
+    "email_backend": "smtp",
+    "smtp_host": "smtp.example.com",
+    "smtp_user": "usuario",
+    "smtp_password": "clave-smtp",
+    "email_from": "Predicta <no-responder@example.com>",
+    "frontend_url": "https://predicta.example",
+}
+
+
 def _settings(**values):
-    base = {"database_url": "sqlite:///:memory:", "secret_key": "x", "_env_file": None}
+    """Settings that pass every production rule unless a test overrides one."""
+    base = {
+        "database_url": SSL_DATABASE_URL,
+        "secret_key": STRONG_SECRET,
+        "_env_file": None,
+        **PRODUCTION_MAIL,
+    }
     return Settings(**{**base, **values})
 
 
@@ -56,6 +77,54 @@ def test_wildcard_cors_is_allowed_in_development():
 def test_unset_environment_means_production(monkeypatch):
     monkeypatch.delenv("ENVIRONMENT", raising=False)
     assert _settings().environment == "production"
+
+
+@pytest.mark.parametrize("secret", ["x", "a" * 31, SECRET_KEY_PLACEHOLDER])
+def test_production_rejects_a_weak_secret(secret):
+    with pytest.raises(ValidationError, match="SECRET_KEY debe tener al menos 32"):
+        _settings(secret_key=secret, environment="production")
+
+
+@pytest.mark.parametrize("environment", ["development", "test"])
+def test_weak_secret_is_accepted_outside_production(environment):
+    assert _settings(secret_key="x", environment=environment).secret_key == "x"
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "postgresql+psycopg2://u:p@db.example/predicta",
+        "postgresql+psycopg2://u:p@db.example/predicta?sslmode=prefer",
+        "postgresql+psycopg2://u:p@db.example/predicta?sslmode=disable",
+        "sqlite:///:memory:",
+    ],
+)
+def test_production_requires_ssl_to_the_database(url):
+    with pytest.raises(ValidationError, match="sslmode=require"):
+        _settings(database_url=url, environment="production")
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        SSL_DATABASE_URL,
+        "postgresql+psycopg2://u:p@db.example/predicta?sslmode=verify-full",
+        # Neon's connection string.
+        "postgresql+psycopg2://u:p@ep-x.neon.tech/predicta?sslmode=require&channel_binding=require",
+    ],
+)
+def test_production_accepts_secure_ssl_modes(url):
+    assert _settings(database_url=url, environment="production").database_url == url
+
+
+def test_database_without_ssl_is_accepted_in_development():
+    assert _settings(database_url="sqlite:///:memory:", environment="development")
+
+
+def test_trusted_proxies_default_to_localhost_and_split_on_commas(monkeypatch):
+    monkeypatch.delenv("TRUSTED_PROXIES", raising=False)
+    assert _settings().trusted_proxies == DEFAULT_TRUSTED_PROXIES == ["127.0.0.1"]
+    assert _settings(trusted_proxies=" 10.0.0.1, 10.0.0.0/8 ,").trusted_proxies == ["10.0.0.1", "10.0.0.0/8"]
 
 
 def test_app_refuses_to_start_with_wildcard_cors_in_production():
@@ -102,7 +171,16 @@ def test_env_example_holds_only_placeholders():
         "CORS_ORIGINS",
         "LOG_LEVEL",
         "MAX_UPLOAD_ROWS",
+        "TRUSTED_PROXIES",
+        "EMAIL_BACKEND",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_USER",
+        "SMTP_PASSWORD",
+        "EMAIL_FROM",
+        "FRONTEND_URL",
     }
+    assert values["SMTP_PASSWORD"] == ""
     assert "CHANGE_ME" in values["DATABASE_URL"]
     assert values["SECRET_KEY"].startswith("CHANGE_ME")
 
@@ -125,6 +203,7 @@ def test_existing_account_logs_in_with_its_old_hash(client, test_db):
                 correo_electronico="legado@example.com",
                 contrasena_hash=LEGACY_HASHES["StrongPass1"],
                 id_rol=role.id_rol,
+                correo_verificado=True,
             )
         )
         session.commit()
@@ -154,6 +233,7 @@ def test_password_limit_counts_bytes_not_characters(client):
         "/users/register",
         json={"nombre_usuario": "cabe", "correo_electronico": "cabe@example.com", "password": fits},
     )
+    confirm_email(client, "cabe@example.com")
     rejected = client.post(
         "/users/register",
         json={"nombre_usuario": "largo", "correo_electronico": "largo@example.com", "password": too_long},
@@ -224,12 +304,12 @@ def test_profile_collision_answers_400(client, auth_headers, monkeypatch):
     assert client.post("/users/register", json=other).status_code == 201
     _skip_duplicate_checks(monkeypatch)
 
-    response = client.put("/users/me", headers=auth_headers, json={"correo_electronico": other["correo_electronico"]})
+    response = client.put("/users/me", headers=auth_headers, json={"nombre_usuario": other["nombre_usuario"]})
 
     assert response.status_code == 400
     assert "ya se encuentra registrado" in response.json()["detail"]
     # The rolled-back session still serves the user.
-    assert client.get("/users/me", headers=auth_headers).json()["correo_electronico"] == "test@example.com"
+    assert client.get("/users/me", headers=auth_headers).json()["nombre_usuario"] == "test_user"
 
 
 # --------------------------------------------------------------- downloads
@@ -246,7 +326,7 @@ def test_content_disposition_keeps_an_ascii_fallback_and_the_utf8_name():
 
 def test_report_download_works_for_an_accented_username(client):
     credentials = {"nombre_usuario": "josé_ñ", "correo_electronico": "jose@example.com", "password": "StrongPass1"}
-    assert client.post("/users/register", json=credentials).status_code == 201
+    register_verified(client, credentials)
     token = client.post(
         "/users/login", data={"username": credentials["correo_electronico"], "password": credentials["password"]}
     ).json()["access_token"]
