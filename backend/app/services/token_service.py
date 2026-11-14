@@ -7,11 +7,12 @@ consumed, expired or unknown token gives ``None`` without saying which.
 
 import hashlib
 import secrets
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 from sqlalchemy import delete, update
 from sqlalchemy.orm import Session
 
+from app.core import security
 from app.models import models
 
 VERIFICATION = "verificacion"
@@ -29,12 +30,7 @@ def hash_token(raw: str) -> str:
 
 
 def _now() -> datetime:
-    return datetime.now(UTC)
-
-
-def _as_utc(moment: datetime) -> datetime:
-    # SQLite returns naive datetimes; they were stored in UTC.
-    return moment if moment.tzinfo else moment.replace(tzinfo=UTC)
+    return security.utcnow()
 
 
 def issue(db: Session, user_id: int, tipo: str, lifetime: timedelta) -> str:
@@ -78,7 +74,7 @@ def consume(db: Session, raw: str, tipo: str) -> models.TokenUsuario | None:
         .first()
     )
     now = _now()
-    if token is None or token.usado_en is not None or _as_utc(token.expira_en) <= now:
+    if token is None or token.usado_en is not None or security.as_utc(token.expira_en) <= now:
         return None
     result = db.execute(
         update(models.TokenUsuario)

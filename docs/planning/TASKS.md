@@ -51,7 +51,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 040 | Validación de campos y exportación segura | `docs/planning/plans/040-validacion-campos.md` | P1 | M | 039 | HECHO |
 | 041 | Rate limit, proxy, cabeceras y configuración de producción | `docs/planning/plans/041-endurecer-api.md` | P1 | M | 039 | HECHO |
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | HECHO |
-| 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | TODO |
+| 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | HECHO |
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | HECHO |
 | 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | TODO |
 
@@ -607,12 +607,12 @@ Plan: `docs/planning/plans/042-verificacion-correo.md` | Depende de: 040, 041 | 
 
 Plan: `docs/planning/plans/043-contrasenas-bloqueo.md` | Depende de: 042 | Esfuerzo: L
 
-- [ ] 043.1 Crear la migración `0008`. Verificar: `upgrade`, `check` y `downgrade -1` pasan.
-- [ ] 043.2 Revocar sesiones con el claim `ver`. Verificar: token con `ver` vieja o sin `ver` da 401.
-- [ ] 043.3 Agregar el cambio de contraseña. Verificar: `pytest tests/test_passwords.py`.
-- [ ] 043.4 Agregar olvido y restablecimiento por correo. Verificar: mismo mensaje con y sin cuenta, 30 min y un solo uso.
-- [ ] 043.5 Bloquear tras 10 fallos durante 15 min. Verificar: `pytest tests/test_lockout.py`.
-- [ ] 043.6 Agregar las páginas de olvido y restablecimiento y el cambio en el perfil. Verificar: RTL de cada página.
+- [x] 043.1 Crear la migración `0008`. Verificar: `upgrade`, `check` y `downgrade -1` pasan.
+- [x] 043.2 Revocar sesiones con el claim `ver`. Verificar: token con `ver` vieja o sin `ver` da 401.
+- [x] 043.3 Agregar el cambio de contraseña. Verificar: `pytest tests/test_passwords.py`.
+- [x] 043.4 Agregar olvido y restablecimiento por correo. Verificar: mismo mensaje con y sin cuenta, 30 min y un solo uso.
+- [x] 043.5 Bloquear tras 10 fallos durante 15 min. Verificar: `pytest tests/test_lockout.py`.
+- [x] 043.6 Agregar las páginas de olvido y restablecimiento y el cambio en el perfil. Verificar: RTL de cada página.
 
 ### Tarea 044 — Escáneres de seguridad en CI
 

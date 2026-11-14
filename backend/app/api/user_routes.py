@@ -1,6 +1,7 @@
 """Authentication, e-mail verification and profile endpoints."""
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -10,9 +11,12 @@ from app.core import security
 from app.core.database import get_db
 from app.core.rate_limit import (
     CONFIRM_LINK_LIMIT,
+    FORGOT_PASSWORD_LIMIT,
     LOGIN_LIMIT,
+    PASSWORD_CHANGE_LIMIT,
     REGISTER_LIMIT,
     RESEND_VERIFICATION_LIMIT,
+    RESET_PASSWORD_LIMIT,
     limiter,
 )
 from app.models import models
@@ -33,6 +37,19 @@ PASSWORD_REQUIRED_FOR_EMAIL = "Escribe tu contraseña actual para cambiar el cor
 WRONG_CURRENT_PASSWORD = "La contraseña actual no es correcta."  # noqa: S105 - user-facing message, not a secret
 EMAIL_TAKEN = "El nuevo correo electronico ya esta en uso."
 VERIFICATION_HOURS = int(token_service.VERIFICATION_LIFETIME.total_seconds() // 3600)
+INVALID_CREDENTIALS = "Credenciales invalidas."
+ACCOUNT_LOCKED = "Cuenta bloqueada temporalmente. Intenta en unos minutos o restablece tu contraseña."
+SAME_PASSWORD = "La contraseña nueva debe ser distinta de la actual."  # noqa: S105 - user-facing message, not a secret
+# Same answer whether the account exists or not: it reveals nothing.
+FORGOT_ANSWER = "Si el correo tiene una cuenta, te enviamos un enlace para elegir una contraseña nueva."
+PASSWORD_RESET_DONE = "Contraseña actualizada. Ya puedes iniciar sesión."  # noqa: S105 - user-facing message, not a secret
+
+
+def _issue_reset_token(db: Session, user: models.Usuario) -> str:
+    """Single-use reset token valid ``RESET_TOKEN_MINUTES``; the caller commits."""
+    return token_service.issue(
+        db, user.id_usuario, token_service.PASSWORD_RESET, security.RESET_TOKEN_LIFETIME
+    )
 
 
 def _send_verification(
@@ -80,32 +97,109 @@ def register_user(
     return created
 
 
-@router.post("/login")
+@router.post("/login", response_model=schemas.TokenResponse)
 @limiter.limit(LOGIN_LIMIT)
 def login(
     request: Request,
+    background_tasks: BackgroundTasks,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
-) -> dict:
+) -> dict | JSONResponse:
     """Authenticate a verified user and return a JWT access token.
 
-    Limited to 5 attempts per minute per IP to mitigate brute force. The right
-    password on an unverified account answers 403.
+    Limited to 5 attempts per minute per IP. Per account, ``MAX_FAILED_LOGINS``
+    wrong passwords in a row lock it for ``LOCKOUT_MINUTES`` (423, even with the
+    right password) and e-mail a reset link. The right password on an
+    unverified account answers 403.
     """
-    user = user_service.authenticate_user(
-        db, email=form_data.username, password=form_data.password
-    )
-    if not user:
+    try:
+        user = user_service.authenticate_user(
+            db, email=form_data.username, password=form_data.password
+        )
+    except user_service.InvalidCredentialsError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales invalidas.",
+            detail=INVALID_CREDENTIALS,
             headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+    except user_service.AccountLockedError as exc:
+        if not exc.just_locked:
+            raise HTTPException(status_code=status.HTTP_423_LOCKED, detail=ACCOUNT_LOCKED) from exc
+        locked = exc.user
+        token = _issue_reset_token(db, locked)
+        db.commit()
+        subject, text = email_service.account_locked_notice(
+            locked.nombre_usuario, token, security.RESET_TOKEN_MINUTES, security.LOCKOUT_MINUTES
         )
+        email_service.send_in_background(background_tasks, locked.correo_electronico, subject, text)
+        # Returned, not raised: FastAPI drops background tasks on an exception.
+        return JSONResponse(status_code=status.HTTP_423_LOCKED, content={"detail": ACCOUNT_LOCKED})
     if not user.correo_verificado:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=EMAIL_NOT_VERIFIED)
 
-    access_token = security.create_access_token(data={"sub": str(user.id_usuario)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": security.token_for(user.id_usuario, user.version_token), "token_type": "bearer"}
+
+
+@router.post("/contrasena/olvido", response_model=schemas.MessageResponse)
+@limiter.limit(FORGOT_PASSWORD_LIMIT)
+def forgot_password(
+    request: Request,
+    payload: schemas.ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+) -> dict:
+    """E-mail a reset link if the address has an account; the answer is always the same."""
+    user = user_service.get_user_by_email(db, email=payload.correo_electronico)
+    if user is not None:
+        token = _issue_reset_token(db, user)
+        db.commit()
+        subject, text = email_service.password_reset_email(
+            user.nombre_usuario, token, security.RESET_TOKEN_MINUTES
+        )
+        email_service.send_in_background(background_tasks, user.correo_electronico, subject, text)
+    return {"message": FORGOT_ANSWER}
+
+
+@router.post("/contrasena/restablecer", response_model=schemas.MessageResponse)
+@limiter.limit(RESET_PASSWORD_LIMIT)
+def reset_password(
+    request: Request,
+    payload: schemas.PasswordResetRequest,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Set a new password with a reset link: closes every session and lifts the lockout."""
+    token = token_service.consume(db, payload.token, token_service.PASSWORD_RESET)
+    user = user_service.get_user_by_id(db, token.id_usuario) if token else None
+    if user is None:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=INVALID_LINK)
+    user_service.reset_password(db, user, payload.password_nueva)
+    db.commit()
+    return {"message": PASSWORD_RESET_DONE}
+
+
+@router.put("/me/password", response_model=schemas.TokenResponse)
+@limiter.limit(PASSWORD_CHANGE_LIMIT)
+def change_my_password(
+    request: Request,
+    payload: schemas.PasswordChangeRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: models.Usuario = Depends(get_current_user),
+) -> dict:
+    """Change the password with the current one; returns a new token and closes the other sessions."""
+    try:
+        user_service.change_password(db, current_user, payload.password_actual, payload.password_nueva)
+    except user_service.WrongPasswordError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=WRONG_CURRENT_PASSWORD) from exc
+    except user_service.SamePasswordError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=SAME_PASSWORD) from exc
+    subject, text = email_service.password_changed_notice(current_user.nombre_usuario)
+    email_service.send_in_background(background_tasks, current_user.correo_electronico, subject, text)
+    return {
+        "access_token": security.token_for(current_user.id_usuario, current_user.version_token),
+        "token_type": "bearer",
+    }
 
 
 @router.post("/verificacion/reenviar", response_model=schemas.MessageResponse)

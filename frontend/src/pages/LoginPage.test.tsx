@@ -53,4 +53,19 @@ describe("LoginPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Credenciales invalidas.");
     expect(screen.queryByRole("button", { name: "Reenviar enlace" })).not.toBeInTheDocument();
   });
+
+  it("explains a locked account without offering a resend", async () => {
+    vi.mocked(loginUser).mockRejectedValue(
+      apiError(423, "Cuenta bloqueada temporalmente. Intenta en unos minutos o restablece tu contraseña."),
+    );
+
+    await submit();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Cuenta bloqueada temporalmente.");
+    expect(screen.queryByRole("button", { name: "Reenviar enlace" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "¿Olvidaste tu contraseña?" })).toHaveAttribute(
+      "href",
+      "/olvide-contrasena",
+    );
+  });
 });

@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { updateCurrentUser } from "../api/auth";
+import { PasswordChangeCard } from "../components/auth/PasswordChangeCard";
 import { Alert, Button, Card, Input, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
 import { PASSWORD_REQUIRED_FOR_EMAIL, profileSchema, type ProfileForm } from "../lib/authSchemas";
@@ -66,7 +67,7 @@ export function ProfilePage() {
         <p className="text-terminal-muted">Actualiza tus datos de acceso y contacto.</p>
       </header>
       <Card className="max-w-2xl">
-        <form className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
+        <form aria-label="Datos de la cuenta" className="grid gap-5" onSubmit={handleSubmit(onSubmit)}>
           {serverError && <Alert tone="error">{serverError}</Alert>}
           {saved && <Alert tone="success">{saved}</Alert>}
           {user?.correo_pendiente && (
@@ -103,6 +104,7 @@ export function ProfilePage() {
           </Button>
         </form>
       </Card>
+      <PasswordChangeCard />
     </div>
   );
 }

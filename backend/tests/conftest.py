@@ -184,3 +184,31 @@ def auth_headers(client, user_credentials):
     )
     assert login.status_code == 200
     return {"Authorization": f"Bearer {login.json()['access_token']}"}
+
+
+class FakeClock:
+    """Replaces ``security.utcnow``; ``advance`` moves time forward."""
+
+    def __init__(self):
+        from datetime import UTC, datetime
+
+        # Real time at start: PyJWT checks "exp" against the real clock.
+        self.now = datetime.now(UTC)
+
+    def __call__(self):
+        return self.now
+
+    def advance(self, **delta):
+        from datetime import timedelta
+
+        self.now += timedelta(**delta)
+
+
+@pytest.fixture
+def clock(monkeypatch):
+    """A controllable clock for lockouts and link expiry (one source of time)."""
+    from app.core import security
+
+    fake = FakeClock()
+    monkeypatch.setattr(security, "utcnow", fake)
+    return fake

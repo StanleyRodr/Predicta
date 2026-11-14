@@ -112,3 +112,45 @@ def email_change_notice(nombre_usuario: str, new_email: str) -> tuple[str, str]:
         "Si no fuiste tú, cambia tu contraseña.\n"
     )
     return "Se pidió cambiar el correo de tu cuenta de Predicta", text
+
+
+def reset_link(token: str) -> str:
+    """Frontend page that sets a new password; the token travels in the fragment."""
+    return f"{settings.frontend_url}/restablecer-contrasena#token={token}"
+
+
+def password_reset_email(nombre_usuario: str, token: str, minutes: int) -> tuple[str, str]:
+    """Subject and body of the link that sets a new password."""
+    text = (
+        f"Hola, {nombre_usuario}:\n\n"
+        "Para elegir una contraseña nueva en Predicta, abre este enlace:\n\n"
+        f"{reset_link(token)}\n\n"
+        f"El enlace sirve una sola vez y vence en {minutes} minutos. "
+        "Al usarlo se cierran todas las sesiones abiertas.\n"
+        "Si no lo pediste, ignora este correo: tu contraseña no cambia.\n"
+    )
+    return "Restablece tu contraseña de Predicta", text
+
+
+def password_changed_notice(nombre_usuario: str) -> tuple[str, str]:
+    """Subject and body sent after the password changes from the profile."""
+    text = (
+        f"Hola, {nombre_usuario}:\n\n"
+        "La contraseña de tu cuenta de Predicta acaba de cambiar y se cerraron las demás sesiones.\n\n"
+        "Si no fuiste tú, pide un enlace en \"¿Olvidaste tu contraseña?\" desde la página de inicio de sesión.\n"
+    )
+    return "Tu contraseña de Predicta cambió", text
+
+
+def account_locked_notice(nombre_usuario: str, token: str, minutes: int, lock_minutes: int) -> tuple[str, str]:
+    """Subject and body sent when wrong passwords lock the account."""
+    text = (
+        f"Hola, {nombre_usuario}:\n\n"
+        f"Hubo varios intentos de entrar a tu cuenta de Predicta con una contraseña incorrecta, "
+        f"así que la bloqueamos {lock_minutes} minutos.\n\n"
+        "Si fuiste tú y no recuerdas la contraseña, o si no fuiste tú, elige una nueva con este enlace. "
+        "Al usarlo se quita el bloqueo:\n\n"
+        f"{reset_link(token)}\n\n"
+        f"El enlace sirve una sola vez y vence en {minutes} minutos.\n"
+    )
+    return "Bloqueamos tu cuenta de Predicta por seguridad", text

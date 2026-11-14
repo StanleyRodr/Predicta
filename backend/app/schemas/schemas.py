@@ -160,6 +160,42 @@ class TokenRequest(BaseModel):
     token: str = Field(..., min_length=1, max_length=128, pattern=r"^[A-Za-z0-9_-]+$")
 
 
+class TokenResponse(BaseModel):
+    """A signed access token for the ``Authorization: Bearer`` header."""
+
+    access_token: str
+    token_type: Literal["bearer"] = "bearer"  # noqa: S105 - OAuth2 token type, not a secret
+
+
+class PasswordChangeRequest(BaseModel):
+    """Payload of ``PUT /users/me/password``."""
+
+    password_actual: CurrentPassword
+    password_nueva: str
+
+    @field_validator("password_nueva")
+    @classmethod
+    def _validate_new_password(cls, value: str) -> str:
+        return validate_new_password(value)
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Payload of ``POST /users/contrasena/olvido``."""
+
+    correo_electronico: Email
+
+
+class PasswordResetRequest(TokenRequest):
+    """Payload of ``POST /users/contrasena/restablecer``."""
+
+    password_nueva: str
+
+    @field_validator("password_nueva")
+    @classmethod
+    def _validate_new_password(cls, value: str) -> str:
+        return validate_new_password(value)
+
+
 class MessageResponse(BaseModel):
     """A Spanish message for the user, without account details."""
 

@@ -4,19 +4,12 @@ import { confirmEmail } from "../api/auth";
 import { AuthLayout } from "../components/auth/AuthLayout";
 import { Alert, Card, Spinner } from "../components/ui";
 import { getApiErrorMessage } from "../lib/apiErrors";
-
-export const MISSING_TOKEN = "El enlace está incompleto. Ábrelo tal como llegó a tu correo.";
-
-/** Token from the link fragment (#token=...), which never reaches the server or the Referer. */
-function readToken(): string | null {
-  const params = new URLSearchParams(window.location.hash.slice(1));
-  return params.get("token");
-}
+import { MISSING_TOKEN, useLinkToken } from "../lib/linkToken";
 
 type Result = { tone: "success" | "error"; message: string };
 
 export function VerifyEmailPage() {
-  const [token] = useState(readToken);
+  const token = useLinkToken();
   const [result, setResult] = useState<Result | null>(
     token ? null : { tone: "error", message: MISSING_TOKEN },
   );
@@ -24,9 +17,6 @@ export function VerifyEmailPage() {
   const sent = useRef(false);
 
   useEffect(() => {
-    if (window.location.hash) {
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
     if (!token || sent.current) return;
     sent.current = true;
     confirmEmail(token)

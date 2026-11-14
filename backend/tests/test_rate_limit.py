@@ -56,6 +56,9 @@ def test_limits_match_the_plan():
     assert rate_limit.GLOBAL_LIMIT == "120/minute"
     assert rate_limit.RESEND_VERIFICATION_LIMIT == "3/minute"
     assert rate_limit.CONFIRM_LINK_LIMIT == "10/minute"
+    assert rate_limit.PASSWORD_CHANGE_LIMIT == "5/minute"
+    assert rate_limit.FORGOT_PASSWORD_LIMIT == "3/minute"
+    assert rate_limit.RESET_PASSWORD_LIMIT == "10/minute"
 
 
 def test_fourth_registration_in_a_minute_is_rejected(client, rate_limited):
@@ -76,6 +79,12 @@ def test_sixth_login_in_a_minute_is_rejected(client, rate_limited):
     [
         ("/users/verificacion/reenviar", {"correo_electronico": "nadie@example.com"}, rate_limit.RESEND_VERIFICATION_LIMIT),
         ("/users/verificacion/confirmar", {"token": "desconocido"}, rate_limit.CONFIRM_LINK_LIMIT),
+        ("/users/contrasena/olvido", {"correo_electronico": "nadie@example.com"}, rate_limit.FORGOT_PASSWORD_LIMIT),
+        (
+            "/users/contrasena/restablecer",
+            {"token": "desconocido", "password_nueva": "OtraClave9"},
+            rate_limit.RESET_PASSWORD_LIMIT,
+        ),
     ],
 )
 def test_verification_routes_are_limited(client, rate_limited, path, body, limit):
@@ -148,3 +157,10 @@ def test_untrusted_sender_cannot_choose_its_ip(client, rate_limited):
         assert _register(direct, number, **forged).status_code == 201
 
     _assert_too_many(_register(direct, 3, **{"X-Forwarded-For": "198.51.100.200"}))
+
+
+def test_password_change_is_limited(client, rate_limited):
+    body = {"password_actual": "Equivocada1", "password_nueva": "OtraClave9"}
+    for _ in range(_limit(rate_limit.PASSWORD_CHANGE_LIMIT)):
+        assert client.put("/users/me/password", headers=rate_limited, json=body).status_code == 400
+    _assert_too_many(client.put("/users/me/password", headers=rate_limited, json=body))

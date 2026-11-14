@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-14. Falta la prueba real con Brevo del restablecimiento, que hace el usuario en local.
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Riesgo:** HIGH (cambia el login y la validación de cada token)
@@ -110,6 +110,18 @@ Para que el tiempo del 401 no revele si el correo existe, el login con un usuari
 - Ninguna respuesta de olvido revela si una cuenta existe.
 - Una cuenta no acepta más de 10 contraseñas incorrectas seguidas sin bloquearse.
 - Prueba real con Brevo: pedir el restablecimiento, recibir el correo, cambiar la contraseña y entrar.
+
+## Cambios respecto del plan al ejecutarlo
+
+- **Un solo reloj:** `security.utcnow()`. Lo usan el bloqueo, los enlaces (`token_service`) y la expiración del JWT. Los tests lo reemplazan con el fixture `clock` (`tests/conftest.py`), que arranca en la hora real porque PyJWT valida `exp` contra el reloj del sistema. No hizo falta cambiar firmas, así que la condición STOP no aplicó.
+- **El aviso de bloqueo se devuelve, no se lanza:** en el intento que bloquea, el login responde con un `JSONResponse(423)`, porque FastAPI descarta los `BackgroundTasks` cuando la ruta lanza una excepción. Los intentos siguientes durante el bloqueo sí lanzan el 423 y no envían correo ni alargan el bloqueo.
+- **El contador vuelve a cero al bloquear:** pasados los 15 minutos, la cuenta tiene otra vez 10 intentos.
+- **`ver` estricto:** un `ver` ausente, de texto, nulo o booleano da 401. El booleano se rechaza aparte, porque en Python `True == 1`.
+- **`DUMMY_HASH`** se calcula al importar `security` con una contraseña aleatoria, en vez de guardar un hash fijo en el código.
+- **Login con `response_model=TokenResponse`**, y `PUT /users/me/password` responde igual.
+- **Migración en la base local:** la `0008` solo agrega columnas, así que se aplicó sin STOP. Antes se probó en una base temporal `predicta_mig043` (`upgrade`, `check`, `downgrade -1` y `upgrade`); una fila existente quedó en `(0, 0, NULL)`. Las sesiones abiertas antes de la migración piden entrar de nuevo, porque su JWT no trae `ver`.
+- **Frontend:** `lib/linkToken.ts` (`useLinkToken` y `MISSING_TOKEN`) es el lector del fragmento que comparten `VerifyEmailPage` y `ResetPasswordPage`. El cambio de contraseña vive en `components/auth/PasswordChangeCard.tsx`, montado en el perfil. El formulario de datos del perfil se llama "Datos de la cuenta" para distinguir sus campos en los tests. En el test de olvido con un correo inválido, el `type="email"` de jsdom frena el envío antes que Zod; se comprueba que no se llama a la API.
+- **Límites:** `PASSWORD_CHANGE_LIMIT` (5/min), `FORGOT_PASSWORD_LIMIT` (3/min) y `RESET_PASSWORD_LIMIT` (10/min), con sus tests en `tests/test_rate_limit.py`.
 
 ## Fuera de alcance
 

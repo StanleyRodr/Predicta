@@ -66,6 +66,11 @@ class Usuario(Base):
     )
     # A requested new address; it replaces correo_electronico once confirmed.
     correo_pendiente: Mapped[str | None] = mapped_column(String(100))
+    # Travels in every JWT as "ver"; raising it closes every open session.
+    version_token: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    # Wrong passwords in a row; MAX_FAILED_LOGINS locks the account until bloqueado_hasta.
+    intentos_fallidos: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    bloqueado_hasta: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     rol: Mapped["Rol | None"] = relationship("Rol", lazy="joined")
     ventas: Mapped[list["Venta"]] = relationship(

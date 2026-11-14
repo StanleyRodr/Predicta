@@ -34,6 +34,10 @@ REGISTER_LIMIT = "3/minute"
 # E-mail verification (task 042): each resend sends a message.
 RESEND_VERIFICATION_LIMIT = "3/minute"
 CONFIRM_LINK_LIMIT = "10/minute"
+# Passwords (task 043): each forgot request sends a message.
+PASSWORD_CHANGE_LIMIT = "5/minute"  # noqa: S105 - rate limit, not a secret
+FORGOT_PASSWORD_LIMIT = "3/minute"  # noqa: S105 - rate limit, not a secret
+RESET_PASSWORD_LIMIT = "10/minute"  # noqa: S105 - rate limit, not a secret
 UPLOAD_LIMIT = "10/minute"
 # Forecasts (statsmodels) and reports (matplotlib, FPDF2, openpyxl).
 COMPUTE_LIMIT = "20/minute"

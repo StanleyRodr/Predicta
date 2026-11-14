@@ -93,6 +93,11 @@ export function LoginPage() {
           <Button disabled={isSubmitting} type="submit">
             {isSubmitting ? <Spinner label="Entrando" /> : "Entrar"}
           </Button>
+          <p className="text-center text-sm">
+            <Link className="text-terminal-amber hover:underline" to="/olvide-contrasena">
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </p>
           <p className="text-center text-sm text-terminal-muted">
             ¿Primera vez aqui?{" "}
             <Link className="text-terminal-amber hover:underline" to="/register">

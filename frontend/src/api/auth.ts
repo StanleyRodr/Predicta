@@ -40,3 +40,21 @@ export async function confirmEmail(token: string): Promise<MessageResponse> {
   const response = await http.post<MessageResponse>("/users/verificacion/confirmar", { token });
   return response.data;
 }
+
+/** Change the password with the current one; the answer carries the new session token. */
+export async function changePassword(password_actual: string, password_nueva: string): Promise<LoginResponse> {
+  const response = await http.put<LoginResponse>("/users/me/password", { password_actual, password_nueva });
+  return response.data;
+}
+
+/** Ask for a reset link; the answer is the same whether the account exists or not. */
+export async function forgotPassword(correo_electronico: string): Promise<MessageResponse> {
+  const response = await http.post<MessageResponse>("/users/contrasena/olvido", { correo_electronico });
+  return response.data;
+}
+
+/** Set a new password with the token of a reset link. */
+export async function resetPassword(token: string, password_nueva: string): Promise<MessageResponse> {
+  const response = await http.post<MessageResponse>("/users/contrasena/restablecer", { token, password_nueva });
+  return response.data;
+}

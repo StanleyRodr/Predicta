@@ -63,8 +63,8 @@ usuario aprobó su subtarea el 2026-11-11.
 | S-02 | `get_remote_address` detrás de un proxy usa la IP del proxy: un usuario agota el límite de todos | Alta | `app/core/rate_limit.py:18` | 041 | Corregido en la 041 (2026-11-14) |
 | S-20 | La subida no se limita antes de recibirla: Starlette guarda todo el multipart en disco temporal y `read_limited` corta a 25 MB recién después | Alta | `app/api/etl_routes.py:68-104`, `app/services/etl_service.py:324` | 041 (041.6) | Corregido en la 041 (2026-11-14) |
 | S-03 | Sin verificación de correo: cualquiera registra correos ajenos o inventados | Media | `app/api/user_routes.py:23-43` | 042 | Corregido en la 042 (2026-11-14) |
-| S-04 | Sin cambio ni restablecimiento de contraseña; un token robado vale hasta que vence | Media | No existen rutas; `app/core/security.py:27` solo emite `sub` y `exp` | 043 | Pendiente |
-| S-05 | Sin bloqueo por cuenta: con varias IP se prueban contraseñas contra una cuenta sin freno | Media | `app/services/user_service.py:78-90` | 043 | Pendiente |
+| S-04 | Sin cambio ni restablecimiento de contraseña; un token robado vale hasta que vence | Media | No existen rutas; `app/core/security.py:27` solo emite `sub` y `exp` | 043 | Corregido en la 043 (2026-11-14) |
+| S-05 | Sin bloqueo por cuenta: con varias IP se prueban contraseñas contra una cuenta sin freno | Media | `app/services/user_service.py:78-90` | 043 | Corregido en la 043 (2026-11-14) |
 | S-06 | Inyección de fórmulas en Excel: un producto `=HYPERLINK(...)` se exporta tal cual | Media | `app/services/report_service.py:201` (`df.to_excel` sin neutralizar) | 040 | Corregido en la 040 (2026-11-11) |
 | S-07 | El correo distingue mayúsculas: `Ana@x.com` y `ana@x.com` son dos cuentas | Media | `app/services/user_service.py:29` compara por igualdad exacta | 040 | Corregido en la 040 (2026-11-11) |
 | S-10 | Sin cabeceras de seguridad en API ni frontend (CSP, HSTS, `nosniff`, anti-clickjacking) | Media | ZAP 10038, 10020 y 10021 en `localhost:4173`; 10021 en la API. `curl` a `/users/me` sin esas cabeceras | 041, 045 | API corregida en la 041 (2026-11-14); frontend pendiente en la 045 |
@@ -78,7 +78,7 @@ usuario aprobó su subtarea el 2026-11-11.
 | S-11 | `/docs`, `/redoc` y `/openapi.json` públicos en producción | Baja | Con `ENVIRONMENT=production`, `GET /docs` y `GET /openapi.json` responden 200; `app/main.py:62` | 041 | Corregido en la 041 (2026-11-14) |
 | S-14 | Las respuestas 422 repiten el valor recibido, incluida la contraseña del registro | Baja | `POST /users/register` con contraseña débil devuelve `"input":"secretoDebil"` | 040 | Corregido en la 040 (2026-11-11) |
 | S-21 | `GET /` responde 500 siempre: `url_for("swagger_ui")` no existe. La respuesta es genérica (ZAP 90022) y no filtra datos | Baja | `app/main.py:142`; `NoMatchFound: No route exists for name "swagger_ui"` en el log | 041 (041.4) | Corregido en la 041 (2026-11-14) |
-| S-22 | Diferencia de tiempo en el login: con un correo inexistente no se ejecuta bcrypt, lo que permite adivinar qué correos tienen cuenta | Baja | `app/services/user_service.py:84-86` | 043 (hash fijo ya planificado) | Pendiente |
+| S-22 | Diferencia de tiempo en el login: con un correo inexistente no se ejecuta bcrypt, lo que permite adivinar qué correos tienen cuenta | Baja | `app/services/user_service.py:84-86` | 043 (hash fijo ya planificado) | Corregido en la 043 (2026-11-14) |
 | S-23 | Una build sin `VITE_API_URL` apunta a `http://localhost:8000`; en producción falla en silencio (contenido mixto) | Baja | `frontend/src/lib/apiUrl.ts:1-5` | — | Riesgo aceptado: la guía de la 045 exige la variable |
 | S-15 | JWT en `localStorage`: un XSS podría robarlo | Informativa | `frontend/src/stores/authStore.ts:23` | 045 (CSP) | Riesgo aceptado por el usuario |
 | S-17 | El 403 de `require_role` incluye el nombre del rol requerido | Informativa | `app/api/deps.py:60` | — | Riesgo aceptado: ninguna ruta usa `require_role` hoy |

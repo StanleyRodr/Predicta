@@ -3,7 +3,8 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { confirmEmail } from "../api/auth";
 import { apiError } from "../test/apiError";
-import { MISSING_TOKEN, VerifyEmailPage } from "./VerifyEmailPage";
+import { MISSING_TOKEN } from "../lib/linkToken";
+import { VerifyEmailPage } from "./VerifyEmailPage";
 
 vi.mock("../api/auth", () => ({ confirmEmail: vi.fn() }));
 

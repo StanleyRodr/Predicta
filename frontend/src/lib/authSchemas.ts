@@ -61,6 +61,40 @@ export const profileSchema = z.object({
     .optional(),
 });
 
+const PASSWORDS_DIFFER = "Las contraseñas no coinciden.";
+
+const currentPasswordSchema = z
+  .string()
+  .min(1, "Escribe tu contraseña actual.")
+  .refine((value) => utf8Length(value) <= MAX_PASSWORD_BYTES, PASSWORD_TOO_LONG);
+
+export const passwordChangeSchema = z
+  .object({
+    password_actual: currentPasswordSchema,
+    password_nueva: passwordSchema,
+    confirmacion: z.string(),
+  })
+  .refine((values) => values.password_nueva === values.confirmacion, {
+    message: PASSWORDS_DIFFER,
+    path: ["confirmacion"],
+  })
+  .refine((values) => values.password_nueva !== values.password_actual, {
+    message: "La contraseña nueva debe ser distinta de la actual.",
+    path: ["password_nueva"],
+  });
+
+export const forgotPasswordSchema = z.object({ correo_electronico: emailSchema });
+
+export const resetPasswordSchema = z
+  .object({ password_nueva: passwordSchema, confirmacion: z.string() })
+  .refine((values) => values.password_nueva === values.confirmacion, {
+    message: PASSWORDS_DIFFER,
+    path: ["confirmacion"],
+  });
+
 export type LoginForm = z.infer<typeof loginSchema>;
+export type PasswordChangeForm = z.infer<typeof passwordChangeSchema>;
+export type ForgotPasswordForm = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordForm = z.infer<typeof resetPasswordSchema>;
 export type RegisterForm = z.infer<typeof registerSchema>;
 export type ProfileForm = z.infer<typeof profileSchema>;
