@@ -2,6 +2,7 @@ export { CategoryBarChart } from "./CategoryBarChart";
 export { CategoryComparisonChart } from "./CategoryComparisonChart";
 export { CategoryProductFilter, type CategoryProduct } from "./CategoryProductFilter";
 export { DateRangeFilter } from "./DateRangeFilter";
+export { GrowthCard } from "./GrowthCard";
 export { HistoryLineChart } from "./HistoryLineChart";
 export { MetricCard } from "./MetricCard";
 export { MonthDetailChart, MonthTotalsChart } from "./MonthDetailChart";

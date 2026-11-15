@@ -5,6 +5,7 @@ import {
   CategoryBarChart,
   CategoryComparisonChart,
   DateRangeFilter,
+  GrowthCard,
   HistoryLineChart,
   MetricCard,
   MonthDetailChart,
@@ -120,11 +121,12 @@ export function DashboardPage() {
       </p>
       {firstError && <Alert tone="error">{getApiErrorMessage(firstError, "No se pudieron cargar las métricas.")}</Alert>}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard currency label="Ingresos totales" loading={global.isLoading} value={metrics?.total_ingresos} />
         <MetricCard label="Operaciones" loading={global.isLoading} value={metrics?.cantidad_operaciones} />
         <MetricCard currency label="Ticket promedio" loading={global.isLoading} value={metrics?.ticket_promedio} />
         <MetricCard currency label="Venta más alta" loading={global.isLoading} value={metrics?.venta_mas_alta} />
+        <GrowthCard growth={global.data?.crecimiento_mensual} loading={global.isLoading} />
       </div>
 
       <SeriesViewSelector

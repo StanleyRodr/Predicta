@@ -263,3 +263,69 @@ def test_annual_report_requires_multiple_months(client, auth_headers):
 
     assert response.status_code == 400
     assert "6 meses completos" in response.json()["detail"]
+
+
+# ---------------------------------------------------------------- monthly growth
+
+
+def _growth(client, headers, query=""):
+    response = client.get(f"/analytics/stats{query}", headers=headers)
+    assert response.status_code == 200, response.text
+    return response.json()["crecimiento_mensual"]
+
+
+def test_growth_compares_the_last_complete_month_with_the_previous_one(client, auth_headers):
+    rows = [
+        ("Arroz", 1000, "Abarrotes", "2025-02-10"),
+        ("Arroz", 1000, "Abarrotes", "2026-01-10"),
+        ("Arroz", 1100, "Abarrotes", "2026-02-28"),
+    ]
+    assert _upload_sales(client, auth_headers, rows).status_code == 200
+
+    growth = _growth(client, auth_headers)
+
+    assert growth == {"periodo": "2026-02", "ingresos": 1100.0, "vs_mes_anterior": 10.0, "vs_anio_anterior": 10.0}
+
+
+def test_growth_skips_an_unfinished_last_month(client, auth_headers):
+    rows = [
+        ("Arroz", 1000, "Abarrotes", "2026-01-31"),
+        ("Arroz", 800, "Abarrotes", "2026-02-28"),
+        ("Arroz", 5000, "Abarrotes", "2026-03-15"),
+    ]
+    assert _upload_sales(client, auth_headers, rows).status_code == 200
+
+    growth = _growth(client, auth_headers)
+
+    assert growth["periodo"] == "2026-02"
+    assert growth["vs_mes_anterior"] == -20.0
+    assert growth["vs_anio_anterior"] is None
+
+
+def test_growth_follows_the_end_of_the_date_range(client, auth_headers):
+    rows = [
+        ("Arroz", 1000, "Abarrotes", "2026-01-10"),
+        ("Arroz", 1500, "Abarrotes", "2026-02-10"),
+        ("Arroz", 3000, "Abarrotes", "2026-03-10"),
+    ]
+    assert _upload_sales(client, auth_headers, rows).status_code == 200
+
+    growth = _growth(client, auth_headers, "?fecha_desde=2026-02-01&fecha_hasta=2026-02-28")
+
+    assert growth["periodo"] == "2026-02"
+    assert growth["vs_mes_anterior"] == 50.0
+
+
+def test_growth_is_null_without_a_complete_month(client, auth_headers):
+    assert _growth(client, auth_headers) is None
+    assert _upload_sales(client, auth_headers, [("Arroz", 10, "Abarrotes", "2026-01-10")]).status_code == 200
+
+    assert _growth(client, auth_headers) is None
+
+
+def test_growth_without_the_previous_month_keeps_the_period(client, auth_headers):
+    assert _upload_sales(client, auth_headers, [("Arroz", 10, "Abarrotes", "2026-01-31")]).status_code == 200
+
+    growth = _growth(client, auth_headers)
+
+    assert growth == {"periodo": "2026-01", "ingresos": 10.0, "vs_mes_anterior": None, "vs_anio_anterior": None}

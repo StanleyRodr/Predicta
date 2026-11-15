@@ -58,7 +58,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 047 | Semilla y fecha fija en el generador CSV | `docs/planning/plans/047-semilla-generador-csv.md` | P2 | S | — | HECHO |
 | 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | HECHO |
 | 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | HECHO |
-| 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | TODO |
+| 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | HECHO |
 | 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | TODO |
 | 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | TODO |
 | 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | TODO |
@@ -682,8 +682,8 @@ Plan: `docs/planning/plans/049-prueba-serializacion-json.md` | Depende de: 048 |
 
 Plan: `docs/planning/plans/050-kpi-crecimiento.md` | Depende de: — | Esfuerzo: M
 
-- [ ] 050.1 `crecimiento_mensual` en `GET /analytics/stats`. Verificar: pruebas de +10 %, −20 %, mes incompleto y sin datos.
-- [ ] 050.2 Tarjeta «Crecimiento mensual» en el dashboard. Verificar: prueba del dashboard y checks del frontend.
+- [x] 050.1 `crecimiento_mensual` en `GET /analytics/stats`. Verificar: pruebas de +10 %, −20 %, mes incompleto y sin datos.
+- [x] 050.2 Tarjeta «Crecimiento mensual» en el dashboard. Verificar: prueba del dashboard y checks del frontend.
 
 ### Tarea 051 — Comando único del experimento
 

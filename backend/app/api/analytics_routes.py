@@ -101,13 +101,18 @@ def global_stats(
     db: Session = Depends(get_db),
     current_user: models.Usuario = Depends(get_current_user),
 ) -> dict:
-    """Return aggregate revenue, count, average ticket, and max sale."""
+    """Return aggregate revenue, count, average ticket, max sale, and monthly growth."""
     metrics = _in_date_range(
         lambda: analytics_service.global_metrics(
             db, current_user.id_usuario, fecha_desde, fecha_hasta
         )
     )
-    return {"usuario": current_user.nombre_usuario, "metricas_globales": metrics}
+    growth = analytics_service.monthly_growth(db, current_user.id_usuario, fecha_desde, fecha_hasta)
+    return {
+        "usuario": current_user.nombre_usuario,
+        "metricas_globales": metrics,
+        "crecimiento_mensual": growth,
+    }
 
 
 @router.get("/stats/categories", response_model=schemas.CategoryStatsResponse)

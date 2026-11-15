@@ -10,9 +10,22 @@ export interface GlobalMetrics {
   venta_mas_alta: number;
 }
 
+/** Revenue change of the last complete month of the range. */
+export interface MonthlyGrowth {
+  /** YYYY-MM */
+  periodo: string;
+  ingresos: number;
+  /** Percent change against the previous month; null without that month. */
+  vs_mes_anterior: number | null;
+  /** Percent change against the same month a year earlier; null without it. */
+  vs_anio_anterior: number | null;
+}
+
 export interface GlobalStatsResponse {
   usuario: string;
   metricas_globales: GlobalMetrics;
+  /** null: the range has no complete month with sales. */
+  crecimiento_mensual: MonthlyGrowth | null;
 }
 
 export interface CategoryMetric {

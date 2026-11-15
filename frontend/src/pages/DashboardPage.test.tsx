@@ -79,6 +79,7 @@ beforeEach(() => {
   vi.mocked(getGlobalStats).mockResolvedValue({
     usuario: "ana",
     metricas_globales: { total_ingresos: 1000, cantidad_operaciones: 4, ticket_promedio: 250, venta_mas_alta: 400 },
+    crecimiento_mensual: { periodo: "2026-02", ingresos: 1100, vs_mes_anterior: 10, vs_anio_anterior: -5.5 },
   });
   vi.mocked(getCategoryStats).mockResolvedValue({
     usuario: "ana",
@@ -222,5 +223,23 @@ describe("DashboardPage", () => {
       expect(seriesCalls()).toContainEqual({ granularidad: "mes", categoria: undefined, ...range });
     });
     expect(screen.getByText(/Rango activo:/)).toHaveTextContent("Aplica a las tarjetas y a todos los gráficos.");
+  });
+
+  it("shows the monthly growth against the previous month and a year earlier", async () => {
+    renderPage();
+
+    expect(await screen.findByText("+10.00%")).toBeInTheDocument();
+    expect(screen.getByText("feb 2026 vs mes anterior · -5.50% vs año anterior")).toBeInTheDocument();
+  });
+
+  it("says when there is not enough history for the growth", async () => {
+    vi.mocked(getGlobalStats).mockResolvedValue({
+      usuario: "ana",
+      metricas_globales: { total_ingresos: 10, cantidad_operaciones: 1, ticket_promedio: 10, venta_mas_alta: 10 },
+      crecimiento_mensual: null,
+    });
+    renderPage();
+
+    expect(await screen.findByText("Sin datos suficientes")).toBeInTheDocument();
   });
 });
