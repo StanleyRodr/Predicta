@@ -55,7 +55,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | HECHO |
 | 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | HECHO |
 | 046 | Licencia MIT | `docs/planning/plans/046-licencia-mit.md` | P1 | S | — | HECHO |
-| 047 | Semilla y fecha fija en el generador CSV | `docs/planning/plans/047-semilla-generador-csv.md` | P2 | S | — | TODO |
+| 047 | Semilla y fecha fija en el generador CSV | `docs/planning/plans/047-semilla-generador-csv.md` | P2 | S | — | HECHO |
 | 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | TODO |
 | 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | TODO |
 | 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | TODO |
@@ -662,7 +662,7 @@ Plan: `docs/planning/plans/046-licencia-mit.md` | Depende de: — | Esfuerzo: S
 
 Plan: `docs/planning/plans/047-semilla-generador-csv.md` | Depende de: — | Esfuerzo: S
 
-- [ ] 047.1 Semilla 2026 y fecha de inicio fijas en `generate_dataset.py`. Verificar: `tests/test_generate_dataset.py`.
+- [x] 047.1 Semilla 2026 y fecha de inicio fijas en `generate_dataset.py`. Verificar: `tests/test_generate_dataset.py`.
 
 ### Tarea 048 — Exponer los coeficientes del modelo
 

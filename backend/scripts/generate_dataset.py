@@ -4,10 +4,17 @@ Outputs a CSV file with realistic business patterns:
 - Year-over-year growth simulation
 - Inflation applied to prices
 - Product distribution across 5 retail categories
+
+The thesis dataset comes from ``DatosDePrueba/ventas_fabricadas/generar_ventas.py``
+(seed 2026, XLSX); this script is the CSV alternative for development. Both are
+reproducible: the same seed and start date always give the same rows.
+
+Run: python scripts/generate_dataset.py [--seed 2026] [--start 2023-11-01] [--days 1095]
 """
 
+import argparse
 import random
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -62,6 +69,9 @@ INFLATION_FACTORS = (1.0, 1.05, 1.10)
 DAILY_SALES_RANGE = [(2, 6), (4, 9), (6, 12)]
 PRICE_RANGE = (15.0, 250.0)
 OUTPUT_FILENAME = "ventas_3_anios_predicta.csv"
+SEED = 2026
+# Ends on 2026-10-30, close to the last month of the thesis dataset.
+START_DATE = date(2023, 11, 1)
 
 
 def _period_config(day_index: int) -> tuple[int, int, float]:
@@ -74,24 +84,31 @@ def _period_config(day_index: int) -> tuple[int, int, float]:
     return DAILY_SALES_RANGE[-1][0], DAILY_SALES_RANGE[-1][1], INFLATION_FACTORS[-1]
 
 
-def generate_dataset(days: int = DAYS_TOTAL) -> pd.DataFrame:
-    """Build a synthetic sales dataframe covering the given number of days."""
-    start_date = datetime.now() - timedelta(days=days)
+def generate_dataset(
+    days: int = DAYS_TOTAL, seed: int = SEED, start: date = START_DATE
+) -> pd.DataFrame:
+    """Build a synthetic sales dataframe of ``days`` days from ``start``.
+
+    A private ``random.Random(seed)`` drives every draw, so the result depends
+    only on the arguments, never on the current date or the global RNG.
+    """
+    rng = random.Random(seed)
+    start_date = datetime(start.year, start.month, start.day)
     records: list[dict] = []
 
     for day_index in range(days):
         current_date = start_date + timedelta(days=day_index)
         min_sales, max_sales, inflation = _period_config(day_index)
 
-        for _ in range(random.randint(min_sales, max_sales)):
-            category = random.choice(CATEGORIES)
-            product = random.choice(PRODUCTS[category])
-            amount = round(random.uniform(*PRICE_RANGE) * inflation, 2)
+        for _ in range(rng.randint(min_sales, max_sales)):
+            category = rng.choice(CATEGORIES)
+            product = rng.choice(PRODUCTS[category])
+            amount = round(rng.uniform(*PRICE_RANGE) * inflation, 2)
             records.append(
                 {
                     "producto": product,
                     "monto": amount,
-                    "cantidad": random.randint(1, 10),
+                    "cantidad": rng.randint(1, 10),
                     "categoria": category,
                     "fecha": current_date.strftime("%Y-%m-%d %H:%M:%S"),
                 }
@@ -101,8 +118,13 @@ def generate_dataset(days: int = DAYS_TOTAL) -> pd.DataFrame:
 
 
 def main() -> None:
-    print(f"Generating {DAYS_TOTAL} days of synthetic sales data...")
-    df = generate_dataset()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--seed", type=int, default=SEED)
+    parser.add_argument("--start", type=date.fromisoformat, default=START_DATE)
+    parser.add_argument("--days", type=int, default=DAYS_TOTAL)
+    args = parser.parse_args()
+    print(f"Generating {args.days} days from {args.start} (seed {args.seed})...")
+    df = generate_dataset(args.days, args.seed, args.start)
     output_path = Path(__file__).resolve().parent.parent / OUTPUT_FILENAME
     df.to_csv(output_path, index=False)
     print(f"Wrote {len(df)} records to {output_path}")
