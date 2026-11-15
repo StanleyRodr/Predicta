@@ -1,7 +1,7 @@
 # Reporte de verificación — 2026-11-14
 Commit: `8dd376012927405a8917df274aa11a7c17069e5c`   Semilla del dataset: `2026` (`generar_ventas.py`, XLSX); evaluación con semilla `20261108`; el generador CSV alternativo no tiene semilla   Registros: `28,667`
 
-Este reporte reemplaza a `verificacion_2026-11-08.md`. Verifica el sistema completo (tareas 001 a 045 en estado `HECHO` en `docs/planning/TASKS.md`) contra `docs/checking/VERIFICACION_TESIS.md`. La sección «Funciones del sistema fuera de VERIFICACION_TESIS.md» enumera lo que el sistema hace y la tesis todavía no describe. La sección «Trabajo pendiente priorizado» es la entrada para el siguiente agente.
+Este reporte reemplaza a `verificacion_2026-11-08.md`. Verifica el sistema completo (tareas 001 a 045 en estado `HECHO` en `docs/planning/TASKS.md`) contra `docs/checking/VERIFICACION_TESIS.md`. La sección «Funciones del sistema fuera de VERIFICACION_TESIS.md» enumera lo que el sistema hace y la tesis todavía no describe. Las secciones «Decisiones del autor (2026-11-14)» y «Trabajo pendiente priorizado» son la entrada para el siguiente agente.
 
 Dataset usado: `DatosDePrueba/ventas_fabricadas/ventas_tienda_2_anios.xlsx`. Tiene 28,667 filas, columnas `producto, monto, cantidad, categoria, fecha`, fechas de 2024-11-01 a 2026-10-31 (24 meses completos), 5 categorías (`Abarrotes`, `Bebidas`, `Cuidado Personal`, `Limpieza`, `Lácteos`), 0 nulos y 0 filas duplicadas.
 
@@ -131,7 +131,7 @@ Resultado del backtest frente a las referencias (WAPE, horizontes 1 a 6): la reg
 
 ## Pendientes de la §9: estado real en el código
 
-La §9 no se modificó: la decisión sigue siendo del autor. Esta tabla dice qué eligió el código, para que el autor lo confirme o lo cambie en la tesis y en el código.
+La §9 no se modificó. Esta tabla dice qué eligió el código antes de las decisiones del autor; lo que el autor resolvió está en «Decisiones del autor (2026-11-14)».
 
 | ID | Qué hace hoy el código | Evidencia | Lo que falta |
 |---|---|---|---|
@@ -222,26 +222,62 @@ Copiadas a `docs/checking/VERIFICACION_TESIS.md`, sección 10:
 
 Estado actualizado de filas anteriores: «Frontend» (planning-only) queda resuelta: `AGENTS.md` ya describe la SPA implementada. REQ-50..52 avanza: la gráfica combinada existe y faltan los nombres de las vistas. REQ-09 se reduce: la auditoría Python se completó y el `UNLICENSED` es el propio proyecto.
 
+## Decisiones del autor (2026-11-14)
+
+El autor resolvió todos los pendientes que requerían su decisión. Cada decisión, con su redacción recomendada para la tesis y el archivo y la sección donde va, está en la fila correspondiente de la §10 de `docs/checking/VERIFICACION_TESIS.md`. La §9 no se modificó: cada `P-xx` se cierra cuando la tesis refleje la decisión.
+
+| # | Pendiente | Decisión | Fila de la §10 | ¿Cambia el código? |
+|---|---|---|---|---|
+| 1 | Biblioteca del modelo (REQ-30, REQ-05) | La tesis dice RLM por OLS con `statsmodels` (intervalos del 95 %); MAE y RMSE con `sklearn.metrics` | REQ-30, REQ-05 (2026-11-14) | No |
+| 2 | Características (REQ-33, REQ-34, P-04) | X1 tendencia + X2 estacionalidad desde 36 meses; se retira X3 (*lag*) explicando por qué | REQ-33, REQ-34 (2026-11-14) | No |
+| 3 | División de datos (REQ-36, P-03) | Origen móvil y *holdout* cronológico, citando `TimeSeriesSplit` | REQ-36 | No |
+| 4 | Baseline y umbral (P-01, P-02) | Gana a la mejor de 3 referencias en el horizonte 1 (WAPE) + escala de Lewis sobre el MAPE | REQ-37, REQ-61, Hipótesis | No |
+| 5 | Esquema (REQ-13, REQ-21) | La tesis documenta el esquema real y remite al mapeo de columnas (con los 3 datasets reales) | REQ-13 | No |
+| 10 | ETL con Pandas (REQ-04, 22, 24–26, 29) | La tesis describe la arquitectura real (validación por fila → PostgreSQL → Pandas para el modelo, SQL para lo descriptivo) | REQ-24..26, REQ-29 | No |
+| 11 | Atípicos (REQ-23, P-08) | Se retira la afirmación, con justificación | REQ-23 | No |
+| 12 | Nombres de las vistas (REQ-52) | Se cambia la figura `fig:arquitectura_resultados` con los nombres actuales | REQ-50..52 | No |
+| 13 | Asíncrono (REQ-02, REQ-42) | Redacción precisa (ASGI + hilos de trabajo + correo en segundo plano), sin mencionar los *workers* | REQ-42 | Sí: C6 |
+| 15 | Licencia (REQ-09) | MIT | REQ-09 (2026-11-14) | Sí: C7 |
+| 16a | KPI (REQ-56, P-06) | Ingresos totales, operaciones, ticket promedio (por operación) + crecimiento; venta más alta como indicador complementario | REQ-56 | Sí: C8 |
+| 16b | Funciones extra | Solo lo esencial: el mapeo de columnas (con los datasets reales) y los intervalos de predicción | Alcance | No |
+| P-05 | Variable Y (REQ-35) | `monto` es la Y principal; `cantidad`, la secundaria | REQ-35 | No |
+| P-07 | Costos (PE3) | Tabla con 1, 5 y 10 usuarios, los planes actuales con una nota sobre Vercel Hobby, en USD y MXN | PE3 | Documento: D1 |
+
 ## Trabajo pendiente priorizado
 
-Orden sugerido para el siguiente agente. Cada punto indica si requiere una decisión del autor antes de tocar el código o la tesis.
+### Tareas de código y documentación (para el siguiente agente)
 
-1. **Decidir la biblioteca del modelo (REQ-30, REQ-05).** Opciones: (a) cambiar la tesis para decir `statsmodels.OLS`, que es el mismo OLS y da intervalos de predicción, y dejar Scikit-Learn para las métricas; (b) migrar a `LinearRegression`, perdiendo `get_prediction`. Requiere decisión del autor. Recomendación: (a).
-2. **Definir las características (REQ-33, P-04).** Agregar el *lag* X3 al código o retirarlo de la tesis, y explicar la regla escalonada de 36 meses. Si cambian las características, volver a ejecutar `scripts/evaluate_models.py`. Requiere decisión del autor.
-3. **Definir la división de datos (REQ-36, P-03).** Describir en `metodos.tex` el origen móvil y el *holdout* cronológico en lugar de `train_test_split`. Requiere decisión del autor.
-4. **Elegir el baseline y el umbral (P-01, P-02).** El código ya calcula tres referencias. Falta elegir cuál prueba la hipótesis y con qué umbral. Requiere decisión del autor.
-5. **Esquema (REQ-13).** Guardar `precio_unitario` y `total` (requiere migración Alembic) o reescribir el esquema en la tesis. Requiere decisión del autor.
-6. **Exponer los coeficientes (REQ-32).** Agregar `coeficientes` (β0…βn con nombres) a `MonthlyForecastResponse`, a los logs o a `docs/evaluacion/`. Es código sin decisión de tesis.
-7. **Comando único del experimento y métricas fechadas (§7, REQ-61).** Un script que genere el dataset, lo cargue, ejecute la evaluación y escriba `resultados/metricas_AAAA-MM-DD.json` con el commit, la semilla y los parámetros. Es código.
-8. **Prueba `test_serializacion_json` (REQ-60).** DataFrame → JSON → comparación valor por valor. Es código.
-9. **E2E con Playwright (REQ-50, 51, 53, 54, 62).** Gráficas con datos de la API, capturas a 375 y 1440 px sin *scroll* horizontal, sin evento `load` al filtrar y sin errores en la consola. Es código (requiere backend y base de datos en CI).
-10. **Pipeline ETL con Pandas (REQ-04, REQ-22, REQ-24..26, REQ-29).** Centralizar en un DataFrame la conversión de fecha, las columnas de calendario (día de la semana, mes y semana ISO) y el `groupby` por día y categoría; o ajustar el texto de la tesis a la arquitectura real (validación por fila y agregación en SQL). Requiere decisión del autor.
-11. **Atípicos (REQ-23, P-08).** Implementar IQR o *z-score* con máscaras booleanas, o retirar la afirmación. Requiere decisión del autor.
-12. **Nombres de las vistas (REQ-52).** Renombrar los títulos a «Proyección Global» y «Análisis por Categoría», o actualizar la figura de la tesis. Requiere decisión del autor.
-13. **Async (REQ-02, REQ-42).** Mover el ETL o el ajuste a `run_in_threadpool` explícito o a tareas en segundo plano, o describir en la tesis el *threadpool* de FastAPI. Requiere decisión del autor.
-14. **Generador CSV (REQ-11).** Agregar una semilla y una fecha fija a `backend/scripts/generate_dataset.py`, o retirarlo y dejar `generar_ventas.py` como el generador autoritativo. Es código.
-15. **Licencia del proyecto (REQ-09).** Agregar un `LICENSE` y el campo `license` en `frontend/package.json`. Requiere decisión del autor (qué licencia).
-16. **Tesis: describir las funciones extra** de la sección anterior que el autor quiera incluir (mapeo de columnas, datasets reales, reportes, seguridad y despliegue) y los KPI reales (P-06).
+No requieren más decisiones. Cada tarea cita su fila de la §10. Al terminar una tarea, cambia el estado de su fila en la §10 a «Resuelta» con la evidencia (archivo, función y prueba), sin borrar filas.
+
+1. **C1. Exponer los coeficientes (REQ-32).** Agregar `coeficientes` (β0…βn con el nombre de cada variable, por objetivo) a `MonthlyForecastResponse` y a `docs/evaluacion/resultados.md` (`scripts/evaluate_models.py`). Prueba de contrato en `tests/test_forecast_api.py`.
+2. **C2. Comando único del experimento y métricas fechadas (§7, REQ-61).** Un script que genere el dataset (`generar_ventas.py`, semilla 2026), lo cargue, ejecute la evaluación y escriba `resultados/metricas_AAAA-MM-DD.json` con el commit, la semilla, los parámetros del dataset, el MAE y el RMSE, el baseline y la clasificación de Lewis decididos en el #4.
+3. **C3. Prueba `test_serializacion_json` (REQ-60).** Convertir un DataFrame mensual a la respuesta JSON de `/analytics/forecast` y compararlo valor por valor (periodos ISO, montos redondeados a 2 decimales, sin filas perdidas).
+4. **C4. E2E con Playwright (REQ-50, 51, 53, 54, 62).** Gráficas con datos de la API, capturas a 375 y 1440 px sin *scroll* horizontal, sin evento `load` al cambiar un filtro y sin errores en la consola.
+5. **C5. Generador CSV (REQ-10/11).** Agregar una semilla fija y una fecha de inicio fija a `backend/scripts/generate_dataset.py`, y documentar `generar_ventas.py` como el generador autoritativo.
+6. **C6. Medición de concurrencia (REQ-02, REQ-42).** Script versionado en `backend/scripts/` que, con `uvicorn` y PostgreSQL local, mida el p50 y el p95 de `GET /analytics/stats` en reposo y durante la carga del XLSX completo (por otro usuario), y registre el resultado en `docs/evaluacion/`.
+7. **C7. Licencia MIT (REQ-09).** Agregar `LICENSE` (MIT, con el nombre del autor y 2026) en la raíz y `"license": "MIT"` en `frontend/package.json`. Verificar que `npx license-checker --production --summary` ya no muestre `UNLICENSED`.
+8. **C8. Tarjeta de crecimiento (REQ-56).** Backend: en `/analytics/stats`, la variación % de los ingresos del último mes completo del rango filtrado frente al mes anterior y frente al mismo mes del año anterior cuando exista; `null` sin dos meses completos. Frontend: una `MetricCard` en `DashboardPage.tsx` que muestre «Sin datos suficientes» cuando el valor es `null`. Pruebas en ambos lados.
+9. **D1. Comparación de costos (PE3, P-07).** Crear `docs/costos/comparacion.md` según la fila PE3 de la §10. Requiere buscar los precios oficiales actuales en internet y citar la URL y la fecha de cada precio.
+
+### Cambios en la tesis (para el autor)
+
+El código no cambia en estos puntos. La redacción recomendada está en la fila de la §10 que se indica.
+
+| Archivo › Sección de la tesis | Qué cambiar | Fila de la §10 |
+|---|---|---|
+| `metodos.tex › Scikit-Learn`, `› Modelado Predictivo`; stack en `intro.tex` y `arte.tex` | `statsmodels.OLS` para el ajuste; `sklearn.metrics` para MAE y RMSE | REQ-30, REQ-05 |
+| `metodos.tex › Modelado Predictivo`; `arte.tex › 2.1.3.4` | X1, X2 desde 36 meses, sin *lag*; intervalos del 95 % | REQ-33, REQ-34; Alcance |
+| `metodos.tex › Modelado Predictivo`, `› Definición del Experimento` | Origen móvil y *holdout* cronológico | REQ-36 |
+| `metodos.tex › Modelado Predictivo` | `monto` como Y principal; `cantidad`, secundaria | REQ-35 |
+| `intro.tex › Hipótesis`, `› Objetivos › Específico 5`; `metodos.tex › Definición del Experimento` | Baseline (mejor de 3 referencias, horizonte 1) y escala de Lewis | REQ-37, REQ-61, Hipótesis |
+| `metodos.tex › Selección y Estructura de Datos` | Esquema real y referencia al mapeo | REQ-13 |
+| `metodos.tex › Pandas (Ingeniería de Datos y Tubería ETL)`, `› Preprocesamiento…` | Mapeo de columnas con los datasets reales; ETL real; sin atípicos | REQ-13, REQ-24..26, REQ-29, REQ-23 |
+| `intro.tex › Justificación`; `arte.tex › 2.1.4`; `metodos.tex › Validación e Integración del Sistema` | Redacción precisa de lo asíncrono | REQ-42 |
+| Figura `fig:arquitectura_resultados` | Nombres actuales de las vistas | REQ-50..52 |
+| `intro.tex › Objetivos › Específico 1`; diseño del dashboard | Lista de KPI | REQ-56 |
+| Capítulo que responde la PE3 | Tabla de costos (después de D1) | PE3 |
+
+Cuando la tesis refleje un cambio, actualiza en `VERIFICACION_TESIS.md` la afirmación del REQ correspondiente (§1 a §7), cierra su fila en la §10 y el `P-xx` de la §9 si aplica (regla de la §12).
 
 ## Comandos ejecutados
 
