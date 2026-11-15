@@ -636,6 +636,8 @@ Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 |
 - [ ] 045.6 Desplegar con la guía. Verificar: la checklist se cumple sobre los dominios reales.
 - [ ] 045.7 Repetir ZAP baseline contra los dominios reales. Verificar: las alertas de cabeceras de la 039 desaparecen.
 - [ ] 045.8 Verificación global. Verificar: todos los comandos terminan con código 0.
+- [x] 045.9 Configurar loguru sin `diagnose` ni `backtrace` (S-26, hallado en el despliegue del 2026-11-14). Verificar: un test confirma que la contraseña de un login que falla no aparece en el log.
+- [x] 045.10 Enviar correos por la API HTTPS de Brevo (`EMAIL_BACKEND=brevo_api`), porque Railway Hobby bloquea el SMTP saliente (`TimeoutError` en el puerto 587). Verificar: tests de la petición, del error sin cuerpo y de la configuración de producción.
 
 ## Verificación global
 

@@ -13,7 +13,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 Environment = Literal["development", "test", "production"]
-EmailBackend = Literal["smtp", "console"]
+EmailBackend = Literal["smtp", "brevo_api", "console"]
 
 DEFAULT_CORS_ORIGINS = ["http://localhost:5173"]
 DEFAULT_TRUSTED_PROXIES = ["127.0.0.1"]
@@ -48,12 +48,14 @@ class Settings(BaseSettings):
         default_factory=lambda: list(DEFAULT_TRUSTED_PROXIES)
     )
     # Mail: "console" only logs each message (development and tests); "smtp"
-    # sends it through any provider with STARTTLS (Brevo in production).
+    # sends it through any provider with STARTTLS; "brevo_api" uses Brevo's
+    # HTTPS API, for hosts that block outbound SMTP (Railway Hobby).
     email_backend: EmailBackend = "console"
     smtp_host: str | None = None
     smtp_port: int = Field(587, gt=0, le=65535)
     smtp_user: str | None = None
     smtp_password: str | None = None
+    brevo_api_key: str | None = None
     email_from: str | None = None
     # Links in the e-mails point here: {frontend_url}/verificar-correo#token=...
     frontend_url: str = "http://localhost:5173"
@@ -102,24 +104,23 @@ class Settings(BaseSettings):
         return self
 
     @model_validator(mode="after")
-    def _require_smtp_in_production(self) -> "Settings":
+    def _require_mail_in_production(self) -> "Settings":
         if not self.is_production:
             return self
-        missing = [
-            name
-            for name, value in (
-                ("SMTP_HOST", self.smtp_host),
-                ("SMTP_USER", self.smtp_user),
-                ("SMTP_PASSWORD", self.smtp_password),
-                ("EMAIL_FROM", self.email_from),
-            )
-            if not value
-        ]
-        if self.email_backend != "smtp" or missing:
+        if self.email_backend == "console":
             raise ValueError(
-                "En producción se exige EMAIL_BACKEND=smtp con SMTP_HOST, SMTP_USER, "
-                "SMTP_PASSWORD y EMAIL_FROM."
-                + (f" Faltan: {', '.join(missing)}." if missing else "")
+                "En producción se exige EMAIL_BACKEND=smtp (SMTP_HOST, SMTP_USER, SMTP_PASSWORD, "
+                "EMAIL_FROM) o EMAIL_BACKEND=brevo_api (BREVO_API_KEY, EMAIL_FROM)."
+            )
+        required = (
+            [("SMTP_HOST", self.smtp_host), ("SMTP_USER", self.smtp_user), ("SMTP_PASSWORD", self.smtp_password)]
+            if self.email_backend == "smtp"
+            else [("BREVO_API_KEY", self.brevo_api_key)]
+        )
+        missing = [name for name, value in [*required, ("EMAIL_FROM", self.email_from)] if not value]
+        if missing:
+            raise ValueError(
+                f"Con EMAIL_BACKEND={self.email_backend} en producción faltan: {', '.join(missing)}."
             )
         if not self.frontend_url.startswith("https://"):
             raise ValueError("FRONTEND_URL debe empezar con https:// en producción.")

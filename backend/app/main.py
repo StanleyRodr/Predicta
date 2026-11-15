@@ -15,6 +15,7 @@ starting the server for the first time.
 
 import sys
 from contextlib import asynccontextmanager
+from typing import TextIO
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.encoders import jsonable_encoder
@@ -35,14 +36,26 @@ from app.core.rate_limit import enforce_default_limit, limiter, rate_limit_excee
 # ============================================================
 # Logging
 # ============================================================
-logger.remove()
-logger.add(
-    sys.stdout,
-    level=settings.log_level,
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+LOG_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
     "<level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan> - "
-    "<level>{message}</level>",
+    "<level>{message}</level>"
 )
+
+
+def add_log_sink(sink: TextIO, level: str) -> int:
+    """Attach a sink with the app's safe options; returns its loguru id.
+
+    diagnose=False: loguru would otherwise print the value of every local
+    variable in a traceback, a password or the SMTP key included (audit S-26).
+    backtrace=False keeps the standard traceback instead of an extended one,
+    which also keeps each error to a few lines (Railway drops logs past 500/s).
+    """
+    return logger.add(sink, level=level, format=LOG_FORMAT, backtrace=False, diagnose=False)
+
+
+logger.remove()
+add_log_sink(sys.stdout, settings.log_level)
 
 
 # ============================================================

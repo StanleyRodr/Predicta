@@ -1,6 +1,9 @@
 """E-mail service, single-use tokens, verification on sign-up and e-mail change (task 042)."""
 
 import hashlib
+import io
+import json
+import urllib.error
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -392,3 +395,92 @@ def test_pending_email_taken_meanwhile_is_dropped_on_confirmation(client, auth_h
     me = client.get("/users/me", headers=auth_headers).json()
     assert me["correo_electronico"] == "test@example.com"
     assert me["correo_pendiente"] is None
+
+
+# --------------------------------------------------------------- brevo_api
+
+
+class FakeResponse:
+    def __init__(self, status):
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _brevo_settings(monkeypatch):
+    monkeypatch.setattr(email_service.settings, "email_backend", "brevo_api")
+    monkeypatch.setattr(email_service.settings, "brevo_api_key", "clave-api-de-prueba")
+    monkeypatch.setattr(email_service.settings, "email_from", "Predicta <no-responder@example.com>")
+
+
+def test_brevo_api_posts_the_message_over_https(monkeypatch):
+    _brevo_settings(monkeypatch)
+    sent = []
+
+    def fake_urlopen(request, timeout):
+        sent.append((request, timeout))
+        return FakeResponse(201)
+
+    monkeypatch.setattr(email_service.urllib.request, "urlopen", fake_urlopen)
+
+    real_deliver(email_service.build_message("ana@example.com", "Asunto", "Cuerpo con tilde: ñ"))
+
+    [(request, timeout)] = sent
+    assert request.full_url == "https://api.brevo.com/v3/smtp/email"
+    assert request.get_method() == "POST"
+    assert request.get_header("Api-key") == "clave-api-de-prueba"
+    assert timeout == email_service.BREVO_TIMEOUT_SECONDS
+    assert json.loads(request.data) == {
+        "sender": {"name": "Predicta", "email": "no-responder@example.com"},
+        "to": [{"email": "ana@example.com"}],
+        "subject": "Asunto",
+        "textContent": "Cuerpo con tilde: ñ\n",
+    }
+
+
+def test_brevo_api_error_keeps_only_the_status(monkeypatch):
+    _brevo_settings(monkeypatch)
+
+    def refused(request, timeout):
+        raise urllib.error.HTTPError(
+            request.full_url, 401, "Unauthorized", None, io.BytesIO(b'{"message":"Key not found"}')
+        )
+
+    monkeypatch.setattr(email_service.urllib.request, "urlopen", refused)
+
+    with pytest.raises(email_service.EmailDeliveryError, match="Brevo respondió 401.") as caught:
+        real_deliver(email_service.build_message("ana@example.com", "Asunto", "Cuerpo"))
+    assert "Key not found" not in str(caught.value)
+
+
+def test_brevo_api_never_opens_smtp(monkeypatch):
+    _brevo_settings(monkeypatch)
+    monkeypatch.setattr(email_service.urllib.request, "urlopen", lambda request, timeout: FakeResponse(201))
+    monkeypatch.setattr(email_service.smtplib, "SMTP", lambda *args, **kwargs: pytest.fail("SMTP abierto"))
+
+    real_deliver(email_service.build_message("ana@example.com", "Asunto", "Cuerpo"))
+
+
+BREVO_PRODUCTION = {
+    **{key: value for key, value in PRODUCTION.items() if not key.startswith("smtp_")},
+    "email_backend": "brevo_api",
+    "brevo_api_key": "clave-api",
+}
+
+
+def test_production_starts_with_brevo_api_and_no_smtp(monkeypatch):
+    for name in ("SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "BREVO_API_KEY"):
+        monkeypatch.delenv(name, raising=False)
+    assert Settings(**BREVO_PRODUCTION).email_backend == "brevo_api"
+
+
+@pytest.mark.parametrize(("missing", "name"), [("brevo_api_key", "BREVO_API_KEY"), ("email_from", "EMAIL_FROM")])
+def test_production_brevo_api_needs_its_key_and_sender(monkeypatch, missing, name):
+    for variable in ("BREVO_API_KEY", "EMAIL_FROM"):
+        monkeypatch.delenv(variable, raising=False)
+    with pytest.raises(ValidationError, match=name):
+        Settings(**{**BREVO_PRODUCTION, missing: None})

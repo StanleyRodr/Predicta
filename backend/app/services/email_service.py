@@ -1,17 +1,23 @@
-"""Outgoing e-mail: the only module that talks to SMTP.
+"""Outgoing e-mail: the only module that talks to a mail provider.
 
 ``EMAIL_BACKEND=console`` logs each message instead of sending it (development
 and tests). ``smtp`` opens a connection with STARTTLS and logs in, so any
-provider works with environment variables alone (Brevo in production).
+provider works with environment variables alone. ``brevo_api`` posts the same
+message to Brevo's HTTPS API, for hosts that block outbound SMTP (Railway
+Hobby answers a timeout on port 587).
 
 Routes queue messages with ``send_in_background``: the response does not wait
 for the provider, its timing reveals nothing, and a delivery failure is logged
 instead of turning into a 500.
 """
 
+import json
 import smtplib
 import ssl
+import urllib.error
+import urllib.request
 from email.message import EmailMessage
+from email.utils import parseaddr
 
 from fastapi import BackgroundTasks
 from loguru import logger
@@ -19,6 +25,12 @@ from loguru import logger
 from app.core.config import settings
 
 SMTP_TIMEOUT_SECONDS = 15
+BREVO_API_URL = "https://api.brevo.com/v3/smtp/email"
+BREVO_TIMEOUT_SECONDS = 15
+
+
+class EmailDeliveryError(RuntimeError):
+    """The provider refused or failed to take the message; never shown to the client."""
 DEFAULT_SENDER = "Predicta <no-responder@localhost>"
 
 
@@ -32,6 +44,42 @@ def build_message(to: str, subject: str, text: str) -> EmailMessage:
     return message
 
 
+def brevo_payload(message: EmailMessage) -> dict:
+    """Brevo transactional e-mail body for a plain-text message."""
+    sender_name, sender_email = parseaddr(str(message["From"]))
+    sender = {"email": sender_email, **({"name": sender_name} if sender_name else {})}
+    return {
+        "sender": sender,
+        "to": [{"email": str(message["To"])}],
+        "subject": str(message["Subject"]),
+        "textContent": message.get_content(),
+    }
+
+
+def _send_with_brevo_api(message: EmailMessage) -> None:
+    """POST the message to Brevo over HTTPS (port 443)."""
+    if not settings.brevo_api_key:
+        raise RuntimeError("BREVO_API_KEY no está configurada.")
+    request = urllib.request.Request(
+        BREVO_API_URL,
+        data=json.dumps(brevo_payload(message)).encode("utf-8"),
+        headers={
+            "api-key": settings.brevo_api_key,
+            "content-type": "application/json",
+            "accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=BREVO_TIMEOUT_SECONDS) as response:  # noqa: S310 - fixed https URL
+            status = response.status
+    except urllib.error.HTTPError as exc:
+        # Only the status: the body may echo the message or account details.
+        raise EmailDeliveryError(f"Brevo respondió {exc.code}.") from None
+    if status >= 300:
+        raise EmailDeliveryError(f"Brevo respondió {status}.")
+
+
 def _deliver(message: EmailMessage) -> None:
     """Hand the message to the configured backend; tests replace this function."""
     if settings.email_backend == "console":
@@ -42,6 +90,9 @@ def _deliver(message: EmailMessage) -> None:
             message["Subject"],
             message.get_content(),
         )
+        return
+    if settings.email_backend == "brevo_api":
+        _send_with_brevo_api(message)
         return
     if not settings.smtp_host:
         raise RuntimeError("SMTP_HOST no está configurado.")
