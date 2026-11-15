@@ -103,6 +103,8 @@ class ForecastPoint:
 class TargetForecast:
     puntos: list[ForecastPoint]
     metricas: Metrics
+    #: β of the final fit by predictor name: ``const`` (β0), ``mes_indice``, ``mes_2``…
+    coeficientes: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -252,6 +254,17 @@ def monthly_regression(seasonal: bool) -> ModelFn:
     return model
 
 
+def fitted_coefficients(train: pd.DataFrame, target: str, seasonal: bool) -> dict[str, float]:
+    """β0…βn of the OLS fitted on ``train``, keyed by predictor (``const`` is β0).
+
+    It is the same fit ``monthly_regression`` projects with, so the coefficients
+    describe the equation behind the returned forecast.
+    """
+    design = _with_constant(_monthly_design(list(train["fecha"]), seasonal))
+    fitted = sm.OLS(train[target].to_numpy(dtype=float), design).fit()
+    return {name: float(value) for name, value in fitted.params.items()}
+
+
 def _split_partial_month(
     monthly: pd.DataFrame, last_sale: date
 ) -> tuple[pd.DataFrame, pd.Series | None]:
@@ -333,7 +346,9 @@ def monthly_forecast_series(
             for step, (moment, row) in enumerate(zip(future_dates, projection.itertuples(), strict=True), start=1)
         ]
         metrics = one_step_metrics(history, target, model, min_train=MIN_MONTHS)
-        objetivos[target] = TargetForecast(puntos=points, metricas=metrics)
+        objetivos[target] = TargetForecast(
+            puntos=points, metricas=metrics, coeficientes=fitted_coefficients(history, target, seasonal)
+        )
 
     return MonthlyForecast(
         modelo="tendencia_estacional" if seasonal else "tendencia",

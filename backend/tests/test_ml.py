@@ -299,3 +299,38 @@ def test_daily_prediction_uses_weekdays_with_two_full_weeks():
 
     assert next_date.weekday() == 0
     assert forecasts["monto"].prediction == pytest.approx(100, abs=1)
+
+
+# ---------------------------------------------------------------- coefficients
+
+
+def test_coefficients_recover_the_line_that_generated_the_series():
+    months = pd.date_range("2024-01-31", periods=12, freq="ME")
+    monthly = pd.DataFrame(
+        {
+            "fecha": months,
+            "monto": [500.0 + 25.0 * step for step in range(12)],
+            "cantidad": [40.0 + 2.0 * step for step in range(12)],
+        }
+    )
+
+    forecast = monthly_forecast_series(monthly, months[-1].date())
+
+    amount = forecast.objetivos["monto"].coeficientes
+    units = forecast.objetivos["cantidad"].coeficientes
+    assert set(amount) == {"const", "mes_indice"}
+    assert amount["const"] == pytest.approx(500.0)
+    assert amount["mes_indice"] == pytest.approx(25.0)
+    assert units["const"] == pytest.approx(40.0)
+    assert units["mes_indice"] == pytest.approx(2.0)
+
+
+def test_seasonal_coefficients_name_every_month_dummy():
+    monthly = _monthly(36)
+
+    forecast = monthly_forecast_series(monthly, _last_day(monthly))
+
+    assert forecast.modelo == "tendencia_estacional"
+    assert list(forecast.objetivos["monto"].coeficientes) == ["const", "mes_indice"] + [
+        f"mes_{month}" for month in range(2, 13)
+    ]

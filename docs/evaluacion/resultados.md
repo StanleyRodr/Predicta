@@ -121,6 +121,21 @@ Modelo final con los 24 meses: tendencia.
 Un valor p menor que 0.05 en Ljung–Box indica autocorrelación en los residuos; en
 Breusch–Pagan, varianza no constante.
 
+## Coeficientes del modelo final
+
+Ajuste por mínimos cuadrados ordinarios (`statsmodels.OLS`) con los 24 meses,
+`Y = β0 + β1·mes_indice + ε`.
+`const` es el intercepto β0; `mes_indice` cuenta los meses de calendario desde el
+primero con ventas. Son los mismos valores que devuelve `GET /analytics/forecast` en
+`coeficientes`. R² del ajuste: monto 0.2326, cantidad 0.1452 (dentro de la muestra; las métricas de arriba son fuera de ella).
+
+| Objetivo | Variable | Coeficiente | Error estándar | Valor p |
+|---|---|---|---|---|
+| monto | const | 76,512.59 | 7,429.93 | 0.0000 |
+| monto | mes_indice | 1,429.46 | 553.54 | 0.0170 |
+| cantidad | const | 2,277.94 | 202.45 | 0.0000 |
+| cantidad | mes_indice | 29.16 | 15.08 | 0.0662 |
+
 ## Niveles del modelo escalonado
 
 El historial se corta a 6, 12 y 18 meses, se proyecta con la regla del sistema y se

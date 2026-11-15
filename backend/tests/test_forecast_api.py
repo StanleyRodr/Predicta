@@ -79,6 +79,7 @@ def test_forecast_returns_history_projection_and_metrics_without_writing(client,
     for target in ("monto", "cantidad"):
         metrics = body["metricas"][target]
         assert 0 <= metrics["mae"] <= metrics["rmse"]
+        assert set(body["coeficientes"][target]) == {"const", "mes_indice"}
     assert _count_predictions(test_db) == 0
 
 

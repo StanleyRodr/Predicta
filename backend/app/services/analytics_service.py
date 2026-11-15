@@ -5,6 +5,7 @@ before anything else. Totals are computed with ``GROUP BY`` in the database;
 only already-aggregated rows reach Python.
 """
 
+import calendar
 from collections import defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -106,6 +107,65 @@ def global_metrics(
         "cantidad_operaciones": count,
         "ticket_promedio": round(float(average or 0), 2),
         "venta_mas_alta": float(highest or 0),
+    }
+
+
+def _percent_change(current: Decimal, previous: Decimal | None) -> float | None:
+    if previous is None or previous == 0:
+        return None
+    return round(float((current - previous) / previous * 100), 2)
+
+
+def monthly_growth(
+    db: Session,
+    user_id: int,
+    fecha_desde: date | None = None,
+    fecha_hasta: date | None = None,
+) -> dict[str, Any] | None:
+    """Revenue change of the last complete month in the range, or ``None``.
+
+    The range ends at ``fecha_hasta`` or, without it, at the latest sale. A month
+    counts when it has sales, lies inside the range, and the range reaches its
+    last day, so an unfinished month is never compared. The previous month and
+    the same month a year earlier come from all the user's sales, because they
+    usually fall before the range. A change is ``None`` when that month has no
+    revenue to compare with.
+    """
+    _check_date_range(fecha_desde, fecha_hasta)
+    rows = (
+        _user_sales(
+            db,
+            user_id,
+            extract("year", models.Venta.fecha_venta),
+            extract("month", models.Venta.fecha_venta),
+            func.sum(models.Venta.monto),
+        )
+        .group_by(extract("year", models.Venta.fecha_venta), extract("month", models.Venta.fecha_venta))
+        .all()
+    )
+    totals = {(int(year), int(month)): Decimal(str(total or 0)) for year, month, total in rows}
+    if not totals:
+        return None
+    end = fecha_hasta
+    if end is None:
+        end = _user_sales(db, user_id, func.max(models.Venta.fecha_venta)).scalar()
+
+    def complete(year: int, month: int) -> bool:
+        last_day = date(year, month, calendar.monthrange(year, month)[1])
+        first_day = date(year, month, 1)
+        return last_day <= end and (fecha_desde is None or first_day >= fecha_desde)
+
+    candidates = [key for key in totals if complete(*key)]
+    if not candidates:
+        return None
+    year, month = max(candidates)
+    previous = (year, month - 1) if month > 1 else (year - 1, 12)
+    current = totals[(year, month)]
+    return {
+        "periodo": f"{year:04d}-{month:02d}",
+        "ingresos": round(float(current), 2),
+        "vs_mes_anterior": _percent_change(current, totals.get(previous)),
+        "vs_anio_anterior": _percent_change(current, totals.get((year - 1, month))),
     }
 
 

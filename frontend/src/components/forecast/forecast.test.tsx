@@ -40,6 +40,7 @@ function forecast(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyFore
       monto: { r2: null, mape: 5, mae: 2, rmse: 3, wape: 4, mase: 0.5, mejora_vs_referencia: 10, referencia: "ultimo_valor", origenes: 3 },
       cantidad: { r2: null, mape: 5, mae: 2, rmse: 3, wape: 4, mase: 0.5, mejora_vs_referencia: 10, referencia: "ultimo_valor", origenes: 3 },
     },
+    coeficientes: { monto: { const: 100, mes_indice: 5 }, cantidad: { const: 10, mes_indice: 1 } },
     ...overrides,
   };
 }

@@ -220,6 +220,37 @@ def residual_diagnostics(history: pd.DataFrame) -> dict[str, float]:
     }
 
 
+def coefficient_table(history: pd.DataFrame) -> pd.DataFrame:
+    """β, standard error, and p-value of the final fit, for amounts and units.
+
+    The design is the one ``monthly_forecast_series`` applies to this history,
+    so the β match the ``coeficientes`` that ``GET /analytics/forecast`` returns.
+    """
+    seasonal, _ = applied_model(len(history), history)
+    index = months_elapsed(history["fecha"])
+    design = (
+        build_seasonal_features(index, history["fecha"].dt.month)
+        if seasonal
+        else pd.DataFrame({"mes_indice": index.astype(float)})
+    )
+    exog = sm.add_constant(design, has_constant="add")
+    rows = []
+    for target in ("monto", "cantidad"):
+        fitted = sm.OLS(history[target].to_numpy(dtype=float), exog).fit()
+        for name in fitted.params.index:
+            rows.append(
+                {
+                    "objetivo": target,
+                    "variable": name,
+                    "coeficiente": float(fitted.params[name]),
+                    "error_estandar": float(fitted.bse[name]),
+                    "p_valor": float(fitted.pvalues[name]),
+                    "r2_ajuste": float(fitted.rsquared),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
 # ---------------------------------------------------------------- tiered levels
 
 
@@ -352,6 +383,7 @@ def main() -> None:
     by_horizon = horizon_table(history, records)
     gains = improvement_table(by_horizon)
     diagnostics = residual_diagnostics(history)
+    coefficients = coefficient_table(history)
     levels, level_charts = level_table(history)
     categories = category_table(sales)
 
@@ -360,6 +392,7 @@ def main() -> None:
         "mejora_vs_referencia": gains,
         "niveles_escalonados": levels,
         "categorias": categories,
+        "coeficientes": coefficients,
     }.items():
         frame.round(4).to_csv(OUTPUT / f"{name}.csv", index=False)
     pd.DataFrame([diagnostics]).round(4).to_csv(OUTPUT / "diagnostico_residuos.csv", index=False)
@@ -437,6 +470,16 @@ Modelo final con los {len(history)} meses: {diagnostics["modelo"].replace("_", "
 
 Un valor p menor que 0.05 en Ljung–Box indica autocorrelación en los residuos; en
 Breusch–Pagan, varianza no constante.
+
+## Coeficientes del modelo final
+
+Ajuste por mínimos cuadrados ordinarios (`statsmodels.OLS`) con los {len(history)} meses,
+`Y = β0 + β1·mes_indice{" + β2·mes_2 + … + β12·mes_12" if diagnostics["modelo"] == "tendencia_estacional" else ""} + ε`.
+`const` es el intercepto β0; `mes_indice` cuenta los meses de calendario desde el
+primero con ventas. Son los mismos valores que devuelve `GET /analytics/forecast` en
+`coeficientes`. R² del ajuste: monto {_number(coefficients[coefficients["objetivo"] == "monto"]["r2_ajuste"].iloc[0], 4)}, cantidad {_number(coefficients[coefficients["objetivo"] == "cantidad"]["r2_ajuste"].iloc[0], 4)} (dentro de la muestra; las métricas de arriba son fuera de ella).
+
+{markdown(coefficients.drop(columns="r2_ajuste").assign(p_valor=lambda f: f["p_valor"].map("{:.4f}".format)), {"objetivo": "Objetivo", "variable": "Variable", "coeficiente": "Coeficiente", "error_estandar": "Error estándar", "p_valor": "Valor p"})}
 
 ## Niveles del modelo escalonado
 

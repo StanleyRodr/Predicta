@@ -35,29 +35,32 @@ export function ChartFrame({ label, description, table, className, children }: C
           {description}
         </p>
       )}
-      <table className="sr-only">
-        <caption>Datos de {label}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{table.rowHeader}</th>
-            {table.columns.map((column) => (
-              <th key={column} scope="col">
-                {column}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row) => (
-            <tr key={row.label}>
-              <th scope="row">{row.label}</th>
-              {row.values.map((value, index) => (
-                <td key={index}>{value}</td>
+      {/* sr-only goes on a wrapper: a table ignores width: 1px and would widen the page. */}
+      <div className="sr-only">
+        <table>
+          <caption>Datos de {label}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{table.rowHeader}</th>
+              {table.columns.map((column) => (
+                <th key={column} scope="col">
+                  {column}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {table.rows.map((row) => (
+              <tr key={row.label}>
+                <th scope="row">{row.label}</th>
+                {row.values.map((value, index) => (
+                  <td key={index}>{value}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

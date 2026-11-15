@@ -92,6 +92,11 @@ export interface MonthlyForecastResponse {
     monto: ValidationMetrics;
     cantidad: ValidationMetrics;
   };
+  /** β of the final OLS fit by predictor: `const` (β0), `mes_indice`, `mes_2`…`mes_12`. */
+  coeficientes: {
+    monto: Record<string, number>;
+    cantidad: Record<string, number>;
+  };
 }
 
 export interface SavedPoint {

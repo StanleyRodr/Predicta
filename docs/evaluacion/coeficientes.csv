@@ -1,0 +1,5 @@
+objetivo,variable,coeficiente,error_estandar,p_valor,r2_ajuste
+monto,const,76512.586,7429.9309,0.0,0.2326
+monto,mes_indice,1429.4629,553.5381,0.017,0.2326
+cantidad,const,2277.9367,202.4507,0.0,0.1452
+cantidad,mes_indice,29.1613,15.0828,0.0662,0.1452

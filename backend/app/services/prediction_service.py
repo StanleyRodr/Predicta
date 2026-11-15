@@ -79,6 +79,10 @@ def forecast_payload(
             "monto": {key: _clean(value) for key, value in amount.metricas.items()},
             "cantidad": {key: _clean(value) for key, value in units.metricas.items()},
         },
+        "coeficientes": {
+            "monto": {name: round(value, 4) for name, value in amount.coeficientes.items()},
+            "cantidad": {name: round(value, 4) for name, value in units.coeficientes.items()},
+        },
     }
 
 

@@ -1,0 +1,126 @@
+{
+  "fecha": "2026-11-14",
+  "commit": "cc8e9dd43d23856d2b2724037f802d4bd1843984",
+  "cambios_sin_commit": false,
+  "dataset": {
+    "generador": "DatosDePrueba/ventas_fabricadas/generar_ventas.py",
+    "semilla": 2026,
+    "inicio": "2024-11-01",
+    "fin": "2026-10-31",
+    "filas": 28667,
+    "categorias": [
+      "Abarrotes",
+      "Bebidas",
+      "Cuidado Personal",
+      "Limpieza",
+      "Lácteos"
+    ],
+    "monto_total": 2230833.83,
+    "sha256_filas": "74066ae210a2deb313c4afb47ac29264bc0273dd4318409ef23b283b2c741078"
+  },
+  "etl": {
+    "registros_leidos": 28667,
+    "registros_cargados": 28667,
+    "filas_rechazadas": 0
+  },
+  "modelo": {
+    "algoritmo": "Regresión lineal múltiple por OLS (statsmodels.OLS)",
+    "especificacion": "tendencia",
+    "meses_observados": 24,
+    "horizonte": 12,
+    "primer_mes_proyectado": "2026-11",
+    "validacion": "Origen móvil: reajuste en cada uno de los últimos 6 meses y predicción del mes siguiente"
+  },
+  "objetivos": {
+    "monto": {
+      "metricas": {
+        "r2": -0.6723401330417553,
+        "mape": 9.293616758307598,
+        "mae": 9987.74493934023,
+        "rmse": 13418.303043058979,
+        "wape": 9.319791592648608,
+        "mase": 0.4938296302110131,
+        "referencia": "promedio_movil_3",
+        "mejora_vs_referencia": 10.430618048143296,
+        "origenes": 6
+      },
+      "referencias": {
+        "ultimo_valor": {
+          "mae": 14402.705000000004,
+          "rmse": 16350.294347922816,
+          "wape": 13.439491074875715,
+          "mape": 13.63291094761941
+        },
+        "mismo_mes_anio_anterior": {
+          "mae": 12472.566666666666,
+          "rmse": 13886.055524573323,
+          "wape": 11.638435168772737,
+          "mape": 11.558776819681434
+        },
+        "promedio_movil_3": {
+          "mae": 11150.847222222226,
+          "rmse": 17314.59657215066,
+          "wape": 10.405108743139447,
+          "mape": 9.89715411732896
+        }
+      },
+      "mejor_referencia": "promedio_movil_3",
+      "gana_a_la_mejor_referencia": true,
+      "escala_lewis": "muy precisa",
+      "coeficientes": {
+        "const": 76512.586,
+        "mes_indice": 1429.4629
+      }
+    },
+    "cantidad": {
+      "metricas": {
+        "r2": -0.5571234256032935,
+        "mape": 9.71532544814875,
+        "mae": 281.2927740927408,
+        "rmse": 368.22639043602203,
+        "wape": 9.696407242080001,
+        "mase": 0.5309768109678651,
+        "referencia": "mismo_mes_anio_anterior",
+        "mejora_vs_referencia": -8.677182521342242,
+        "origenes": 6
+      },
+      "referencias": {
+        "ultimo_valor": {
+          "mae": 385.8333333333333,
+          "rmse": 451.28981818782484,
+          "wape": 13.300011490290705,
+          "mape": 13.421752046906303
+        },
+        "mismo_mes_anio_anterior": {
+          "mae": 258.8333333333333,
+          "rmse": 297.1439045311211,
+          "wape": 8.922210731931518,
+          "mape": 8.873188154234054
+        },
+        "promedio_movil_3": {
+          "mae": 301.0,
+          "rmse": 462.06549159022734,
+          "wape": 10.375732506032403,
+          "mape": 9.836065134267125
+        }
+      },
+      "mejor_referencia": "mismo_mes_anio_anterior",
+      "gana_a_la_mejor_referencia": false,
+      "escala_lewis": "muy precisa",
+      "coeficientes": {
+        "const": 2277.9367,
+        "mes_indice": 29.1613
+      }
+    }
+  },
+  "hipotesis": {
+    "criterio": "WAPE del monto a un mes menor que el de la mejor de las tres referencias",
+    "objetivo": "monto",
+    "wape_modelo": 9.319791592648608,
+    "mejor_referencia": "promedio_movil_3",
+    "wape_referencia": 10.405108743139447,
+    "mejora_pct": 10.430618048143296,
+    "se_cumple": true,
+    "escala_lewis": "muy precisa"
+  }
+}

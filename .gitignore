@@ -69,8 +69,12 @@ backend/saved_models/*.joblib
 backend/*.log
 backend/.python-version
 
-# Synthetic test data for manual uploads (regenerate with generar_ventas.py)
-DatosDePrueba/
+# Synthetic test data for manual uploads (regenerate with generar_ventas.py).
+# Only the generator is tracked: it rebuilds the same XLSX from seed 2026.
+DatosDePrueba/*
+!DatosDePrueba/ventas_fabricadas/
+DatosDePrueba/ventas_fabricadas/*
+!DatosDePrueba/ventas_fabricadas/generar_ventas.py
 
 # ============================================
 # Secrets, keys and credentials
@@ -112,3 +116,8 @@ backups/
 # ============================================
 .DS_Store
 desktop.ini
+
+# Playwright (frontend/e2e): results, report and the saved login
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/.auth/

@@ -257,11 +257,27 @@ class GlobalMetrics(BaseModel):
     venta_mas_alta: float
 
 
+class MonthlyGrowth(BaseModel):
+    """Revenue change of the last complete month of the range."""
+
+    periodo: str = Field(..., description="YYYY-MM del último mes completo del rango.")
+    ingresos: float
+    vs_mes_anterior: float | None = Field(
+        ..., description="Variación porcentual frente al mes anterior; nulo sin ese mes o con ingresos 0."
+    )
+    vs_anio_anterior: float | None = Field(
+        ..., description="Variación porcentual frente al mismo mes del año anterior; nulo sin ese mes."
+    )
+
+
 class GlobalStatsResponse(BaseModel):
     """Response of ``GET /analytics/stats``."""
 
     usuario: str
     metricas_globales: GlobalMetrics
+    crecimiento_mensual: MonthlyGrowth | None = Field(
+        None, description="Nulo cuando el rango no tiene ningún mes completo con ventas."
+    )
 
 
 class CategoryMetric(BaseModel):
@@ -377,6 +393,13 @@ class ValidationMetricsByTarget(BaseModel):
     cantidad: ValidationMetrics
 
 
+class CoefficientsByTarget(BaseModel):
+    """β of the final OLS fit by predictor: ``const`` is β0, then ``mes_indice`` and ``mes_2``…``mes_12``."""
+
+    monto: dict[str, float]
+    cantidad: dict[str, float]
+
+
 class MonthlyForecastResponse(BaseModel):
     """Response of ``GET /analytics/forecast``; it never stores anything."""
 
@@ -396,6 +419,9 @@ class MonthlyForecastResponse(BaseModel):
     )
     proyeccion: list[ProjectedMonth]
     metricas: ValidationMetricsByTarget
+    coeficientes: CoefficientsByTarget = Field(
+        ..., description="Intercepto (const) y coeficientes del ajuste final, por variable."
+    )
 
 
 class SavePredictionRequest(BaseModel):

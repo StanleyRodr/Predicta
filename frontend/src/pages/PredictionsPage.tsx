@@ -224,7 +224,7 @@ export function PredictionsPage() {
 
           <MonthDetail month={current} />
 
-          <Card className="grid gap-4">
+          <Card className="grid min-w-0 gap-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="font-semibold">Detalle mensual</h2>
               <Button disabled={save.isPending} onClick={() => save.mutate()} variant="ghost">

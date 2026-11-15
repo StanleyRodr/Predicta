@@ -69,6 +69,7 @@ function monthly(overrides: Partial<MonthlyForecastResponse> = {}): MonthlyForec
       month("2027-05", 9900, true),
     ],
     metricas: { monto: metrics, cantidad: metrics },
+    coeficientes: { monto: { const: 100, mes_indice: 5 }, cantidad: { const: 10, mes_indice: 1 } },
     ...overrides,
   };
 }

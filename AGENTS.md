@@ -19,14 +19,15 @@
 - Tests do not need PostgreSQL: `backend/tests/conftest.py` sets `DATABASE_URL=sqlite:///:memory:` before importing the app and gives each test a fresh in-memory SQLite database. Set `TEST_DATABASE_URL` to a disposable PostgreSQL database to run the same suite on PostgreSQL.
 - Every private endpoint must appear in `backend/tests/test_isolation.py::PRIVATE_CASES`; a test fails when a route is missing.
 - Before submitting backend changes, run from `backend/`: `ruff check app/`, `mypy app/`, and `pytest --cov=app --cov-report=term-missing`; run `ruff check --fix app/ && ruff format app/` only when intentionally applying Ruff fixes/formatting. Ruff includes the security rules (`S`, flake8-bandit); every `noqa: S...` states its reason.
-- Before submitting frontend changes, run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test -- --run`, and `npm run build`.
+- Before submitting frontend changes, run from `frontend/`: `npm run lint`, `npm run typecheck`, `npm test -- --run`, and `npm run build`. `npm run e2e` runs the Playwright suite in `frontend/e2e/` against the real API: it needs the local PostgreSQL of `DATABASE_URL` and recreates the throwaway database `predicta_e2e`; CI runs it in the `e2e` job.
 - `.github/workflows/ci.yml` runs lint, types, migrations (`upgrade`, `check`, `downgrade`), the backend suite on SQLite and PostgreSQL, the frontend checks, and the security scanners on every push: `pip-audit` and `npm audit --omit=dev --audit-level=high` fail on high or critical vulnerabilities in production dependencies, and the `secrets` job runs gitleaks over the full history. Every ignored advisory carries its reason in `ci.yml`.
 
 ## Data And Schema Changes
 
 - Do not restore runtime `Base.metadata.create_all()`: schema management is intentionally Alembic-only.
 - After changing SQLAlchemy models, create a migration from `backend/` with `alembic revision --autogenerate -m "description"`, review it, then apply it with `alembic upgrade head`.
-- Generate synthetic data with `python scripts/generate_dataset.py` from `backend/`; it writes the ignored `backend/ventas_*.csv` artifact.
+- Generate synthetic data with `python scripts/generate_dataset.py` from `backend/` (seed 2026 and a fixed start date by default); it writes the ignored `backend/ventas_*.csv` artifact. The thesis dataset comes from `DatosDePrueba/ventas_fabricadas/generar_ventas.py`.
+- Run the thesis experiment with `python scripts/run_experiment.py` from `backend/`: it generates the dataset, loads it through the ETL on in-memory SQLite (the only place `create_all` is allowed, inside that throwaway database), fits the model, and writes `docs/resultados/metricas_<date>.json`. Regenerate `docs/evaluacion/` with `python scripts/evaluate_models.py` whenever model features change. `python scripts/measure_concurrency.py` needs the local PostgreSQL of `DATABASE_URL`: it creates and drops the throwaway database `predicta_bench` and writes `docs/evaluacion/concurrencia.md`.
 - Never commit `.env`, credentials, generated datasets, coverage/cache directories, or saved model artifacts; the root `.gitignore` excludes them.
 
 ## Code Conventions
