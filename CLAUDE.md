@@ -19,6 +19,7 @@ ruff check --fix app/ && ruff format app/                 # only when intentiona
 mypy                                                      # typecheck (pyproject sets files = app)
 python scripts/evaluate_models.py                         # regenerate docs/evaluacion/
 python scripts/run_experiment.py                          # thesis experiment -> docs/resultados/metricas_<date>.json
+python scripts/measure_concurrency.py                     # needs local PostgreSQL; -> docs/evaluacion/concurrencia.md
 pytest --cov=app --cov-report=term-missing                # full suite
 pytest tests/test_auth.py                                 # single file
 pytest -k test_register                                   # single test by name

@@ -60,7 +60,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | HECHO |
 | 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | HECHO |
 | 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | HECHO |
-| 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | TODO |
+| 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | HECHO |
 | 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | TODO |
 | 054 | Comparación de costos frente al BI privativo | `docs/planning/plans/054-comparacion-costos.md` | P1 | S-M | — | TODO |
 
@@ -696,7 +696,7 @@ Plan: `docs/planning/plans/051-comando-experimento.md` | Depende de: 048 | Esfue
 
 Plan: `docs/planning/plans/052-medicion-concurrencia.md` | Depende de: — | Esfuerzo: M
 
-- [ ] 052.1 `scripts/measure_concurrency.py` con `uvicorn` y `predicta_bench`. Verificar: `docs/evaluacion/concurrencia.md` y la base eliminada.
+- [x] 052.1 `scripts/measure_concurrency.py` con `uvicorn` y `predicta_bench`. Verificar: `docs/evaluacion/concurrencia.md` y la base eliminada.
 
 ### Tarea 053 — Pruebas E2E con Playwright
 
