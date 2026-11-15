@@ -20,6 +20,7 @@ anteriores. Rotar `SECRET_KEY` invalida todos los tokens a la vez
 - `docs/seguridad/auditoria-039.md`: auditoría del 2026-11-11 (tarea 039), con hallazgos, severidad y tarea que corrige cada uno.
 
 - `docs/seguridad/zap-baseline-039.md`: ZAP baseline en local, antes de las correcciones.
+- `docs/seguridad/zap-baseline-045.md`: ZAP baseline contra los dominios reales, después de las correcciones.
 
 ## Defensas en producción (tareas 039 a 045)
 

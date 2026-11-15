@@ -53,7 +53,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 042 | Verificación de correo | `docs/planning/plans/042-verificacion-correo.md` | P1 | L | 040, 041 | HECHO |
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | HECHO |
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | HECHO |
-| 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | EN PROGRESO |
+| 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | HECHO |
 
 ## Reglas de ejecución
 
@@ -633,9 +633,9 @@ Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 |
 - [x] 045.3 Crear `frontend/vercel.json` con cabeceras y reescritura. Verificar: test que compara su CSP con la del `<meta>`.
 - [x] 045.4 Crear `backend/railway.json` y `backend/.python-version`. Verificar: JSON válido contra el esquema de Railway.
 - [x] 045.5 Escribir `docs/despliegue.md`. Verificar: cada variable de `.env.example` y cada punto de la checklist aparecen.
-- [ ] 045.6 Desplegar con la guía. Verificar: la checklist se cumple sobre los dominios reales.
-- [ ] 045.7 Repetir ZAP baseline contra los dominios reales. Verificar: las alertas de cabeceras de la 039 desaparecen.
-- [ ] 045.8 Verificación global. Verificar: todos los comandos terminan con código 0.
+- [x] 045.6 Desplegar con la guía. Verificar: la checklist se cumple sobre los dominios reales.
+- [x] 045.7 Repetir ZAP baseline contra los dominios reales. Verificar: las alertas de cabeceras de la 039 desaparecen.
+- [x] 045.8 Verificación global. Verificar: todos los comandos terminan con código 0.
 - [x] 045.9 Configurar loguru sin `diagnose` ni `backtrace` (S-26, hallado en el despliegue del 2026-11-14). Verificar: un test confirma que la contraseña de un login que falla no aparece en el log.
 - [x] 045.10 Enviar correos por la API HTTPS de Brevo (`EMAIL_BACKEND=brevo_api`), porque Railway Hobby bloquea el SMTP saliente (`TimeoutError` en el puerto 587). Verificar: tests de la petición, del error sin cuerpo y de la configuración de producción.
 
