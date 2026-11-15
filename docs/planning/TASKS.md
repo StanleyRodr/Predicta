@@ -54,6 +54,15 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 043 | Contraseñas, bloqueo y revocación de sesiones | `docs/planning/plans/043-contrasenas-bloqueo.md` | P1 | L | 042 | HECHO |
 | 044 | Escáneres de seguridad en CI | `docs/planning/plans/044-escaneres-ci.md` | P1 | S | 039 | HECHO |
 | 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | HECHO |
+| 046 | Licencia MIT | `docs/planning/plans/046-licencia-mit.md` | P1 | S | — | HECHO |
+| 047 | Semilla y fecha fija en el generador CSV | `docs/planning/plans/047-semilla-generador-csv.md` | P2 | S | — | TODO |
+| 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | TODO |
+| 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | TODO |
+| 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | TODO |
+| 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | TODO |
+| 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | TODO |
+| 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | TODO |
+| 054 | Comparación de costos frente al BI privativo | `docs/planning/plans/054-comparacion-costos.md` | P1 | S-M | — | TODO |
 
 ## Reglas de ejecución
 
@@ -639,6 +648,69 @@ Plan: `docs/planning/plans/045-guia-despliegue.md` | Depende de: 041, 042, 043 |
 - [x] 045.9 Configurar loguru sin `diagnose` ni `backtrace` (S-26, hallado en el despliegue del 2026-11-14). Verificar: un test confirma que la contraseña de un login que falla no aparece en el log.
 - [x] 045.10 Enviar correos por la API HTTPS de Brevo (`EMAIL_BACKEND=brevo_api`), porque Railway Hobby bloquea el SMTP saliente (`TimeoutError` en el puerto 587). Verificar: tests de la petición, del error sin cuerpo y de la configuración de producción.
 
+## Fase 9: cierre de la verificación tesis ↔ sistema
+
+Tareas de código y documentación que salen de las decisiones del autor del 2026-11-14 registradas en la §10 de `docs/checking/VERIFICACION_TESIS.md` y en `docs/reportes/verificacion_2026-11-14.md`.
+
+### Tarea 046 — Licencia MIT
+
+Plan: `docs/planning/plans/046-licencia-mit.md` | Depende de: — | Esfuerzo: S
+
+- [x] 046.1 Agregar `LICENSE` (MIT) y `"license": "MIT"` en `frontend/package.json`. Verificar: `license-checker --production --excludePrivatePackages` da `MIT: 46`.
+
+### Tarea 047 — Semilla y fecha fija en el generador CSV
+
+Plan: `docs/planning/plans/047-semilla-generador-csv.md` | Depende de: — | Esfuerzo: S
+
+- [ ] 047.1 Semilla 2026 y fecha de inicio fijas en `generate_dataset.py`. Verificar: `tests/test_generate_dataset.py`.
+
+### Tarea 048 — Exponer los coeficientes del modelo
+
+Plan: `docs/planning/plans/048-coeficientes-modelo.md` | Depende de: — | Esfuerzo: S-M
+
+- [ ] 048.1 Coeficientes en `monthly_forecast_series`. Verificar: serie lineal exacta.
+- [ ] 048.2 Campo `coeficientes` en `GET /analytics/forecast`. Verificar: prueba de contrato.
+- [ ] 048.3 Coeficientes en `docs/evaluacion/resultados.md`. Verificar: β0 y β1 del monto iguales al reporte.
+
+### Tarea 049 — Prueba de serialización DataFrame → JSON
+
+Plan: `docs/planning/plans/049-prueba-serializacion-json.md` | Depende de: 048 | Esfuerzo: S
+
+- [ ] 049.1 `tests/test_serializacion_json.py::test_serializacion_json`. Verificar: compara valor por valor y falla si se pierde una fila.
+
+### Tarea 050 — KPI de crecimiento mensual
+
+Plan: `docs/planning/plans/050-kpi-crecimiento.md` | Depende de: — | Esfuerzo: M
+
+- [ ] 050.1 `crecimiento_mensual` en `GET /analytics/stats`. Verificar: pruebas de +10 %, −20 %, mes incompleto y sin datos.
+- [ ] 050.2 Tarjeta «Crecimiento mensual» en el dashboard. Verificar: prueba del dashboard y checks del frontend.
+
+### Tarea 051 — Comando único del experimento
+
+Plan: `docs/planning/plans/051-comando-experimento.md` | Depende de: 048 | Esfuerzo: M
+
+- [ ] 051.1 `scripts/run_experiment.py` y su prueba. Verificar: dos corridas iguales.
+- [ ] 051.2 Primera corrida en `docs/resultados/`. Verificar: MAE y RMSE iguales a `resultados.md` (horizonte 1).
+
+### Tarea 052 — Medición de concurrencia
+
+Plan: `docs/planning/plans/052-medicion-concurrencia.md` | Depende de: — | Esfuerzo: M
+
+- [ ] 052.1 `scripts/measure_concurrency.py` con `uvicorn` y `predicta_bench`. Verificar: `docs/evaluacion/concurrencia.md` y la base eliminada.
+
+### Tarea 053 — Pruebas E2E con Playwright
+
+Plan: `docs/planning/plans/053-e2e-playwright.md` | Depende de: 050 | Esfuerzo: L
+
+- [ ] 053.1 Playwright con backend real y `predicta_e2e`. Verificar: `npm run e2e` levanta los servidores.
+- [ ] 053.2 Escenarios REQ-50, 51, 53, 54 y 62. Verificar: `npm run e2e` pasa en local.
+- [ ] 053.3 Job `e2e` en CI. Verificar: pasa en GitHub Actions.
+
+### Tarea 054 — Comparación de costos frente al BI privativo
+
+Plan: `docs/planning/plans/054-comparacion-costos.md` | Depende de: — | Esfuerzo: S-M
+
+- [ ] 054.1 `docs/costos/comparacion.md` con fuentes. Verificar: cada precio con URL y fecha; totales recalculados.
 ## Verificación global
 
 Desde `backend/`, con el entorno virtual activo:
