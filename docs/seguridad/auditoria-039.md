@@ -67,7 +67,7 @@ usuario aprobó su subtarea el 2026-11-11.
 | S-05 | Sin bloqueo por cuenta: con varias IP se prueban contraseñas contra una cuenta sin freno | Media | `app/services/user_service.py:78-90` | 043 | Corregido en la 043 (2026-11-14) |
 | S-06 | Inyección de fórmulas en Excel: un producto `=HYPERLINK(...)` se exporta tal cual | Media | `app/services/report_service.py:201` (`df.to_excel` sin neutralizar) | 040 | Corregido en la 040 (2026-11-11) |
 | S-07 | El correo distingue mayúsculas: `Ana@x.com` y `ana@x.com` son dos cuentas | Media | `app/services/user_service.py:29` compara por igualdad exacta | 040 | Corregido en la 040 (2026-11-11) |
-| S-10 | Sin cabeceras de seguridad en API ni frontend (CSP, HSTS, `nosniff`, anti-clickjacking) | Media | ZAP 10038, 10020 y 10021 en `localhost:4173`; 10021 en la API. `curl` a `/users/me` sin esas cabeceras | 041, 045 | API corregida en la 041 (2026-11-14); frontend pendiente en la 045 |
+| S-10 | Sin cabeceras de seguridad en API ni frontend (CSP, HSTS, `nosniff`, anti-clickjacking) | Media | ZAP 10038, 10020 y 10021 en `localhost:4173`; 10021 en la API. `curl` a `/users/me` sin esas cabeceras | 041, 045 | Corregido: API en la 041 y frontend en la 045 (2026-11-14); ZAP contra los dominios reales ya no lo reporta (`docs/seguridad/zap-baseline-045.md`) |
 | S-12 | `SECRET_KEY` acepta cualquier longitud desde 1 carácter, también en producción | Media | `app/core/config.py:28` (`min_length=1`) | 041 | Corregido en la 041 (2026-11-14) |
 | S-13 | `DATABASE_URL` sin SSL exigido en producción | Media | `app/core/config.py:27` | 041 | Corregido en la 041 (2026-11-14) |
 | S-16 | Sin escaneo de dependencias ni de secretos en CI | Media | `.github/workflows/ci.yml` no ejecuta `pip-audit`, `npm audit` ni `gitleaks` | 044 | Corregido en la 044 (2026-11-11) |
@@ -85,6 +85,7 @@ usuario aprobó su subtarea el 2026-11-11.
 | S-24 | CORS con `allow_credentials=True`, aunque la API usa Bearer y no cookies | Informativa | `app/main.py:90` | — | Sin impacto con orígenes explícitos; revisar si se agregan cookies |
 | S-25 | El registro responde "El correo electrónico ya se encuentra registrado." y revela si un correo tiene cuenta | Informativa | `app/api/user_routes.py:30-34` | — | Riesgo aceptado por el usuario para la demo (plan 042) |
 | S-26 | loguru registra cada traceback con los valores de las variables locales (`diagnose=True` por defecto): un error en el login podría dejar la contraseña en el log, y un error genera cientos de líneas (Railway descartó 858 por superar 500 líneas/s) | Media | `app/main.py` (`logger.add` sin `diagnose=False` ni `backtrace=False`); hallado en el despliegue del 2026-11-14 | 045 (045.9) | Corregido en la 045 (2026-11-14) |
+| S-27 | Vercel envía `Access-Control-Allow-Origin: *` en los archivos estáticos del frontend (ZAP 10098 contra el dominio real) | Informativa | `docs/seguridad/zap-baseline-045.md` | — | Riesgo aceptado: los archivos son públicos, sin datos de usuario ni cookies; la API tiene CORS cerrado al dominio de Vercel |
 
 Las severidades de S-01, S-02 y S-20 son altas porque, en un host público,
 bastan una cuenta gratuita o ninguna para dejar la API sin servicio.

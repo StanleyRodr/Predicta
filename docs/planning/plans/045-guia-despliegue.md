@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** EN PROGRESO
+- **Estado:** HECHO el 2026-11-14.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Riesgo:** MEDIUM (una CSP mal escrita deja la app en blanco o sin conexión al API; un despliegue mal configurado expone la API sin las defensas de 041-043)
@@ -172,6 +172,20 @@ Escrita para quien despliega por primera vez. Cada paso dice qué hacer, dónde 
 - La build del frontend sale con CSP sin `'unsafe-eval'` ni scripts en línea.
 - La guía permite repetir el despliegue desde cero sin leer el código.
 - ZAP ya no reporta las cabeceras faltantes de la 039.
+
+## Cambios respecto del plan al ejecutarlo
+
+- **CSP en el build, no a mano en `index.html`:** `frontend/csp.ts` es la única fuente de la política. Un plugin de `vite.config.ts` inserta el `<meta>` solo en `vite build`, porque el servidor de desarrollo necesita scripts en línea para React Refresh. `npm run preview` sí la tiene. `style-src` quedó en `'self'` sin `'unsafe-inline'`: React aplica los `style` por CSSOM, que la CSP no bloquea.
+- **`vercel.json` y `VITE_API_URL`:** la cabecera lleva el origen de la API escrito (`https://predicta-api.up.railway.app`). En los builds de Vercel (`VERCEL` presente), el plugin falla si `VITE_API_URL` no coincide; en el primer despliegue frenó un build sin la variable. `.env.production` está en `.gitignore`, así que no sirvió como fuente.
+- **Sin `@types/node`:** `csp.ts` saca el origen con una expresión regular y `vite.config.ts` importa `vercel.json` como JSON (`resolveJsonModule`) y lee `VERCEL` con `loadEnv(mode, ".", "")`.
+- **`railway.json`:** se validó contra el esquema oficial con un script propio, porque `jsonschema` no está instalado; no hubo claves ni valores inválidos. En Railway, el archivo se agrega con **Add File Path** (`/backend/railway.json`). En el primer despliegue los campos de Deploy quedaron vacíos y Railpack falló con "No start command detected"; se cargaron a mano el Start Command, el Pre-deploy y el Healthcheck, y la guía lo explica.
+- **App de GitHub:** Railway mostraba "Could not load branches" porque la app de GitHub no estaba instalada (iniciar sesión con GitHub no la instala). La guía explica cómo instalarla.
+- **Correo por la API de Brevo (045.10):** Railway Hobby bloquea el SMTP saliente (`TimeoutError` en el puerto 587). Se agregó `EMAIL_BACKEND=brevo_api` con `BREVO_API_KEY` (PR #10). Un punto y coma pegado al valor (`brevo_api;`) hizo fallar el pre-deploy por la validación de configuración, lo que confirmó que la API no arranca con una configuración inválida.
+- **Logs sin variables (045.9, S-26):** el traceback del fallo SMTP generó cientos de líneas (Railway descartó 858 por superar 500/s) y loguru mostraba los valores locales. `app.main.add_log_sink` apaga `diagnose` y `backtrace`, y `tests/test_logging.py` lo comprueba.
+- **Dominios finales:** `https://predicta-three-zeta.vercel.app` (frontend) y `https://predicta-api.up.railway.app` (API). El subdominio de Railway coincidió con el previsto, así que `vercel.json` no cambió.
+- **Checklist sobre los dominios reales (2026-11-14):** `/docs` y `/openapi.json` dan 404; cabeceras completas en la API y el frontend; el registro envía el correo y el enlace verifica la cuenta; el login sin verificar da 403; el sexto login fallido da 429; el log de Railway muestra la IP pública del cliente; con `X-Forwarded-For` falsificado en cada intento, el sexto sigue en 429, así que `TRUSTED_PROXIES=*` es seguro en Railway; el recorrido completo no mostró violaciones de CSP ni errores de CORS.
+- **ZAP (045.7):** `docs/seguridad/zap-baseline-045.md`. Desaparecieron las alertas 10038, 10020, 10021 y 90022 de la 039. Queda `Access-Control-Allow-Origin: *` en los estáticos de Vercel (S-27, riesgo aceptado).
+- **Seguridad de los secretos:** durante el despliegue se pegaron claves en el chat. Se pidió al usuario rotar `SECRET_KEY`, la contraseña de Neon y las claves de Brevo, y borrar las variables `SMTP_*` de Railway.
 
 ## Fuera de alcance
 
