@@ -35,6 +35,7 @@ npm run typecheck                    # tsc -b
 npm test -- --run                    # Vitest, single run (plain `npm test` watches)
 npx vitest run src/api/auth.test.ts  # single test file
 npm run build                        # tsc -b && vite build
+npm run e2e                          # Playwright: real API on PostgreSQL (predicta_e2e) + production build
 ```
 
 Before submitting: backend `ruff check app/`, `mypy`, `pytest --cov=app`; frontend `npm run lint`, `npm run typecheck`, `npm test -- --run`, `npm run build`. CI (`.github/workflows/ci.yml`, every push) also runs `alembic upgrade head`, `alembic check`, `alembic downgrade -1`, `alembic upgrade head` against PostgreSQL 17, so a model change without a matching migration fails CI. CI also fails on a high or critical vulnerability in production dependencies (`pip-audit -r requirements.txt`, `npm audit --omit=dev --audit-level=high`) and on any secret in the git history (`secrets` job, gitleaks); every ignored advisory carries its reason in `ci.yml`.
@@ -67,7 +68,7 @@ Before submitting: backend `ruff check app/`, `mypy`, `pytest --cov=app`; fronte
 - `src/api/*.ts` hold one typed client per backend area (auth, etl, analytics, forecast, reports) with matching types in `src/types/`; server state goes through TanStack Query. Forecasts are fetched only on explicit user action (no auto-fetch or refetch-on-focus), and report downloads are handled as blobs. The upload page accepts up to 50 files per selection: it analyzes and uploads them one at a time in natural name order through the same two ETL endpoints, files with identical headers share one reviewed mapping, a failed or duplicate (409) file does not stop the rest, and `UploadBatchTable` reports each file; ordering, grouping and totals live only in `src/lib/uploadBatch.ts`.
 - Routing (`App.tsx`): public `/`, `/login`, `/register`, `/verificar-correo`, `/olvide-contrasena` and `/restablecer-contrasena` (the link pages read `#token` through `lib/linkToken.ts`, which drops it from the URL); everything else sits behind `ProtectedRoute` + `AppShell`, with Dashboard/Predictions/Reports lazy-loaded.
 - Forms use React Hook Form + Zod (`src/lib/authSchemas.ts`); styling is Tailwind CSS v4 with hand-written primitives in `src/components/ui/`; charts use Chart.js via react-chartjs-2, wrapped in the accessible `ChartFrame`.
-- Tests (Vitest + React Testing Library, jsdom, setup in `src/test/setup.ts`) sit next to the code as `*.test.ts(x)`.
+- Tests (Vitest + React Testing Library, jsdom, setup in `src/test/setup.ts`) sit next to the code as `*.test.ts(x)`. End-to-end specs live in `frontend/e2e/` (Playwright, `npm run e2e`): `backend/scripts/e2e_server.py` recreates the throwaway database `predicta_e2e` (or `E2E_DATABASE_URL`), migrates and seeds it with the thesis dataset and a confirmed user, and starts uvicorn on port 8001; the specs log in once, fail on any console error, and save screenshots to `docs/evaluacion/capturas/`. Locally they use the installed Chrome; CI runs them in the `e2e` job. Chart data tables are hidden with `sr-only` on a wrapping `div`, because a table ignores `width: 1px` and would widen the page.
 
 ## Conventions and workflow
 

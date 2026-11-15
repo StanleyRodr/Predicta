@@ -61,7 +61,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | HECHO |
 | 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | HECHO |
 | 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | HECHO |
-| 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | TODO |
+| 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | HECHO |
 | 054 | Comparación de costos frente al BI privativo | `docs/planning/plans/054-comparacion-costos.md` | P1 | S-M | — | TODO |
 
 ## Reglas de ejecución
@@ -702,8 +702,8 @@ Plan: `docs/planning/plans/052-medicion-concurrencia.md` | Depende de: — | Esf
 
 Plan: `docs/planning/plans/053-e2e-playwright.md` | Depende de: 050 | Esfuerzo: L
 
-- [ ] 053.1 Playwright con backend real y `predicta_e2e`. Verificar: `npm run e2e` levanta los servidores.
-- [ ] 053.2 Escenarios REQ-50, 51, 53, 54 y 62. Verificar: `npm run e2e` pasa en local.
+- [x] 053.1 Playwright con backend real y `predicta_e2e`. Verificar: `npm run e2e` levanta los servidores.
+- [x] 053.2 Escenarios REQ-50, 51, 53, 54 y 62. Verificar: `npm run e2e` pasa en local.
 - [ ] 053.3 Job `e2e` en CI. Verificar: pasa en GitHub Actions.
 
 ### Tarea 054 — Comparación de costos frente al BI privativo

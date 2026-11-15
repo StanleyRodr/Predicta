@@ -116,3 +116,8 @@ backups/
 # ============================================
 .DS_Store
 desktop.ini
+
+# Playwright (frontend/e2e): results, report and the saved login
+frontend/test-results/
+frontend/playwright-report/
+frontend/e2e/.auth/
