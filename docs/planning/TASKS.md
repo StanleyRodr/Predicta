@@ -56,7 +56,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 045 | CSP y despliegue en Vercel, Railway y Neon | `docs/planning/plans/045-guia-despliegue.md` | P1 | M | 041, 042, 043 | HECHO |
 | 046 | Licencia MIT | `docs/planning/plans/046-licencia-mit.md` | P1 | S | — | HECHO |
 | 047 | Semilla y fecha fija en el generador CSV | `docs/planning/plans/047-semilla-generador-csv.md` | P2 | S | — | HECHO |
-| 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | TODO |
+| 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | HECHO |
 | 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | TODO |
 | 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | TODO |
 | 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | TODO |
@@ -668,9 +668,9 @@ Plan: `docs/planning/plans/047-semilla-generador-csv.md` | Depende de: — | Esf
 
 Plan: `docs/planning/plans/048-coeficientes-modelo.md` | Depende de: — | Esfuerzo: S-M
 
-- [ ] 048.1 Coeficientes en `monthly_forecast_series`. Verificar: serie lineal exacta.
-- [ ] 048.2 Campo `coeficientes` en `GET /analytics/forecast`. Verificar: prueba de contrato.
-- [ ] 048.3 Coeficientes en `docs/evaluacion/resultados.md`. Verificar: β0 y β1 del monto iguales al reporte.
+- [x] 048.1 Coeficientes en `monthly_forecast_series`. Verificar: serie lineal exacta.
+- [x] 048.2 Campo `coeficientes` en `GET /analytics/forecast`. Verificar: prueba de contrato.
+- [x] 048.3 Coeficientes en `docs/evaluacion/resultados.md`. Verificar: β0 y β1 del monto iguales al reporte.
 
 ### Tarea 049 — Prueba de serialización DataFrame → JSON
 

@@ -114,7 +114,7 @@ Consultar nunca escribe en la base; guardar es una acción explícita.
 | Ruta | Qué hace |
 |---|---|
 | `GET /analytics/predict` | Proyección del día siguiente: punto, intervalo del 95 % y métricas del holdout. Con menos de 2 días con ventas, 422. |
-| `GET /analytics/forecast?categoria=&producto=` | Serie mensual: `historial`, `mes_parcial`, `proyeccion` (por mes: `prediccion`, `inferior`, `superior` de monto y cantidad, y `extrapolacion`), `metricas`, `modelo`, `horizonte_aplicado` y `advertencia`. Sin `categoria`, cubre todas; con `producto`, solo ese producto de la categoría. |
+| `GET /analytics/forecast?categoria=&producto=` | Serie mensual: `historial`, `mes_parcial`, `proyeccion` (por mes: `prediccion`, `inferior`, `superior` de monto y cantidad, y `extrapolacion`), `metricas`, `coeficientes` (β del ajuste final por variable: `const` es β0, luego `mes_indice` y, si hay estacionalidad, `mes_2`…`mes_12`), `modelo`, `horizonte_aplicado` y `advertencia`. Sin `categoria`, cubre todas; con `producto`, solo ese producto de la categoría. |
 | `GET /analytics/productos?categoria=` | Productos de una categoría, ordenados por nombre. La categoría es obligatoria. |
 | `POST /analytics/predicciones` | Recibe solo `categoria` y `producto`, recalcula la proyección en el servidor y guarda una fila por mes proyectado, todas con el mismo `lote`. Responde 201 con el lote guardado. |
 | `GET /analytics/predicciones?skip=&limit=` | Lotes guardados del usuario, del más reciente al más antiguo. |

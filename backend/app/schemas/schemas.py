@@ -377,6 +377,13 @@ class ValidationMetricsByTarget(BaseModel):
     cantidad: ValidationMetrics
 
 
+class CoefficientsByTarget(BaseModel):
+    """β of the final OLS fit by predictor: ``const`` is β0, then ``mes_indice`` and ``mes_2``…``mes_12``."""
+
+    monto: dict[str, float]
+    cantidad: dict[str, float]
+
+
 class MonthlyForecastResponse(BaseModel):
     """Response of ``GET /analytics/forecast``; it never stores anything."""
 
@@ -396,6 +403,9 @@ class MonthlyForecastResponse(BaseModel):
     )
     proyeccion: list[ProjectedMonth]
     metricas: ValidationMetricsByTarget
+    coeficientes: CoefficientsByTarget = Field(
+        ..., description="Intercepto (const) y coeficientes del ajuste final, por variable."
+    )
 
 
 class SavePredictionRequest(BaseModel):
