@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** HECHO el 2026-11-14.
+- **Estado:** HECHO el 2026-11-14. Job `e2e` en verde en la ejecución `43678072381` de GitHub Actions.
 - **Prioridad:** P1
 - **Esfuerzo:** L
 - **Depende de:** 050

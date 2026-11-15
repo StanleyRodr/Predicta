@@ -1,11 +1,52 @@
 # Reporte de verificación — 2026-11-14
-Commit: `8dd376012927405a8917df274aa11a7c17069e5c`   Semilla del dataset: `2026` (`generar_ventas.py`, XLSX); evaluación con semilla `20261108`; el generador CSV alternativo no tiene semilla   Registros: `28,667`
+Commit: `8dd376012927405a8917df274aa11a7c17069e5c` (verificación inicial); `cc8e9dd43d23856d2b2724037f802d4bd1843984` (después de las tareas 046 a 054)   Semilla del dataset: `2026` (`generar_ventas.py`, XLSX); evaluación con semilla `20261108`; el generador CSV alternativo no tiene semilla   Registros: `28,667`
 
 Este reporte reemplaza a `verificacion_2026-11-08.md`. Verifica el sistema completo (tareas 001 a 045 en estado `HECHO` en `docs/planning/TASKS.md`) contra `docs/checking/VERIFICACION_TESIS.md`. La sección «Funciones del sistema fuera de VERIFICACION_TESIS.md» enumera lo que el sistema hace y la tesis todavía no describe. Las secciones «Decisiones del autor (2026-11-14)» y «Trabajo pendiente priorizado» son la entrada para el siguiente agente.
 
 Dataset usado: `DatosDePrueba/ventas_fabricadas/ventas_tienda_2_anios.xlsx`. Tiene 28,667 filas, columnas `producto, monto, cantidad, categoria, fecha`, fechas de 2024-11-01 a 2026-10-31 (24 meses completos), 5 categorías (`Abarrotes`, `Bebidas`, `Cuidado Personal`, `Limpieza`, `Lácteos`), 0 nulos y 0 filas duplicadas.
 
-## Resumen
+## Actualización tras las tareas 046 a 054 (2026-11-14)
+
+Las tareas de código C1 a C8 y D1 se ejecutaron como las tareas 046 a 054 de `docs/planning/TASKS.md`, en la rama `feat/046-cierre-verificacion`, con un commit por tarea. Todas tienen su plan en `docs/planning/plans/` y están cerradas. La CI de la rama pasó en la ejecución [`43678072381`](https://github.com/StanleyRodr/Predicta/actions/runs/43678072381), incluido el job nuevo `e2e`.
+
+Los requisitos cuyo cambio pendiente es solo de la tesis conservan su estado: el código ya no cambiará, y el estado mejora cuando la tesis refleje la decisión del autor (§10 de `VERIFICACION_TESIS.md`). El documento `docs/reportes/correcciones_tesis_2026-11-14.md` reúne esos cambios para quien edite el LaTeX.
+
+### Resumen actualizado
+
+CUMPLE: 29 | NO CUMPLE: 6 | PARCIAL: 10 | NO VERIFICABLE: 0 | PENDIENTE: 2
+
+- Los 6 NO CUMPLE (REQ-13, 23, 25, 30, 33 y 36) y los 10 PARCIAL (REQ-04, 05, 21, 22, 24, 26, 27, 29, 40 y 52) tienen decidida una corrección de la tesis, no del código.
+- Los 2 PENDIENTE son REQ-43 (`SIN UMBRAL`) y REQ-56: los KPI están decididos e implementados, pero la tesis aún no los lista.
+
+### Requisitos que cambiaron de estado
+
+| REQ | Antes | Ahora | Evidencia |
+|---|---|---|---|
+| REQ-02 | PARCIAL | CUMPLE | Las rutas `def` del ETL y del modelo se delegan al *threadpool* (executor) de FastAPI. Medición: `backend/scripts/measure_concurrency.py` → `docs/evaluacion/concurrencia.md`. |
+| REQ-11 | PARCIAL | CUMPLE | `backend/scripts/generate_dataset.py` con semilla 2026 y fecha fija; `tests/test_generate_dataset.py`. `generar_ventas.py` (semilla 2026) ya está versionado. |
+| REQ-32 | PARCIAL | CUMPLE | `forecast.fitted_coefficients`; `GET /analytics/forecast` › `coeficientes`; `docs/evaluacion/resultados.md` › «Coeficientes del modelo final»; `tests/test_ml.py::test_coefficients_recover_the_line_that_generated_the_series`. |
+| REQ-42 | NO CUMPLE | CUMPLE | Igual que REQ-02. Durante la carga del XLSX completo (12.5 s), otro usuario recibió respuesta en 365.8 ms de mediana (máximo 536.5 ms), sin bloqueo. |
+| REQ-50 | PARCIAL | CUMPLE | `frontend/e2e/predictions.spec.ts` › «REQ-50…»: 24 meses de historial + 12 proyectados desde la API, lienzo pintado. |
+| REQ-51 | PARCIAL | CUMPLE | `frontend/e2e/dashboard.spec.ts` › «REQ-51…»: barras con las 5 categorías. |
+| REQ-53 | NO VERIFICABLE | CUMPLE | `dashboard.spec.ts` y `predictions.spec.ts` › «REQ-53…» a 375 y 1440 px; capturas en `docs/evaluacion/capturas/`. La prueba encontró *scroll* horizontal a 375 px y se corrigió en `ChartFrame.tsx` y `PredictionsPage.tsx`. |
+| REQ-54 | PARCIAL | CUMPLE | `dashboard.spec.ts` › «REQ-54…»: ningún evento `load` al cambiar de vista y de filtro. |
+| REQ-60 | PARCIAL | CUMPLE | `backend/tests/test_serializacion_json.py::test_serializacion_json` y `::test_serializacion_json_through_the_api`. |
+| REQ-61 | PARCIAL | CUMPLE | `python scripts/run_experiment.py` → `docs/resultados/metricas_2026-11-14.json` (commit `cc8e9dd`, sin cambios pendientes, semilla 2026). |
+| REQ-62 | NO CUMPLE | CUMPLE | `frontend/e2e/fixtures.ts`: cada escenario falla ante cualquier error de consola. Detectó un 404 del `favicon.ico`, corregido con `public/favicon.svg`. |
+
+Sin cambio de estado, pero con evidencia nueva: REQ-09 (`LICENSE` MIT; `license-checker --production --excludePrivatePackages` → `MIT: 46`), REQ-43 (latencia en reposo y bajo carga en `concurrencia.md`) y REQ-56 (tarjeta «Crecimiento mensual»: `analytics_service.monthly_growth`, `GrowthCard.tsx`).
+
+### Comandos de la verificación final (commit `cc8e9dd`)
+
+- `python scripts/run_experiment.py` → WAPE del monto 9.32 % frente a 10.41 % del promedio móvil de 3 meses: la hipótesis se cumple; MAPE 9.29 %, «muy precisa» según Lewis.
+- `pytest --cov=app` → `501 passed`; cobertura TOTAL 97 % (2,314 sentencias, 79 sin cubrir).
+- `ruff check app/ scripts/` → `All checks passed!`; `mypy` → `Success: no issues found in 32 source files`.
+- `alembic check` → `No new upgrade operations detected.`; `pip-audit` → `No known vulnerabilities found`.
+- `python scripts/evaluate_models.py` → sin cambios en `docs/evaluacion/`.
+- Frontend: `npm run lint` y `typecheck` → exit 0; `npm test -- --run` → `270 passed`; `npm run build` → correcto; `npm audit --omit=dev --audit-level=high` → `found 0 vulnerabilities`; `npm run e2e` → `8 passed`.
+- `python scripts/measure_concurrency.py` → `docs/evaluacion/concurrencia.md`.
+
+## Resumen (verificación inicial)
 CUMPLE: 18 | NO CUMPLE: 8 | PARCIAL: 18 | NO VERIFICABLE: 1 | PENDIENTE: 2
 
 Cambios frente al reporte del 2026-11-08 (CUMPLE 15, NO CUMPLE 14, PARCIAL 16, NO VERIFICABLE 1, PENDIENTE 1):
@@ -245,9 +286,11 @@ El autor resolvió todos los pendientes que requerían su decisión. Cada decisi
 
 ## Trabajo pendiente priorizado
 
-### Tareas de código y documentación (para el siguiente agente)
+### Tareas de código y documentación
 
-No requieren más decisiones. Cada tarea cita su fila de la §10. Al terminar una tarea, cambia el estado de su fila en la §10 a «Resuelta» con la evidencia (archivo, función y prueba), sin borrar filas.
+**Todas hechas el 2026-11-14** como las tareas 046 a 054 (C7 = 046, C5 = 047, C1 = 048, C3 = 049, C8 = 050, C2 = 051, C6 = 052, C4 = 053, D1 = 054). Ver «Actualización tras las tareas 046 a 054».
+
+No requerían más decisiones. Cada tarea cita su fila de la §10. Al terminar una tarea, cambia el estado de su fila en la §10 a «Resuelta» con la evidencia (archivo, función y prueba), sin borrar filas.
 
 1. **C1. Exponer los coeficientes (REQ-32).** Agregar `coeficientes` (β0…βn con el nombre de cada variable, por objetivo) a `MonthlyForecastResponse` y a `docs/evaluacion/resultados.md` (`scripts/evaluate_models.py`). Prueba de contrato en `tests/test_forecast_api.py`.
 2. **C2. Comando único del experimento y métricas fechadas (§7, REQ-61).** Un script que genere el dataset (`generar_ventas.py`, semilla 2026), lo cargue, ejecute la evaluación y escriba `resultados/metricas_AAAA-MM-DD.json` con el commit, la semilla, los parámetros del dataset, el MAE y el RMSE, el baseline y la clasificación de Lewis decididos en el #4.
@@ -261,7 +304,7 @@ No requieren más decisiones. Cada tarea cita su fila de la §10. Al terminar un
 
 ### Cambios en la tesis (para el autor)
 
-El código no cambia en estos puntos. La redacción recomendada está en la fila de la §10 que se indica.
+Están desarrollados, con la redacción propuesta y los datos finales, en `docs/reportes/correcciones_tesis_2026-11-14.md`. El código no cambia en estos puntos. La redacción recomendada está en la fila de la §10 que se indica.
 
 | Archivo › Sección de la tesis | Qué cambiar | Fila de la §10 |
 |---|---|---|

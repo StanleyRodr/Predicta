@@ -1,7 +1,7 @@
 {
   "fecha": "2026-11-14",
-  "commit": "ae243584be6850f3318422b78424ac2a037913ab",
-  "cambios_sin_commit": true,
+  "commit": "cc8e9dd43d23856d2b2724037f802d4bd1843984",
+  "cambios_sin_commit": false,
   "dataset": {
     "generador": "DatosDePrueba/ventas_fabricadas/generar_ventas.py",
     "semilla": 2026,

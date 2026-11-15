@@ -704,7 +704,7 @@ Plan: `docs/planning/plans/053-e2e-playwright.md` | Depende de: 050 | Esfuerzo: 
 
 - [x] 053.1 Playwright con backend real y `predicta_e2e`. Verificar: `npm run e2e` levanta los servidores.
 - [x] 053.2 Escenarios REQ-50, 51, 53, 54 y 62. Verificar: `npm run e2e` pasa en local.
-- [ ] 053.3 Job `e2e` en CI. Verificar: pasa en GitHub Actions.
+- [x] 053.3 Job `e2e` en CI. Verificar: pasa en GitHub Actions (ejecución `43678072381`).
 
 ### Tarea 054 — Comparación de costos frente al BI privativo
 
