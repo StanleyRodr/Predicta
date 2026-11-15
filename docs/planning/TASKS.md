@@ -59,7 +59,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | HECHO |
 | 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | HECHO |
 | 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | HECHO |
-| 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | TODO |
+| 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | HECHO |
 | 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | TODO |
 | 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | TODO |
 | 054 | Comparación de costos frente al BI privativo | `docs/planning/plans/054-comparacion-costos.md` | P1 | S-M | — | TODO |
@@ -689,8 +689,8 @@ Plan: `docs/planning/plans/050-kpi-crecimiento.md` | Depende de: — | Esfuerzo:
 
 Plan: `docs/planning/plans/051-comando-experimento.md` | Depende de: 048 | Esfuerzo: M
 
-- [ ] 051.1 `scripts/run_experiment.py` y su prueba. Verificar: dos corridas iguales.
-- [ ] 051.2 Primera corrida en `docs/resultados/`. Verificar: MAE y RMSE iguales a `resultados.md` (horizonte 1).
+- [x] 051.1 `scripts/run_experiment.py` y su prueba. Verificar: dos corridas iguales.
+- [x] 051.2 Primera corrida en `docs/resultados/`. Verificar: MAE y RMSE iguales a `resultados.md` (horizonte 1).
 
 ### Tarea 052 — Medición de concurrencia
 

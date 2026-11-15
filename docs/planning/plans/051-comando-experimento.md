@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-14.
 - **Prioridad:** P1
 - **Esfuerzo:** M
 - **Depende de:** 048
@@ -19,6 +19,7 @@ La §7 pide ejecutar las fases del experimento en orden con un solo comando y re
 - **Salida:** `docs/resultados/metricas_AAAA-MM-DD.json` (decisión del autor).
 - **Criterio:** la hipótesis se cumple si el WAPE del monto en el horizonte 1 es menor que el de la mejor de las tres referencias. El MAPE se clasifica con la escala de Lewis (1982).
 - **Fase 4 (frontend):** la cubren las E2E de la tarea 053.
+- **Generador versionado (decisión del autor del 2026-11-14):** `DatosDePrueba/` estaba completo en `.gitignore`, así que `generar_ventas.py` solo existía en la máquina del autor. Ahora `.gitignore` versiona únicamente ese script; el XLSX sigue ignorado y se regenera idéntico con la semilla 2026. `generar_ventas.py` expone `build_sales(seed)` sin cambiar la secuencia aleatoria: el resultado se comparó fila por fila con el XLSX existente (28,667 filas idénticas).
 
 ## Alcance
 
