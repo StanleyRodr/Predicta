@@ -84,6 +84,7 @@ usuario aprobó su subtarea el 2026-11-11.
 | S-17 | El 403 de `require_role` incluye el nombre del rol requerido | Informativa | `app/api/deps.py:60` | — | Riesgo aceptado: ninguna ruta usa `require_role` hoy |
 | S-24 | CORS con `allow_credentials=True`, aunque la API usa Bearer y no cookies | Informativa | `app/main.py:90` | — | Sin impacto con orígenes explícitos; revisar si se agregan cookies |
 | S-25 | El registro responde "El correo electrónico ya se encuentra registrado." y revela si un correo tiene cuenta | Informativa | `app/api/user_routes.py:30-34` | — | Riesgo aceptado por el usuario para la demo (plan 042) |
+| S-26 | loguru registra cada traceback con los valores de las variables locales (`diagnose=True` por defecto): un error en el login podría dejar la contraseña en el log, y un error genera cientos de líneas (Railway descartó 858 por superar 500 líneas/s) | Media | `app/main.py` (`logger.add` sin `diagnose=False` ni `backtrace=False`); hallado en el despliegue del 2026-11-14 | 045 (045.9) | Corregido en la 045 (2026-11-14) |
 
 Las severidades de S-01, S-02 y S-20 son altas porque, en un host público,
 bastan una cuenta gratuita o ninguna para dejar la API sin servicio.

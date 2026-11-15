@@ -177,10 +177,12 @@ def test_env_example_holds_only_placeholders():
         "SMTP_PORT",
         "SMTP_USER",
         "SMTP_PASSWORD",
+        "BREVO_API_KEY",
         "EMAIL_FROM",
         "FRONTEND_URL",
     }
     assert values["SMTP_PASSWORD"] == ""
+    assert values["BREVO_API_KEY"] == ""
     assert "CHANGE_ME" in values["DATABASE_URL"]
     assert values["SECRET_KEY"].startswith("CHANGE_ME")
 

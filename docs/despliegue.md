@@ -15,11 +15,11 @@ Vercel.
      │
      └──HTTPS (fetch con Bearer)──▶ Railway (API FastAPI) ──SSL──▶ Neon (PostgreSQL)
                                           │
-                                          └──SMTP + STARTTLS──▶ Brevo (correos)
+                                          └──HTTPS (API)──▶ Brevo (correos)
 ```
 
 - El navegador descarga la app desde Vercel y habla directo con la API de Railway.
-- La API guarda los datos en Neon y envía los correos de verificación y de contraseña por Brevo.
+- La API guarda los datos en Neon y envía los correos de verificación y de contraseña por la API HTTPS de Brevo. Railway Hobby bloquea el SMTP saliente (el puerto 587 da `TimeoutError`, comprobado el 2026-11-14), así que en Railway se usa `EMAIL_BACKEND=brevo_api`. En local sirve `smtp`.
 - Railway pone un proxy delante de la API. La API lee la IP real del cliente en `X-Forwarded-For` (variable `TRUSTED_PROXIES`).
 
 ## 2. Costos y por qué esta combinación
@@ -41,6 +41,12 @@ Starter (~US$7, 512 MB). Los precios cambian; revisa las páginas oficiales:
 Necesitas cuentas en GitHub (con el repositorio), Vercel y Railway (las dos con
 tu cuenta de GitHub), Neon y Brevo. Railway pide una tarjeta para el plan Hobby.
 
+Iniciar sesión con GitHub no basta para desplegar: Railway y Vercel necesitan
+su **app de GitHub instalada** con acceso al repositorio. Si Railway muestra
+"Could not load branches", instálala desde **New Project → Deploy from GitHub
+repo → Configure GitHub App** y da acceso a `Predicta`. En GitHub aparece en
+**Settings → Applications → Installed GitHub Apps**.
+
 ## 4. Brevo
 
 La cuenta, el remitente y la clave SMTP ya existen (los creaste para la prueba
@@ -48,7 +54,8 @@ de la tarea 042). Si empiezas de cero:
 
 1. En **Senders, Domains & Dedicated IPs → Senders**, agrega y verifica el correo remitente.
 2. En **SMTP & API → SMTP**, anota el servidor (`smtp-relay.brevo.com`, puerto `587`) y el **Login** (`...@smtp-brevo.com`).
-3. Pulsa **Generate a new SMTP key** y guarda la clave en un lugar seguro. Es `SMTP_PASSWORD`; no es la contraseña de tu cuenta.
+3. Pulsa **Generate a new SMTP key** y guarda la clave en un lugar seguro. Es `SMTP_PASSWORD`, para usar SMTP en local; no es la contraseña de tu cuenta.
+4. Para Railway: en **SMTP & API → API Keys**, pulsa **Generate a new API key**, ponle un nombre (por ejemplo, `predicta-railway`) y guárdala. Es `BREVO_API_KEY`. Es distinta de la clave SMTP y empieza con `xkeysib-`.
 
 **Comprobar:** en **Transactional → Logs** verás cada correo enviado.
 
@@ -73,7 +80,7 @@ En local, `uvicorn --reload` no relee `backend/.env`: si cambias el `.env`, rein
 1. **New Project → Deploy from GitHub repo** y elige el repositorio.
 2. En el servicio, **Settings**:
    - **Source → Root Directory:** `/backend`.
-   - **Config-as-code → Railway Config File:** `/backend/railway.json`. Ese archivo fija el arranque, la migración previa, el chequeo de salud y el reinicio.
+2. **Config-as-code → Railway Config File:** pulsa **Add File Path** y escribe `/backend/railway.json`. Esta ruta no sigue al Root Directory: siempre se cuenta desde la raíz del repo. Ese archivo fija el arranque, la migración previa, el chequeo de salud y el reinicio. Si Railway no lo toma (en el primer despliegue del 2026-11-14 los campos de Deploy quedaron vacíos y Railpack falló con "No start command detected"), carga a mano en **Settings → Deploy** los mismos valores: Start Command `uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1 --no-proxy-headers`, Pre-deploy Command `alembic upgrade head` y Healthcheck Path `/health/db`.
    - **Deploy → Region:** US East (Virginia), la misma zona que Neon.
    - **Branch:** la que vas a publicar (`main` después de unir la rama de seguridad).
 3. **Variables** (pestaña Variables → **Raw Editor**). Una por línea:
@@ -86,17 +93,15 @@ En local, `uvicorn --reload` no relee `backend/.env`: si cambias el `.env`, rein
    | `CORS_ORIGINS` | `https://<tu-app>.vercel.app` (paso 8; por ahora pon el que esperas). |
    | `FRONTEND_URL` | El mismo dominio de Vercel, con `https://`. |
    | `TRUSTED_PROXIES` | `*` (ver la comprobación del paso 9). |
-   | `EMAIL_BACKEND` | `smtp` |
-   | `SMTP_HOST` | `smtp-relay.brevo.com` |
-   | `SMTP_PORT` | `587` |
-   | `SMTP_USER` | El Login de Brevo (`...@smtp-brevo.com`). |
-   | `SMTP_PASSWORD` | La clave SMTP de Brevo. |
+   | `EMAIL_BACKEND` | `brevo_api` (Railway Hobby bloquea SMTP). |
+   | `BREVO_API_KEY` | La API key de Brevo (`xkeysib-...`, paso 4). |
+   | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | No hacen falta con `brevo_api`; puedes borrarlas de Railway. Solo sirven con `EMAIL_BACKEND=smtp` (en local o en un plan que permita SMTP). |
    | `EMAIL_FROM` | `Predicta <tu-remitente-verificado@...>` |
    | `LOG_LEVEL` | `INFO` |
    | `ACCESS_TOKEN_EXPIRE_MINUTES` | `30` (opcional; es el valor por defecto). |
    | `MAX_UPLOAD_ROWS` | `200000` (opcional; es el valor por defecto). |
 
-   La API se niega a arrancar si `SECRET_KEY` tiene menos de 32 caracteres, si `DATABASE_URL` no trae `sslmode`, si falta una variable SMTP o si `FRONTEND_URL` no empieza con `https://`. El log de Railway dice cuál falta.
+   La API se niega a arrancar si `SECRET_KEY` tiene menos de 32 caracteres, si `DATABASE_URL` no trae `sslmode`, si falta una variable del backend de correo elegido o si `FRONTEND_URL` no empieza con `https://`. El log de Railway dice cuál falta.
 
 4. **Settings → Networking → Generate Domain.** Edita el subdominio a `predicta-api` si está libre: `https://predicta-api.up.railway.app`. Si eliges otro, cambia ese origen en el `connect-src` de `frontend/vercel.json` y sube el cambio (si no, el build de Vercel falla a propósito).
 5. **Límite de gasto:** en la configuración del workspace, **Usage → Usage Limits**, fija un límite duro (por ejemplo, US$10). Railway apaga los servicios al llegar a él en vez de cobrar más.
@@ -166,7 +171,7 @@ Usa `API=https://predicta-api.up.railway.app` y `WEB=https://<tu-app>.vercel.app
 - **Error de SSL con la base:** `DATABASE_URL` debe tener `sslmode=require` y la conexión directa (sin `-pooler` en el host).
 - **La migración falla en el pre-despliegue:** el log muestra el error de Alembic. La versión anterior sigue publicada. Corrige y vuelve a desplegar; no edites tablas a mano.
 - **La API no arranca:** el log muestra un error de configuración en español (secreto corto, falta `sslmode`, falta una variable SMTP o `FRONTEND_URL` sin `https://`).
-- **No llegan los correos:** revisa spam, **Transactional → Logs** en Brevo y el log de Railway (`No se pudo enviar el correo ...`).
+- **No llegan los correos:** revisa spam, **Transactional → Logs** en Brevo y el log de Railway (`No se pudo enviar el correo ...`). Un `TimeoutError` significa que el host bloquea SMTP: usa `EMAIL_BACKEND=brevo_api`. `Brevo respondió 401` es una API key mal copiada o borrada.
 - **Memoria agotada o reinicios:** en Railway, **Metrics** muestra la RAM. Una carga de 200,000 filas puede pasar de 400 MB; es normal que suba un momento. Si el servicio se reinicia en cada carga grande, baja `MAX_UPLOAD_ROWS`.
 
 ## 11. Operación
@@ -180,7 +185,7 @@ Usa `API=https://predicta-api.up.railway.app` y `WEB=https://<tu-app>.vercel.app
 
   Guarda el archivo fuera del repositorio. Para restaurarlo: `pg_restore --clean -d "<cadena>" predicta.dump`.
 - **Rotar `SECRET_KEY`:** genera una nueva y cámbiala en Railway. Todas las sesiones se cierran y cada usuario vuelve a entrar.
-- **Rotar la clave SMTP:** genera otra en Brevo, cámbiala en Railway y borra la anterior en Brevo.
+- **Rotar la clave de Brevo:** genera otra API key (o clave SMTP), cámbiala en Railway y borra la anterior en Brevo.
 - **Pausar después de la tesis:** en Railway, quita el despliegue activo del servicio (menú del despliegue → **Remove**) o borra el proyecto; así deja de consumir. Neon y Vercel gratis pueden quedar como están.
 
 ## Mantenimiento de esta guía
