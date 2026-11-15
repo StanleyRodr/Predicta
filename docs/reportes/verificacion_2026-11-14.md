@@ -22,10 +22,10 @@ CUMPLE: 29 | NO CUMPLE: 6 | PARCIAL: 10 | NO VERIFICABLE: 0 | PENDIENTE: 2
 
 | REQ | Antes | Ahora | Evidencia |
 |---|---|---|---|
-| REQ-02 | PARCIAL | CUMPLE | Las rutas `def` del ETL y del modelo se delegan al *threadpool* (executor) de FastAPI. Medición: `backend/scripts/measure_concurrency.py` → `docs/evaluacion/concurrencia.md`. |
+| REQ-02 | PARCIAL | CUMPLE (interpretación aprobada por el autor el 2026-11-15) | Las rutas `def` del ETL y del modelo se delegan al *threadpool* (executor) de FastAPI. Medición: `backend/scripts/measure_concurrency.py` → `docs/evaluacion/concurrencia.md`. |
 | REQ-11 | PARCIAL | CUMPLE | `backend/scripts/generate_dataset.py` con semilla 2026 y fecha fija; `tests/test_generate_dataset.py`. `generar_ventas.py` (semilla 2026) ya está versionado. |
 | REQ-32 | PARCIAL | CUMPLE | `forecast.fitted_coefficients`; `GET /analytics/forecast` › `coeficientes`; `docs/evaluacion/resultados.md` › «Coeficientes del modelo final»; `tests/test_ml.py::test_coefficients_recover_the_line_that_generated_the_series`. |
-| REQ-42 | NO CUMPLE | CUMPLE | Igual que REQ-02. Durante la carga del XLSX completo (12.5 s), otro usuario recibió respuesta en 365.8 ms de mediana (máximo 536.5 ms), sin bloqueo. |
+| REQ-42 | NO CUMPLE | CUMPLE (ídem) | Igual que REQ-02. Durante la carga del XLSX completo (12.5 s), otro usuario recibió respuesta en 365.8 ms de mediana (máximo 536.5 ms), sin bloqueo. |
 | REQ-50 | PARCIAL | CUMPLE | `frontend/e2e/predictions.spec.ts` › «REQ-50…»: 24 meses de historial + 12 proyectados desde la API, lienzo pintado. |
 | REQ-51 | PARCIAL | CUMPLE | `frontend/e2e/dashboard.spec.ts` › «REQ-51…»: barras con las 5 categorías. |
 | REQ-53 | NO VERIFICABLE | CUMPLE | `dashboard.spec.ts` y `predictions.spec.ts` › «REQ-53…» a 375 y 1440 px; capturas en `docs/evaluacion/capturas/`. La prueba encontró *scroll* horizontal a 375 px y se corrigió en `ChartFrame.tsx` y `PredictionsPage.tsx`. |

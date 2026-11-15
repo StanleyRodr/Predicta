@@ -18,9 +18,10 @@ Reglas para editar el LaTeX:
 1. **Este documento manda.** Si un dato de los otros dos no coincide con este, usa el de aquí: es posterior.
 2. **El código ya es definitivo.** Cada corrección cambia la tesis para describir lo que hace el sistema. No propongas cambios al sistema.
 3. **No inventes datos.** Usa solo las cifras de este documento. Si una sección necesita un dato que no aparece aquí, márcalo con `\todo{}` (o un comentario `% TODO`) en lugar de suponerlo.
-4. **Conserva el estilo de la tesis:** tercera persona, tiempo verbal y formato de citas del documento original.
-5. Los textos propuestos son una base. Ajústalos al párrafo donde van, pero conserva cada dato y cada matiz técnico.
-6. Antes de entregar, revisa la lista de la sección 9 («Puntos que el autor debe confirmar»).
+4. **Alcance decidido por el autor:** de las funciones que la tesis no describía, solo se agregan el mapeo de columnas (con los datasets reales como evidencia) y los intervalos de predicción. No agregues reportes PDF/Excel, carga de varios archivos, predicciones guardadas, multiusuario (salvo la columna `id_usuario` del esquema), seguridad, despliegue ni cifras de integración continua.
+5. **Conserva el estilo de la tesis:** tercera persona, tiempo verbal y formato de citas del documento original.
+6. Los textos propuestos son una base. Ajústalos al párrafo donde van, pero conserva cada dato y cada matiz técnico.
+7. Antes de entregar, revisa la lista de la sección 9 («Puntos que el autor debe confirmar»).
 
 Las ubicaciones se dan como `archivo.tex › Sección`, porque los números de línea cambian.
 
@@ -134,7 +135,6 @@ Las ubicaciones se dan como `archivo.tex › Sección`, porque los números de l
 | fecha | fecha de venta, date, fecha de emisión, invoicedate, order_date |
 
 - **Evidencia con datos reales:** el mapeo se probó con los encabezados de tres datasets públicos de comercio: Online Retail II (UCI), Iowa Liquor Sales y Open e-commerce 1.0 (Amazon). Para los tres propone los roles correctos.
-- **Carga de varios archivos:** se pueden subir hasta 50 archivos a la vez. Los archivos con los mismos encabezados comparten un único mapeo revisado.
 
 ### 3.2 Transformación y limpieza (arquitectura real)
 
@@ -289,8 +289,7 @@ El dashboard tiene además gráficas de años superpuestos, comparación entre c
 **Debe decir:** se cambia la figura para usar los nombres reales de la interfaz.
 
 - **Dashboard («Tu operación en una mirada»):** analítica descriptiva, con las vistas «General», «Por categoría», «Por mes» e «Historial completo» y las tarjetas de KPI.
-- **Predicciones («Siguiente movimiento»):** analítica predictiva. Proyecta 12 meses del total de ventas, de una categoría o de un producto, en una gráfica de líneas: historial con línea continua, proyección con línea discontinua y banda del intervalo del 95 %. Muestra también la tabla de meses proyectados, las métricas de calidad y la predicción del día siguiente. Las proyecciones se pueden guardar.
-- **Reportes:** descarga en Excel (historial) y en PDF (historial, proyección anual, mes futuro frente a su historial y proyección por categoría).
+- **Predicciones («Siguiente movimiento»):** analítica predictiva. Proyecta 12 meses del total de ventas, de una categoría o de un producto, en una gráfica de líneas: historial con línea continua, proyección con línea discontinua y banda del intervalo del 95 %. Muestra también la tabla de meses proyectados y las métricas de calidad.
 
 ---
 
@@ -310,10 +309,6 @@ Cada uno de los tres escenarios ya es una **prueba automatizada** que se puede v
 
 > El experimento se ejecuta con un solo comando que genera el dataset sintético con la semilla 2026, lo carga a través del ETL real del sistema, ajusta el modelo y registra en un archivo con fecha las métricas, los coeficientes, el resultado de la hipótesis y la versión del código. La fase de visualización se valida con pruebas de extremo a extremo en un navegador real.
 
-**Otras cifras de calidad del software** (opcionales):
-- 501 pruebas automatizadas del backend, con 97 % de cobertura de código.
-- 270 pruebas unitarias del frontend y 8 pruebas de extremo a extremo.
-- Integración continua en cada cambio: análisis estático, tipos, migraciones, pruebas sobre SQLite y PostgreSQL 17, auditoría de vulnerabilidades y búsqueda de secretos.
 
 ---
 
