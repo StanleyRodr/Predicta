@@ -2,7 +2,7 @@
 
 ## Estado
 
-- **Estado:** TODO
+- **Estado:** HECHO el 2026-11-14.
 - **Prioridad:** P1
 - **Esfuerzo:** S
 - **Depende de:** 048

@@ -57,7 +57,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 046 | Licencia MIT | `docs/planning/plans/046-licencia-mit.md` | P1 | S | — | HECHO |
 | 047 | Semilla y fecha fija en el generador CSV | `docs/planning/plans/047-semilla-generador-csv.md` | P2 | S | — | HECHO |
 | 048 | Exponer los coeficientes del modelo | `docs/planning/plans/048-coeficientes-modelo.md` | P1 | S-M | — | HECHO |
-| 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | TODO |
+| 049 | Prueba de serialización DataFrame → JSON | `docs/planning/plans/049-prueba-serializacion-json.md` | P1 | S | 048 | HECHO |
 | 050 | KPI de crecimiento mensual | `docs/planning/plans/050-kpi-crecimiento.md` | P1 | M | — | TODO |
 | 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | TODO |
 | 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | TODO |
@@ -676,7 +676,7 @@ Plan: `docs/planning/plans/048-coeficientes-modelo.md` | Depende de: — | Esfue
 
 Plan: `docs/planning/plans/049-prueba-serializacion-json.md` | Depende de: 048 | Esfuerzo: S
 
-- [ ] 049.1 `tests/test_serializacion_json.py::test_serializacion_json`. Verificar: compara valor por valor y falla si se pierde una fila.
+- [x] 049.1 `tests/test_serializacion_json.py::test_serializacion_json`. Verificar: compara valor por valor y falla si se pierde una fila.
 
 ### Tarea 050 — KPI de crecimiento mensual
 
