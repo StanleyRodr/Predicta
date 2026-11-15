@@ -62,7 +62,7 @@ Plan de trabajo backend para Predicta. Ejecutar en orden salvo tareas sin depend
 | 051 | Comando único del experimento | `docs/planning/plans/051-comando-experimento.md` | P1 | M | 048 | HECHO |
 | 052 | Medición de concurrencia | `docs/planning/plans/052-medicion-concurrencia.md` | P1 | M | — | HECHO |
 | 053 | Pruebas E2E con Playwright | `docs/planning/plans/053-e2e-playwright.md` | P1 | L | 050 | HECHO |
-| 054 | Comparación de costos frente al BI privativo | `docs/planning/plans/054-comparacion-costos.md` | P1 | S-M | — | TODO |
+| 054 | Comparación de costos frente al BI privativo | `docs/planning/plans/054-comparacion-costos.md` | P1 | S-M | — | HECHO |
 
 ## Reglas de ejecución
 
@@ -710,7 +710,7 @@ Plan: `docs/planning/plans/053-e2e-playwright.md` | Depende de: 050 | Esfuerzo: 
 
 Plan: `docs/planning/plans/054-comparacion-costos.md` | Depende de: — | Esfuerzo: S-M
 
-- [ ] 054.1 `docs/costos/comparacion.md` con fuentes. Verificar: cada precio con URL y fecha; totales recalculados.
+- [x] 054.1 `docs/costos/comparacion.md` con fuentes. Verificar: cada precio con URL y fecha; totales recalculados.
 ## Verificación global
 
 Desde `backend/`, con el entorno virtual activo:
